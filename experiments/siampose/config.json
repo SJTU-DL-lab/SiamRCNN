@@ -1,0 +1,56 @@
+{
+    "network": {
+        "arch": "Custom"
+    },
+    "hp": {
+        "instance_size": 255,
+        "base_size": 8
+    },
+    "lr": {
+        "type": "log",
+        "start_lr": 0.005,
+        "end_lr": 0.0025,
+        "warmup": {
+            "start_lr": 0.001,
+            "end_lr": 0.005,
+            "type": "step",
+            "step": 1,
+            "epoch": 5
+        }
+    },
+    "loss": {
+        "weight": [1.0, 1.2, 36]
+    },
+    "train_datasets": {
+        "datasets": {
+            "coco": {
+                "root": "../../data/coco/crop_pose",
+                "anno": "../../data/coco/train2017_pose_siamfc.json",
+                "frame_range": 1
+            }
+        },
+        "template_size": 127,
+        "search_size": 255,
+        "base_size": 8,
+        "size": 25,
+
+        "num" : 200000,
+
+        "augmentation": {
+            "template": {
+                "shift": 0, "scale": 0
+            },
+            "search": {
+                "shift": 0, "scale": 0, "blur": 0.18
+            },
+            "neg": 0,
+            "gray": 0
+        }
+    },
+    "anchors": {
+        "stride": 8,
+        "ratios": [0.33, 0.5, 1, 2, 3],
+        "scales": [8],
+        "round_dight": 0
+    }
+}
