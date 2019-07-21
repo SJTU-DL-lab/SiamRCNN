@@ -3,8 +3,8 @@ export PYTHONPATH=$ROOT:$PYTHONPATH
 
 mkdir -p logs
 
-python -u $ROOT/tools/train_siampose_ct.py \
-    --config=config.json -b 256 \
+python -u $ROOT/tools/train_siamrcnn.py \
+    --config=config.json -b 4 \
     -j 8 \
     --epochs 200 \
     --log logs/log.txt \
