@@ -4,8 +4,8 @@ from __future__ import print_function
 
 import torch
 import torch.nn as nn
-from ..utils.nms.nms_wrapper import nms
-from ..utils.roialign.roi_align.crop_and_resize import CropAndResizeFunction
+# from utils.nms.nms_wrapper import nms
+# from utils.roialign.roi_align.crop_and_resize import CropAndResizeFunction
 
 def _sigmoid(x):
     y = torch.clamp(x.sigmoid_(), min=1e-4, max=1-1e-4)
@@ -95,9 +95,20 @@ def proposal_layer(inputs, anchors, config=None):
     # inputs[1] = inputs[1].squeeze(0)
 
     # Box Scores, select the fg prob.
-    scores = inputs[0][:, :(inputs[0].size(1) // 2)]
-    scores = scores.transpose(1, 3).view(-1, scores.size(3))
-    pos_ix = torch.nonzero(scores > 0.5).cuda()
+    print('input 0 shape: ', inputs[0].shape)
+    print('input 1 shape: ', inputs[1].shape)
+    print('anchor shape: ', anchors.shape)
+    scores = inputs[0][:, :, :, :]
+    scores = scores.transpose(1, 3).contiguous().view(-1, scores.size(3))
+    # print(scores)
+    # print(scores > 0.3)
+    pos_ix = torch.nonzero(scores > 0.3)
+    # print('pos_ix: ', pos_ix.shape[0], pos_ix.size(0))
+    if pos_ix.size(0) == 0:
+      print('no positive ix')
+      return None
+    else:
+      print('positive ix')
     scores = torch.index_select(scores, 0, pos_ix)
 
     # Box deltas [batch, num_rois, 4]
@@ -138,8 +149,8 @@ def proposal_layer(inputs, anchors, config=None):
 
     # Non-max suppression
     nms_threshold = float(config['train_datasets']['RPN_NMS'])
-    keep = nms(torch.cat((boxes, scores.unsqueeze(1)), 1).data, nms_threshold)
-    boxes = boxes[keep, :]
+    # keep = nms(torch.cat((boxes, scores.unsqueeze(1)), 1).data, nms_threshold)
+    # boxes = boxes[keep, :]
 
     # Normalize dimensions to range of 0 to 1.
     norm = Variable(torch.from_numpy(np.array([height, width, height, width])).float(), requires_grad=False)

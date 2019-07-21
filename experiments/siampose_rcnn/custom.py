@@ -1,8 +1,8 @@
-from models.siampose_osct import SiamMask
+from models.siampose_RCNN import SiamMask
 from models.features import MultiStageFeature
 from models.rpn import RPN, DepthCorr
 from models.mask import Mask
-from models.DCNv2.dcn_v2 import DCN
+# from models.DCNv2.dcn_v2 import DCN
 import torch
 import torch.nn as nn
 import math

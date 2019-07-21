@@ -26,7 +26,7 @@ from utils.load_helper import load_pretrain, restore_from
 from utils.average_meter_helper import AverageMeter
 
 from datasets.siam_pose_ct_dataset import DataSets
-from model.utils import proposal_layer
+from models.utils import proposal_layer
 
 from utils.lr_helper import build_lr_scheduler
 from tensorboardX import SummaryWriter
@@ -411,7 +411,7 @@ def train(train_loader, model, optimizer, lr_scheduler, epoch, cfg):
 
         outputs = model(x_rpn, x_kp)
         rpn_pred_cls, rpn_pred_loc = outputs['predict'][:2]
-        anchors = train_loader.dataset.all_anchors[0]
+        anchors = train_loader.dataset.anchors.all_anchors[0]
 
         normalized_boxes = proposal_layer([rpn_pred_cls, rpn_pred_loc], anchors, cfg)
         print(normalized_boxes)

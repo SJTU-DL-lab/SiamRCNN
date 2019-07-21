@@ -136,6 +136,8 @@ class SiamMask(nn.Module):
         search_feature = self.feature_extractor(search)
         rpn_pred_cls, rpn_pred_loc = self.rpn(template_feature, search_feature)
         corr_feature = self.kp_corr.kp.forward_corr(template_feature, search_feature)  # (b, 256, w, h)
+        print('rpn_pred_cls shape: ', rpn_pred_cls.shape)
+        print('rpn_pred_loc shape: ', rpn_pred_loc.shape)
         # print('template shape: ', template.shape)
         # print('search shape: ', search.shape)
         # print('template_feature shape: ', template_feature.shape)
@@ -145,6 +147,7 @@ class SiamMask(nn.Module):
 
         if softmax:
             rpn_pred_cls = self.softmax(rpn_pred_cls)
+        print('rpn_pred_cls softmax shape: ', rpn_pred_cls.shape)
         return rpn_pred_cls, rpn_pred_loc, pred_kp, template_feature, search_feature
 
     def softmax(self, cls):
@@ -176,7 +179,8 @@ class SiamMask(nn.Module):
 
         outputs = dict()
 
-        outputs['predict'] = [rpn_pred_loc, rpn_pred_cls, pred_kp, template_feature, search_feature]
+        outputs['predict'] = [rpn_pred_cls, rpn_pred_loc, pred_kp, template_feature, search_feature]
+        
 
         if self.training:
             rpn_loss_cls, rpn_loss_loc = \
@@ -205,6 +209,8 @@ def get_cls_loss(pred, label, select):
     if select.nelement() == 0: return pred.sum() * 0.
     pred = torch.index_select(pred, 0, select)
     label = torch.index_select(label, 0, select)
+    print('pred: ', pred.shape, pred)
+    print('label: ', label.shape, label)
 
     return F.nll_loss(pred, label)
 
