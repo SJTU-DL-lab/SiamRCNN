@@ -172,7 +172,7 @@ def proposal_layer(inputs, anchors, thresh=0.5, args=None):
 
     return normalized_boxes
 
-def roi_align(inputs, pool_size, image_shape):
+def roi_align(inputs, pool_size):
     """Implements ROI Pooling on single feature map.
 
     Params:
