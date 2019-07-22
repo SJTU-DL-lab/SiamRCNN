@@ -146,13 +146,13 @@ class SiamMask(nn.Module):
         # print('search_feature shape: ', search_feature.shape)
         # print('corr_feature output: ', corr_feature.shape)
         # pred_kp = self.kp_model(corr_feature)
-        pred_kp = self.kp_model(search_feature)
+        # pred_kp = self.kp_model(search_feature)
 
         if softmax:
             rpn_pred_cls_sfmax = self.softmax(rpn_pred_cls, log=True)
         rpn_pred_cls = self.softmax(rpn_pred_cls, log=False)
         # print('rpn_pred_cls softmax shape: ', rpn_pred_cls.shape)
-        return rpn_pred_cls_sfmax, rpn_pred_loc, pred_kp, template_feature, search_feature, rpn_pred_cls
+        return rpn_pred_cls_sfmax, rpn_pred_loc, template_feature, search_feature, rpn_pred_cls
 
     def softmax(self, cls, log=True):
         b, a2, h, w = cls.size()
@@ -182,10 +182,12 @@ class SiamMask(nn.Module):
             lable_loc_weight = rpn_input['label_loc_weight']
             anchors = rpn_input['anchors']
 
-        rpn_pred_cls, rpn_pred_loc, pred_kp, template_feature, search_feature, rpn_pred_score = \
+        rpn_pred_cls, rpn_pred_loc, template_feature, search_feature, rpn_pred_score = \
             self.run(template, search, softmax=self.training)
 
         normalized_boxes = proposal_layer([rpn_pred_score, rpn_pred_loc], anchors, args=self.opt)
+        pooled_features = roi_align([normalized_boxes, search_feature], [7, 7])
+        pred_kp = self.kp_model(pooled_features)
         outputs = dict()
 
         outputs['predict'] = [rpn_pred_cls, rpn_pred_loc, pred_kp, template_feature, search_feature, rpn_pred_score]
