@@ -411,10 +411,11 @@ def train(train_loader, model, optimizer, lr_scheduler, epoch, cfg):
 
         outputs = model(x_rpn, x_kp)
         rpn_pred_cls, rpn_pred_loc = outputs['predict'][:2]
+        rpn_pred_cls = outputs['predict'][-1]
         anchors = train_loader.dataset.anchors.all_anchors[0]
 
         normalized_boxes = proposal_layer([rpn_pred_cls, rpn_pred_loc], anchors, cfg)
-        print(normalized_boxes)
+        print('rpn_pred_cls: ', rpn_pred_cls)
 
         rpn_cls_loss, rpn_loc_loss, kp_losses = torch.mean(outputs['losses'][0]),\
                                                     torch.mean(outputs['losses'][1]),\
