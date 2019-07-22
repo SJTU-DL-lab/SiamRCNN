@@ -123,7 +123,8 @@ class SiamMask(nn.Module):
     def _add_rpn_loss(self, label_cls, label_loc, lable_loc_weight, label_mask,
                       rpn_pred_cls, rpn_pred_loc):
         rpn_loss_cls = select_cross_entropy_loss(rpn_pred_cls, label_cls)
-
+        # print('label_cls shape: ', label_cls.shape)
+        # print('label_cls positive: ', torch.nonzero(label_cls > 0.5))
         rpn_loss_loc = weight_l1_loss(rpn_pred_loc, label_loc, lable_loc_weight)
 
         return rpn_loss_cls, rpn_loss_loc
@@ -136,8 +137,8 @@ class SiamMask(nn.Module):
         search_feature = self.feature_extractor(search)
         rpn_pred_cls, rpn_pred_loc = self.rpn(template_feature, search_feature)
         corr_feature = self.kp_corr.kp.forward_corr(template_feature, search_feature)  # (b, 256, w, h)
-        print('rpn_pred_cls shape: ', rpn_pred_cls.shape)
-        print('rpn_pred_loc shape: ', rpn_pred_loc.shape)
+        # print('rpn_pred_cls shape: ', rpn_pred_cls)
+        # print('rpn_pred_loc shape: ', rpn_pred_loc.shape)
         # print('template shape: ', template.shape)
         # print('search shape: ', search.shape)
         # print('template_feature shape: ', template_feature.shape)
@@ -148,7 +149,7 @@ class SiamMask(nn.Module):
         if softmax:
             rpn_pred_cls_sfmax = self.softmax(rpn_pred_cls, log=True)
         rpn_pred_cls = self.softmax(rpn_pred_cls, log=False)
-        print('rpn_pred_cls softmax shape: ', rpn_pred_cls.shape)
+        # print('rpn_pred_cls softmax shape: ', rpn_pred_cls.shape)
         return rpn_pred_cls_sfmax, rpn_pred_loc, pred_kp, template_feature, search_feature, rpn_pred_cls
 
     def softmax(self, cls, log=True):

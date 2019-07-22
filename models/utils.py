@@ -4,8 +4,22 @@ from __future__ import print_function
 
 import torch
 import torch.nn as nn
+from torch.autograd import Variable
+import numpy as np
 # from utils.nms.nms_wrapper import nms
 # from utils.roialign.roi_align.crop_and_resize import CropAndResizeFunction
+
+def clip_boxes(boxes, window):
+    """
+    boxes: [N, 4] each col is y1, x1, y2, x2
+    window: [4] in the form y1, x1, y2, x2
+    """
+    boxes = torch.stack( \
+        [boxes[:, 0].clamp(float(window[0]), float(window[2])),
+         boxes[:, 1].clamp(float(window[1]), float(window[3])),
+         boxes[:, 2].clamp(float(window[0]), float(window[2])),
+         boxes[:, 3].clamp(float(window[1]), float(window[3]))], 1)
+    return boxes
 
 def _sigmoid(x):
     y = torch.clamp(x.sigmoid_(), min=1e-4, max=1-1e-4)
@@ -75,7 +89,7 @@ def apply_box_deltas(boxes, deltas):
     result = torch.stack([y1, x1, y2, x2], dim=1)
     return result
 
-def proposal_layer(inputs, anchors, config=None):
+def proposal_layer(inputs, anchors, thresh=0.5, config=None):
     """Receives anchor scores and selects a subset to pass as proposals
     to the second stage. Filtering is done based on anchor scores and
     non-max suppression to remove overlaps. It also applies bounding
@@ -98,27 +112,33 @@ def proposal_layer(inputs, anchors, config=None):
     print('input 0 shape: ', inputs[0].shape)
     print('input 1 shape: ', inputs[1].shape)
     print('anchor shape: ', anchors.shape)
-    scores = inputs[0][:, :, :, :]
-    scores = scores.transpose(1, 3).contiguous().view(-1, scores.size(3))
-    # print(scores)
+    scores = inputs[0][:, :, :, :, 1]
+    print('before scores shape: ', scores.shape)
+    scores = scores.transpose(1, 3).contiguous().view(-1)
+    print('scores shape: ', scores.shape)
     # print(scores > 0.3)
-    pos_ix = torch.nonzero(scores > 0.3)
-    # print('pos_ix: ', pos_ix.shape[0], pos_ix.size(0))
+    pos_ix = torch.nonzero(scores > thresh).squeeze()
+    print('pos_ix: ', pos_ix.shape, pos_ix)
+    print('scores: ', scores.shape, scores[pos_ix])
     if pos_ix.size(0) == 0:
       print('no positive ix')
       return None
     else:
       print('positive ix')
-    scores = torch.index_select(scores, 0, pos_ix)
+    torch.index_select(scores, 0, pos_ix)  # scores = scores[pos_ix] 
 
     # Box deltas [batch, num_rois, 4]
     deltas = inputs[1]
     bs = deltas.size(0)
-    deltas = deltas.view(-1, 4, -1, -1, -1).transpose(1, 4).view(-1, deltas.size(4))
+    deltas = deltas.view(-1, 4, 5, 17, 17)
+    deltas = deltas.permute(0, 2, 3, 4, 1).contiguous()
+    deltas = deltas.view(-1, deltas.size(4))
+    print('delta shape: ', deltas.shape)
 
     boxes = torch.from_numpy(anchors).float().cuda().detach()
-    boxes = torch.expand_dims(bs, -1, -1, -1, -1)
-    boxes = boxes.transpose(0, 4).view(-1, 4)
+    print('boxes shape: ', boxes.shape)
+    boxes = boxes.expand(bs, -1, -1, -1, -1)
+    boxes = boxes.transpose(0, 4).contiguous().view(-1, 4)
     assert boxes.size(0) == deltas.size(0)
     deltas = torch.index_select(deltas, 0, pos_ix)
     anchors = torch.index_select(boxes, 0, pos_ix)
