@@ -26,8 +26,6 @@ from utils.load_helper import load_pretrain, restore_from
 from utils.average_meter_helper import AverageMeter
 
 from datasets.siam_pose_ct_dataset import DataSets
-from models.utils import proposal_layer
-
 from utils.lr_helper import build_lr_scheduler
 from tensorboardX import SummaryWriter
 
@@ -300,6 +298,8 @@ def main():
     # build dataset
     train_loader, val_loader = build_data_loader(cfg)
 
+    args.img_size = int(cfg['train_datasets']['search_size'])
+    args.nms_threshold = float(cfg['train_datasets']['RPN_NMS'])
     if args.arch == 'Custom':
         from custom import Custom
         model = Custom(pretrain=True, opts=args, anchors=cfg['anchors'])
@@ -408,13 +408,14 @@ def train(train_loader, model, optimizer, lr_scheduler, epoch, cfg):
         }
         x_kp = input[7]
         x_kp = {x: torch.autograd.Variable(y).cuda() for x, y in x_kp.items()}
+        x_rpn['anchors'] = train_loader.dataset.anchors.all_anchors[0]
 
         outputs = model(x_rpn, x_kp)
-        rpn_pred_cls, rpn_pred_loc = outputs['predict'][:2]
-        rpn_pred_cls = outputs['predict'][-1]
-        anchors = train_loader.dataset.anchors.all_anchors[0]
-
-        normalized_boxes = proposal_layer([rpn_pred_cls, rpn_pred_loc], anchors, config=cfg)
+        # rpn_pred_cls, rpn_pred_loc = outputs['predict'][:2]
+        # rpn_pred_cls = outputs['predict'][-1]
+        # anchors = train_loader.dataset.anchors.all_anchors[0]
+        #
+        # normalized_boxes = proposal_layer([rpn_pred_cls, rpn_pred_loc], anchors, config=cfg)
         # print('rpn_pred_cls: ', rpn_pred_cls.shape)
 
         rpn_cls_loss, rpn_loc_loss, kp_losses = torch.mean(outputs['losses'][0]),\
