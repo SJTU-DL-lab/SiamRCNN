@@ -136,7 +136,8 @@ class SiamMask(nn.Module):
         template_feature = self.feature_extractor(template)
         search_feature = self.feature_extractor(search)
         rpn_pred_cls, rpn_pred_loc = self.rpn(template_feature, search_feature)
-        corr_feature = self.kp_corr.kp.forward_corr(template_feature, search_feature)  # (b, 256, w, h)
+
+        # corr_feature = self.kp_corr.kp.forward_corr(template_feature, search_feature)  # (b, 256, w, h)
         # print('rpn_pred_cls shape: ', rpn_pred_cls)
         # print('rpn_pred_loc shape: ', rpn_pred_loc.shape)
         # print('template shape: ', template.shape)
@@ -144,7 +145,8 @@ class SiamMask(nn.Module):
         # print('template_feature shape: ', template_feature.shape)
         # print('search_feature shape: ', search_feature.shape)
         # print('corr_feature output: ', corr_feature.shape)
-        pred_kp = self.kp_model(corr_feature)
+        # pred_kp = self.kp_model(corr_feature)
+        pred_kp = self.kp_model(search_feature)
 
         if softmax:
             rpn_pred_cls_sfmax = self.softmax(rpn_pred_cls, log=True)

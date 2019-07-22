@@ -25,7 +25,7 @@ from utils.log_helper import init_log, print_speed, add_file_handler, Dummy
 from utils.load_helper import load_pretrain, restore_from
 from utils.average_meter_helper import AverageMeter
 
-from datasets.siam_pose_ct_dataset import DataSets
+from datasets.siam_rcnn_dataset import DataSets
 from utils.lr_helper import build_lr_scheduler
 from tensorboardX import SummaryWriter
 

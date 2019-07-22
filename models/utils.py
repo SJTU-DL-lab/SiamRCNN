@@ -6,8 +6,8 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 import numpy as np
-# from utils.nms.nms_wrapper import nms
-# from utils.roialign.roi_align.crop_and_resize import CropAndResizeFunction
+from utils.nms.nms_wrapper import nms
+from utils.roialign.roi_align.crop_and_resize import CropAndResizeFunction
 
 def clip_boxes(boxes, window):
     """
@@ -162,8 +162,8 @@ def proposal_layer(inputs, anchors, thresh=0.5, args=None):
 
     # Non-max suppression
     nms_threshold = args.nms_threshold  # float(config['train_datasets']['RPN_NMS'])
-    # keep = nms(torch.cat((boxes, scores.unsqueeze(1)), 1).data, nms_threshold)
-    # boxes = boxes[keep, :]
+    keep = nms(torch.cat((boxes, scores.unsqueeze(1)), 1).data, nms_threshold)
+    boxes = boxes[keep, :]
 
     # Normalize dimensions to range of 0 to 1.
     norm = Variable(torch.from_numpy(np.array([height, width, height, width])).float(), requires_grad=False)
