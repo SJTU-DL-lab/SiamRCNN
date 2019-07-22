@@ -10,7 +10,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 from utils.anchors import Anchors
 from models.losses import FocalLoss, RegL1Loss, RegLoss, RegWeightedL1Loss
-from models.utils import _sigmoid
+from models.utils import _sigmoid, proposal_layer, roi_align
 
 
 class PoseLoss(torch.nn.Module):
@@ -178,10 +178,12 @@ class SiamMask(nn.Module):
             label_loc = rpn_input['label_loc']
             label_mask = rpn_input['label_mask']
             lable_loc_weight = rpn_input['label_loc_weight']
+            anchors = rpn_input['anchors']
 
         rpn_pred_cls, rpn_pred_loc, pred_kp, template_feature, search_feature, rpn_pred_score = \
             self.run(template, search, softmax=self.training)
 
+        normalized_boxes = proposal_layer([rpn_pred_score, rpn_pred_loc], anchors, args=self.opt)
         outputs = dict()
 
         outputs['predict'] = [rpn_pred_cls, rpn_pred_loc, pred_kp, template_feature, search_feature, rpn_pred_score]

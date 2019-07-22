@@ -89,7 +89,7 @@ def apply_box_deltas(boxes, deltas):
     result = torch.stack([y1, x1, y2, x2], dim=1)
     return result
 
-def proposal_layer(inputs, anchors, thresh=0.5, config=None):
+def proposal_layer(inputs, anchors, thresh=0.5, args=None):
     """Receives anchor scores and selects a subset to pass as proposals
     to the second stage. Filtering is done based on anchor scores and
     non-max suppression to remove overlaps. It also applies bounding
@@ -151,7 +151,7 @@ def proposal_layer(inputs, anchors, thresh=0.5, config=None):
     boxes = apply_box_deltas(anchors, deltas)
 
     # Clip to image boundaries. [batch, N, (y1, x1, y2, x2)]
-    size = int(config['train_datasets']['search_size'])
+    size = args.img_size  # int(config['train_datasets']['search_size'])
     height, width = size, size
     window = np.array([0, 0, height, width]).astype(np.float32)
     boxes = clip_boxes(boxes, window)
@@ -161,7 +161,7 @@ def proposal_layer(inputs, anchors, thresh=0.5, config=None):
     # for small objects, so we're skipping it.
 
     # Non-max suppression
-    nms_threshold = float(config['train_datasets']['RPN_NMS'])
+    nms_threshold = args.nms_threshold  # float(config['train_datasets']['RPN_NMS'])
     # keep = nms(torch.cat((boxes, scores.unsqueeze(1)), 1).data, nms_threshold)
     # boxes = boxes[keep, :]
 
