@@ -231,7 +231,7 @@ class ResNet(nn.Module):
         log_once("p3 {}".format(p3.size()))
         p4 = self.layer4(p3)
 
-        return p2, p3, p4
+        return p1, p2, p3, p4
 
 
 class ResAdjust(nn.Module):
@@ -357,4 +357,3 @@ if __name__ == '__main__':
     var = Variable(var)
 
     net(var)
-

@@ -21,17 +21,17 @@ class ResDownS(nn.Module):
 
     def forward(self, x):
         x = self.downsample(x)
-        # if x.size(3) < 20:
-        #     l = 4
-        #     r = -4
-        #     x = x[:, :, l:r, l:r]
+        if x.size(3) < 20:
+            l = 4
+            r = -4
+            x = x[:, :, l:r, l:r]
         return x
 
 
 class ResDown(MultiStageFeature):
     def __init__(self, pretrain=False):
         super(ResDown, self).__init__()
-        self.features = resnet50(layer3=True, layer4=True)
+        self.features = resnet50(layer3=True, layer4=False)
         if pretrain:
             load_pretrain(self.features, '../resnet.model')
 
@@ -61,14 +61,14 @@ class ResDown(MultiStageFeature):
 
     def forward(self, x):
         output = self.features(x)
-        p3 = self.downsample(output[1])
+        p3 = self.downsample(output[-2])
         return p3
 
     def forward_all(self, x):
         output = self.features(x)
-        p3 = self.downsample(output[1])
-        p4 = self.downsample_p4(output[-1])
-        return p3, p4
+        p3 = self.downsample(output[-2])
+        # p4 = self.downsample_p4(output[-1])
+        return output, p3
 
 class UP(RPN):
     def __init__(self, anchor_num=5, feature_in=256, feature_out=256):
@@ -102,8 +102,8 @@ class Center_pose_head(nn.Module):
         # )
         self.deconv_layers = self._make_deconv_layer(
             2,
-            [128, 64],
-            [4, 4],
+            [256, 128, 64],
+            [4, 4, 4],
         )
         self.heads = {'hps': 34, 'hm_hp': 17, 'hp_offset': 2}
 
@@ -213,7 +213,7 @@ class Custom(SiamMask):
         # self.opt = opt
         self.features = ResDown(pretrain=pretrain)
         self.rpn_model = UP(anchor_num=self.anchor_num, feature_in=256, feature_out=256)
-        self.kp_corr = KpCorr()
+        # self.kp_corr = KpCorr()
         self.kp_model = Center_pose_head()
 
     def template(self, template):
