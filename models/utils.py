@@ -109,23 +109,18 @@ def proposal_layer(inputs, anchors, thresh=0.5, config=None):
     # inputs[1] = inputs[1].squeeze(0)
 
     # Box Scores, select the fg prob.
-    print('input 0 shape: ', inputs[0].shape)
-    print('input 1 shape: ', inputs[1].shape)
-    print('anchor shape: ', anchors.shape)
     scores = inputs[0][:, :, :, :, 1]
-    print('before scores shape: ', scores.shape)
     scores = scores.transpose(1, 3).contiguous().view(-1)
-    print('scores shape: ', scores.shape)
     # print(scores > 0.3)
     pos_ix = torch.nonzero(scores > thresh).squeeze()
-    print('pos_ix: ', pos_ix.shape, pos_ix)
-    print('scores: ', scores.shape, scores[pos_ix])
+    # print('pos_ix: ', pos_ix.shape, pos_ix)
+    # print('scores: ', scores.shape, scores[pos_ix])
     if pos_ix.size(0) == 0:
-      print('no positive ix')
+      # print('no positive ix')
       return None
     else:
-      print('positive ix')
-    torch.index_select(scores, 0, pos_ix)  # scores = scores[pos_ix] 
+      # print('positive ix')
+    torch.index_select(scores, 0, pos_ix)  # scores = scores[pos_ix]
 
     # Box deltas [batch, num_rois, 4]
     deltas = inputs[1]
@@ -133,10 +128,8 @@ def proposal_layer(inputs, anchors, thresh=0.5, config=None):
     deltas = deltas.view(-1, 4, 5, 17, 17)
     deltas = deltas.permute(0, 2, 3, 4, 1).contiguous()
     deltas = deltas.view(-1, deltas.size(4))
-    print('delta shape: ', deltas.shape)
 
     boxes = torch.from_numpy(anchors).float().cuda().detach()
-    print('boxes shape: ', boxes.shape)
     boxes = boxes.expand(bs, -1, -1, -1, -1)
     boxes = boxes.transpose(0, 4).contiguous().view(-1, 4)
     assert boxes.size(0) == deltas.size(0)
@@ -179,8 +172,53 @@ def proposal_layer(inputs, anchors, thresh=0.5, config=None):
 
     return normalized_boxes
 
-def roi_align(input):
-    pass
+def roi_align(inputs, pool_size, image_shape):
+    """Implements ROI Pooling on single feature map.
+
+    Params:
+    - pool_size: [height, width] of the output pooled regions. Usually [7, 7]
+    - image_shape: [height, width, channels]. Shape of input image in pixels
+
+    Inputs:
+    - boxes: [batch, num_boxes, (y1, x1, y2, x2)] in normalized
+             coordinates.
+    - Feature maps: feature map from a single feature map.
+                    Each is [batch, channels, height, width]
+
+    Output:
+    Pooled regions in the shape: [num_boxes, height, width, channels].
+    The width and height are those specific in the pool_shape in the layer
+    constructor.
+    """
+
+    # Crop boxes [batch*num_boxes, (y1, x1, y2, x2)] in normalized coords
+    boxes = inputs[0]
+
+    # Feature Maps.
+    # feature pyramid. Each is [batch, height, width, channels]
+    feature_maps = inputs[1]
+
+    # Assign each ROI to a level in the pyramid based on the ROI area.
+    y1, x1, y2, x2 = boxes.chunk(4, dim=1)
+    h = y2 - y1
+    w = x2 - x1
+    ind = Variable(torch.zeros(boxes.size()[0]),requires_grad=False).int()
+
+    pooled_features = CropAndResizeFunction(pool_size, pool_size,
+                                            0)(feature_maps, boxes, ind)
+
+    # Equation 1 in the Feature Pyramid Networks paper. Account for
+    # the fact that our coordinates are normalized here.
+    # e.g. a 224x224 ROI (in pixels) maps to P4
+    # image_area = Variable(torch.FloatTensor([float(image_shape[0]*image_shape[1])]), requires_grad=False)
+    # if boxes.is_cuda:
+    #     image_area = image_area.cuda()
+    # roi_level = 4 + log2(torch.sqrt(h*w)/(224.0/torch.sqrt(image_area)))
+    # roi_level = roi_level.round().int()
+    # roi_level = roi_level.clamp(2,5)
+
+    return pooled_features
+
 
 def pyramid_roi_align(inputs, pool_size, image_shape):
     """Implements ROI Pooling on multiple levels of the feature pyramid.
