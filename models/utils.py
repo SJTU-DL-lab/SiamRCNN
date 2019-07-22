@@ -118,7 +118,6 @@ def proposal_layer(inputs, anchors, thresh=0.5, config=None):
     if pos_ix.size(0) == 0:
       # print('no positive ix')
       return None
-    else:
       # print('positive ix')
     torch.index_select(scores, 0, pos_ix)  # scores = scores[pos_ix]
 
