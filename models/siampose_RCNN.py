@@ -146,15 +146,19 @@ class SiamMask(nn.Module):
         pred_kp = self.kp_model(corr_feature)
 
         if softmax:
-            rpn_pred_cls_sfmax = self.softmax(rpn_pred_cls)
+            rpn_pred_cls_sfmax = self.softmax(rpn_pred_cls, log=True)
+        rpn_pred_cls = self.softmax(rpn_pred_cls, log=False)
         print('rpn_pred_cls softmax shape: ', rpn_pred_cls.shape)
-        return rpn_pred_cls_sfmax, rpn_pred_loc, pred_kp, template_feature, search_feature, F.softmax(rpn_pred_cls, dim=4)
+        return rpn_pred_cls_sfmax, rpn_pred_loc, pred_kp, template_feature, search_feature, rpn_pred_cls
 
-    def softmax(self, cls):
+    def softmax(self, cls, log=True):
         b, a2, h, w = cls.size()
         cls = cls.view(b, 2, a2 // 2, h, w)
         cls = cls.permute(0, 2, 3, 4, 1).contiguous()
-        cls = F.log_softmax(cls, dim=4)
+        if log is True:
+            cls = F.log_softmax(cls, dim=4)
+        else:
+            cls = F.softmax(cls, dim=4)
         return cls
 
     def forward(self, rpn_input, kp_input):
