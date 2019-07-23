@@ -93,7 +93,7 @@ class Center_pose_head(nn.Module):
     def __init__(self, head_conv=256):
         super(Center_pose_head, self).__init__()
 
-        self.inplanes = 512
+        self.inplanes = 256
         self.deconv_with_bias = False
         # self.deconv_layers = self._make_deconv_layer(
         #     3,
@@ -101,7 +101,7 @@ class Center_pose_head(nn.Module):
         #     [4, 4, 4],
         # )
         self.deconv_layers = self._make_deconv_layer(
-            2,
+            3,
             [256, 128, 64],
             [4, 4, 4],
         )

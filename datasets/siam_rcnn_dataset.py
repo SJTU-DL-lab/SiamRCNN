@@ -91,6 +91,7 @@ class SubDataSet(object):
         self.__dict__.update(cfg)
 
         self.has_mask = self.mark in ['coco', 'ytb_vos'] and 'mask' in cfg
+        print('has mask: ', self.has_mask)
 
         self.num_use = int(self.num_use)
 
@@ -908,7 +909,7 @@ class DataSets(Dataset):
             draw(search, bbox, "debug/{:06d}_s.jpg".format(index))
 
         cls, delta, delta_weight = self.anchor_target(self.anchors, bbox, self.size, neg)
-        if not self.has_mask:
+        if not dataset.has_mask:
             pos, s = crop_like_SiamFCx(search_box, exemplar_size=127, context_amount=0.5, search_size=255)
             mapping_bbox = pos_s_2_bbox(pos, s)
 

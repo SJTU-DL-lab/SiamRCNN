@@ -26,6 +26,15 @@ def remove_prefix(state_dict, prefix):
     f = lambda x: x.split(prefix, 1)[-1] if x.startswith(prefix) else x
     return {f(key): value for key, value in state_dict.items()}
 
+def del_keys(state_dict, del_key):
+    new_dict = {}
+    for key, value in state_dict.items():
+        if del_key in key:
+            print('del keys: ', key)
+            # del state_dict[key]
+        else:
+            new_dict[key] = value
+    return new_dict 
 
 def load_pretrain(model, pretrained_path):
     logger.info('load pretrained model from {}'.format(pretrained_path))
@@ -39,6 +48,7 @@ def load_pretrain(model, pretrained_path):
         pretrained_dict = remove_prefix(pretrained_dict['state_dict'], 'module.')
     else:
         pretrained_dict = remove_prefix(pretrained_dict, 'module.')
+    pretrained_dict = del_keys(pretrained_dict, 'kp_model')
 
     try:
         check_keys(model, pretrained_dict)

@@ -1,0 +1,568 @@
+Tue Jul 23 18:47:31 CST 2019
+[2019-07-23 18:47:49,062-rk0-train_siamrcnn.py#287] 
+PyTorch version: 0.4.1.post2
+Is debug build: No
+CUDA used to build PyTorch: 9.0.176
+
+OS: CentOS Linux 7 (Core)
+GCC version: (GCC) 5.4.0
+CMake version: version 2.8.12.2
+
+Python version: 3.6
+Is CUDA available: Yes
+CUDA runtime version: 9.0.176
+GPU models and configuration: 
+GPU 0: GeForce GTX 1080 Ti
+GPU 1: GeForce GTX 1080 Ti
+GPU 2: GeForce GTX 1080 Ti
+GPU 3: GeForce GTX 1080 Ti
+GPU 4: GeForce GTX 1080 Ti
+GPU 5: GeForce GTX 1080 Ti
+
+Nvidia driver version: 410.48
+cuDNN version: Could not collect
+
+Versions of relevant libraries:
+[pip] Could not collect
+[conda] cuda90                    1.0                  h6433d27_0    pytorch
+[conda] pytorch                   0.4.1           py36_py35_py27__9.0.176_7.1.2_2    pytorch
+[conda] torchfile                 0.1.0                    pypi_0    pypi
+[conda] torchvision               0.2.2                    pypi_0    pypi
+        OpenCV (4.1.0)
+[2019-07-23 18:47:49,063-rk0-train_siamrcnn.py#288] Namespace(arch='', batch=1, clip=10.0, config='config.json', dense_hp=False, epochs=200, hm_hp=True, hm_hp_weight=1, hp_weight=1, log='logs/log.txt', log_dir='board', lr=0.001, momentum=0.9, mse_loss=False, not_hm_hp=False, not_reg_bbox=False, not_reg_hp_offset=False, off_weight=1, pretrained='../siampose_ct/checkpoint_e245.pth', print_freq=10, reg_bbox=True, reg_hp_offset=True, reg_loss='l1', resume='', save_dir='snapshot', start_epoch=0, weight_decay=0.0001, workers=8)
+[2019-07-23 18:47:49,066-rk0-train_siamrcnn.py#291] config 
+{
+    "network": {
+        "arch": "Custom"
+    },
+    "hp": {
+        "instance_size": 255,
+        "base_size": 8
+    },
+    "lr": {
+        "feature_lr_mult": 1.0,
+        "rpn_lr_mult": 1.0,
+        "mask_lr_mult": 1.0,
+        "type": "log",
+        "start_lr": 0.05,
+        "end_lr": 0.001,
+        "warmup": {
+            "start_lr": 0.01,
+            "end_lr": 0.05,
+            "type": "step",
+            "step": 1,
+            "epoch": 5
+        }
+    },
+    "loss": {
+        "weight": [
+            1.0,
+            1.2,
+            1.0
+        ],
+        "reg": {
+            "loss": "L1Loss"
+        },
+        "cls": {
+            "split": true
+        }
+    },
+    "train_datasets": {
+        "datasets": {
+            "coco": {
+                "root": "../../data/coco/crop_pose",
+                "anno": "../../data/coco/train2017_pose_siamfc.json",
+                "frame_range": 1
+            }
+        },
+        "template_size": 127,
+        "search_size": 255,
+        "base_size": 8,
+        "size": 25,
+        "RPN_NMS": 0.7,
+        "augmentation": {
+            "template": {
+                "shift": 4,
+                "scale": 0.05
+            },
+            "search": {
+                "shift": 0.0,
+                "scale": 0.0,
+                "blur": 0.18
+            },
+            "neg": 0,
+            "gray": 0.15
+        }
+    },
+    "val_datasets": {
+        "datasets": {
+            "coco": {
+                "root": "../../data/coco/crop_pose",
+                "anno": "../../data/coco/val2017_pose_siamfc.json",
+                "frame_range": 1
+            }
+        },
+        "template_size": 127,
+        "search_size": 255,
+        "size": 17,
+        "num": 1000,
+        "augmentation": {
+            "template": {
+                "shift": 0,
+                "scale": 0.0
+            },
+            "search": {
+                "shift": 0,
+                "scale": 0.0,
+                "blur": 0.18
+            },
+            "neg": 0,
+            "gray": 0
+        }
+    },
+    "anchors": {
+        "stride": 8,
+        "ratios": [
+            0.33,
+            0.5,
+            1,
+            2,
+            3
+        ],
+        "scales": [
+            8
+        ],
+        "round_dight": 0
+    },
+    "mask": {},
+    "clip": {
+        "feature": 10.0,
+        "rpn": 10.0,
+        "split": false
+    }
+}
+[2019-07-23 18:47:49,070-rk0-train_siamrcnn.py#237] build train dataset
+[2019-07-23 18:47:49,072-rk0-siam_rcnn_dataset.py# 38] loading ../../data/coco/train2017_pose_siamfc.json
+[2019-07-23 18:47:52,206-rk0-siam_rcnn_dataset.py# 76] ../../data/coco/train2017_pose_siamfc.json loaded.
+[2019-07-23 18:47:52,241-rk0-siam_rcnn_dataset.py#139] SubDataSet coco start-index 0 select [45900/45900] path {}.{}.{}.jpg
+[2019-07-23 18:48:05,445-rk0-siam_rcnn_dataset.py#749] shuffle done!
+[2019-07-23 18:48:05,446-rk0-siam_rcnn_dataset.py#750] dataset length 9180000
+[2019-07-23 18:48:05,447-rk0-siam_rcnn_dataset.py#603] dataset informations: 
+{
+    "template": 127,
+    "search": 255,
+    "template_small": false,
+    "gray": 0.15,
+    "neg": 0,
+    "inner_neg": 0,
+    "crop_size": 0,
+    "anchor_target": {
+        "thr_high": 0.6,
+        "thr_low": 0.3,
+        "negative": 16,
+        "rpn_batch": 64,
+        "positive": 16
+    },
+    "num": 45900
+}
+[2019-07-23 18:48:18,951-rk0-siam_rcnn_dataset.py#749] shuffle done!
+[2019-07-23 18:48:18,952-rk0-siam_rcnn_dataset.py#750] dataset length 9180000
+[2019-07-23 18:48:18,952-rk0-train_siamrcnn.py#241] build val dataset
+[2019-07-23 18:48:18,954-rk0-siam_rcnn_dataset.py# 38] loading ../../data/coco/val2017_pose_siamfc.json
+[2019-07-23 18:48:19,487-rk0-siam_rcnn_dataset.py# 76] ../../data/coco/val2017_pose_siamfc.json loaded.
+[2019-07-23 18:48:19,490-rk0-siam_rcnn_dataset.py#139] SubDataSet coco start-index 0 select [1899/1899] path {}.{}.{}.jpg
+[2019-07-23 18:48:19,493-rk0-siam_rcnn_dataset.py#749] shuffle done!
+[2019-07-23 18:48:19,494-rk0-siam_rcnn_dataset.py#750] dataset length 1000
+[2019-07-23 18:48:19,494-rk0-siam_rcnn_dataset.py#603] dataset informations: 
+{
+    "template": 127,
+    "search": 255,
+    "template_small": false,
+    "gray": 0,
+    "neg": 0,
+    "inner_neg": 0,
+    "crop_size": 0,
+    "anchor_target": {
+        "thr_high": 0.6,
+        "thr_low": 0.3,
+        "negative": 16,
+        "rpn_batch": 64,
+        "positive": 16
+    },
+    "num": 1000
+}
+[2019-07-23 18:48:19,497-rk0-siam_rcnn_dataset.py#749] shuffle done!
+[2019-07-23 18:48:19,498-rk0-siam_rcnn_dataset.py#750] dataset length 1000
+[2019-07-23 18:48:19,498-rk0-train_siamrcnn.py#252] build dataset done
+[2019-07-23 18:48:19,895-rk0-load_helper.py# 40] load pretrained model from ../resnet.model
+[2019-07-23 18:48:24,177-rk0-load_helper.py# 25] remove prefix 'module.'
+[2019-07-23 18:48:24,178-rk0-load_helper.py# 13] [Warning] missing keys: {'layer1.1.bn1.num_batches_tracked', 'layer3.1.bn2.num_batches_tracked', 'layer3.5.bn2.num_batches_tracked', 'layer3.0.bn2.num_batches_tracked', 'bn1.num_batches_tracked', 'layer3.3.bn3.num_batches_tracked', 'layer2.0.bn1.num_batches_tracked', 'layer2.3.bn2.num_batches_tracked', 'layer2.3.bn1.num_batches_tracked', 'layer3.1.bn1.num_batches_tracked', 'layer1.2.bn2.num_batches_tracked', 'layer2.1.bn1.num_batches_tracked', 'layer2.2.bn2.num_batches_tracked', 'layer2.2.bn1.num_batches_tracked', 'layer1.1.bn2.num_batches_tracked', 'layer1.0.bn1.num_batches_tracked', 'layer3.4.bn2.num_batches_tracked', 'layer1.1.bn3.num_batches_tracked', 'layer2.0.bn2.num_batches_tracked', 'layer3.5.bn3.num_batches_tracked', 'layer3.3.bn2.num_batches_tracked', 'layer3.0.downsample.1.num_batches_tracked', 'layer1.2.bn1.num_batches_tracked', 'layer2.1.bn2.num_batches_tracked', 'layer1.0.bn2.num_batches_tracked', 'layer3.5.bn1.num_batches_tracked', 'layer3.2.bn1.num_batches_tracked', 'layer1.2.bn3.num_batches_tracked', 'layer2.3.bn3.num_batches_tracked', 'layer3.4.bn3.num_batches_tracked', 'layer2.1.bn3.num_batches_tracked', 'layer1.0.downsample.1.num_batches_tracked', 'layer3.0.bn1.num_batches_tracked', 'layer3.2.bn2.num_batches_tracked', 'layer3.1.bn3.num_batches_tracked', 'layer3.4.bn1.num_batches_tracked', 'layer3.0.bn3.num_batches_tracked', 'layer3.2.bn3.num_batches_tracked', 'layer2.2.bn3.num_batches_tracked', 'layer1.0.bn3.num_batches_tracked', 'layer3.3.bn1.num_batches_tracked', 'layer2.0.bn3.num_batches_tracked', 'layer2.0.downsample.1.num_batches_tracked'}
+[2019-07-23 18:48:24,179-rk0-load_helper.py# 14] missing keys:43
+[2019-07-23 18:48:24,179-rk0-load_helper.py# 16] [Warning] unused_pretrained_keys: {'layer4.0.bn3.bias', 'layer4.1.bn1.running_mean', 'layer4.2.bn2.bias', 'layer4.0.bn1.running_mean', 'layer4.0.conv2.weight', 'layer4.1.bn2.running_var', 'layer4.0.conv1.weight', 'layer4.1.bn3.bias', 'layer4.0.bn3.weight', 'layer4.2.bn2.weight', 'layer4.1.conv1.weight', 'layer4.1.bn3.running_mean', 'layer4.0.bn2.running_mean', 'layer4.0.bn2.running_var', 'layer4.1.bn1.bias', 'layer4.0.bn3.running_mean', 'layer4.0.bn1.bias', 'layer4.1.conv2.weight', 'layer4.0.downsample.1.weight', 'layer4.2.bn1.running_mean', 'layer4.2.bn1.weight', 'layer4.2.conv3.weight', 'layer4.2.bn1.bias', 'layer4.0.downsample.1.running_var', 'layer4.0.bn1.running_var', 'layer4.1.bn3.running_var', 'layer4.2.bn1.running_var', 'layer4.0.conv3.weight', 'layer4.0.downsample.0.weight', 'layer4.1.conv3.weight', 'layer4.1.bn2.weight', 'layer4.0.bn3.running_var', 'layer4.2.conv1.weight', 'layer4.2.conv2.weight', 'layer4.2.bn3.weight', 'layer4.0.bn1.weight', 'layer4.0.bn2.bias', 'layer4.0.downsample.1.running_mean', 'layer4.2.bn2.running_mean', 'layer4.0.downsample.1.bias', 'layer4.2.bn3.running_var', 'layer4.2.bn2.running_var', 'layer4.2.bn3.bias', 'layer4.0.bn2.weight', 'layer4.1.bn2.bias', 'layer4.2.bn3.running_mean', 'layer4.1.bn2.running_mean', 'layer4.1.bn1.running_var', 'layer4.1.bn1.weight', 'layer4.1.bn3.weight'}
+[2019-07-23 18:48:24,180-rk0-load_helper.py# 17] unused checkpoint keys:50
+[2019-07-23 18:48:24,180-rk0-load_helper.py# 18] used keys:215
+[2019-07-23 18:48:24,237-rk0-features.py# 66] Current training 0 layers:
+	
+[2019-07-23 18:48:24,238-rk0-features.py# 66] Current training 1 layers:
+	
+[2019-07-23 18:48:24,315-rk0-train_siamrcnn.py#308] Custom(
+  (upSample): UpsamplingBilinear2d(size=[127, 127], mode=bilinear)
+  (kp_criterion): PoseLoss(
+    (crit_hm_hp): FocalLoss()
+    (crit_kp): RegWeightedL1Loss()
+    (crit_reg): RegL1Loss()
+  )
+  (features): ResDown(
+    (features): ResNet(
+      (conv1): Conv2d(3, 64, kernel_size=(7, 7), stride=(2, 2), bias=False)
+      (bn1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): ReLU(inplace)
+      (maxpool): MaxPool2d(kernel_size=3, stride=2, padding=1, dilation=1, ceil_mode=False)
+      (layer1): Sequential(
+        (0): Bottleneck(
+          (conv1): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn2): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv3): Conv2d(64, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn3): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (relu): ReLU(inplace)
+          (downsample): Sequential(
+            (0): Conv2d(64, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+        )
+        (1): Bottleneck(
+          (conv1): Conv2d(256, 64, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn2): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv3): Conv2d(64, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn3): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (relu): ReLU(inplace)
+        )
+        (2): Bottleneck(
+          (conv1): Conv2d(256, 64, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn2): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv3): Conv2d(64, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn3): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (relu): ReLU(inplace)
+        )
+      )
+      (layer2): Sequential(
+        (0): Bottleneck(
+          (conv1): Conv2d(256, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv2): Conv2d(128, 128, kernel_size=(3, 3), stride=(2, 2), bias=False)
+          (bn2): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv3): Conv2d(128, 512, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn3): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (relu): ReLU(inplace)
+          (downsample): Sequential(
+            (0): Conv2d(256, 512, kernel_size=(3, 3), stride=(2, 2), bias=False)
+            (1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+        )
+        (1): Bottleneck(
+          (conv1): Conv2d(512, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv2): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn2): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv3): Conv2d(128, 512, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn3): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (relu): ReLU(inplace)
+        )
+        (2): Bottleneck(
+          (conv1): Conv2d(512, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv2): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn2): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv3): Conv2d(128, 512, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn3): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (relu): ReLU(inplace)
+        )
+        (3): Bottleneck(
+          (conv1): Conv2d(512, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv2): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn2): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv3): Conv2d(128, 512, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn3): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (relu): ReLU(inplace)
+        )
+      )
+      (layer3): Sequential(
+        (0): Bottleneck(
+          (conv1): Conv2d(512, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv2): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn2): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv3): Conv2d(256, 1024, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn3): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (relu): ReLU(inplace)
+          (downsample): Sequential(
+            (0): Conv2d(512, 1024, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (1): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+        )
+        (1): Bottleneck(
+          (conv1): Conv2d(1024, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv2): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(2, 2), dilation=(2, 2), bias=False)
+          (bn2): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv3): Conv2d(256, 1024, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn3): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (relu): ReLU(inplace)
+        )
+        (2): Bottleneck(
+          (conv1): Conv2d(1024, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv2): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(2, 2), dilation=(2, 2), bias=False)
+          (bn2): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv3): Conv2d(256, 1024, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn3): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (relu): ReLU(inplace)
+        )
+        (3): Bottleneck(
+          (conv1): Conv2d(1024, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv2): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(2, 2), dilation=(2, 2), bias=False)
+          (bn2): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv3): Conv2d(256, 1024, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn3): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (relu): ReLU(inplace)
+        )
+        (4): Bottleneck(
+          (conv1): Conv2d(1024, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv2): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(2, 2), dilation=(2, 2), bias=False)
+          (bn2): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv3): Conv2d(256, 1024, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn3): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (relu): ReLU(inplace)
+        )
+        (5): Bottleneck(
+          (conv1): Conv2d(1024, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv2): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(2, 2), dilation=(2, 2), bias=False)
+          (bn2): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv3): Conv2d(256, 1024, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn3): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (relu): ReLU(inplace)
+        )
+      )
+    )
+    (downsample): ResDownS(
+      (downsample): Sequential(
+        (0): Conv2d(1024, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+    )
+    (downsample_p4): ResDownS(
+      (downsample): Sequential(
+        (0): Conv2d(2048, 1024, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (1): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+    )
+  )
+  (rpn_model): UP(
+    (cls): DepthCorr(
+      (conv_kernel): Sequential(
+        (0): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), bias=False)
+        (1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (2): ReLU(inplace)
+      )
+      (conv_search): Sequential(
+        (0): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), bias=False)
+        (1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (2): ReLU(inplace)
+      )
+      (head): Sequential(
+        (0): Conv2d(256, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (2): ReLU(inplace)
+        (3): Conv2d(256, 10, kernel_size=(1, 1), stride=(1, 1))
+      )
+    )
+    (loc): DepthCorr(
+      (conv_kernel): Sequential(
+        (0): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), bias=False)
+        (1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (2): ReLU(inplace)
+      )
+      (conv_search): Sequential(
+        (0): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), bias=False)
+        (1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (2): ReLU(inplace)
+      )
+      (head): Sequential(
+        (0): Conv2d(256, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (2): ReLU(inplace)
+        (3): Conv2d(256, 20, kernel_size=(1, 1), stride=(1, 1))
+      )
+    )
+  )
+  (kp_model): Center_pose_head(
+    (deconv_layers): Sequential(
+      (0): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (2): ReLU(inplace)
+      (3): ConvTranspose2d(256, 256, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1), bias=False)
+      (4): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (5): ReLU(inplace)
+      (6): Conv2d(256, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (7): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (8): ReLU(inplace)
+      (9): ConvTranspose2d(128, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1), bias=False)
+      (10): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (11): ReLU(inplace)
+      (12): Conv2d(128, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (13): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (14): ReLU(inplace)
+      (15): ConvTranspose2d(64, 64, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1), bias=False)
+      (16): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (17): ReLU(inplace)
+    )
+    (hps): Sequential(
+      (0): Conv2d(64, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      (1): ReLU(inplace)
+      (2): Conv2d(256, 34, kernel_size=(1, 1), stride=(1, 1))
+    )
+    (hm_hp): Sequential(
+      (0): Conv2d(64, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      (1): ReLU(inplace)
+      (2): Conv2d(256, 17, kernel_size=(1, 1), stride=(1, 1))
+    )
+    (hp_offset): Sequential(
+      (0): Conv2d(64, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      (1): ReLU(inplace)
+      (2): Conv2d(256, 2, kernel_size=(1, 1), stride=(1, 1))
+    )
+  )
+)
+[2019-07-23 18:48:24,320-rk0-load_helper.py# 40] load pretrained model from ../siampose_ct/checkpoint_e245.pth
+[2019-07-23 18:48:24,677-rk0-load_helper.py# 25] remove prefix 'module.'
+del keys:  kp_model.deconv_layers.0.weight
+del keys:  kp_model.deconv_layers.1.weight
+del keys:  kp_model.deconv_layers.1.bias
+del keys:  kp_model.deconv_layers.1.running_mean
+del keys:  kp_model.deconv_layers.1.running_var
+del keys:  kp_model.deconv_layers.1.num_batches_tracked
+del keys:  kp_model.deconv_layers.3.weight
+del keys:  kp_model.deconv_layers.4.weight
+del keys:  kp_model.deconv_layers.4.bias
+del keys:  kp_model.deconv_layers.4.running_mean
+del keys:  kp_model.deconv_layers.4.running_var
+del keys:  kp_model.deconv_layers.4.num_batches_tracked
+del keys:  kp_model.deconv_layers.6.weight
+del keys:  kp_model.deconv_layers.7.weight
+del keys:  kp_model.deconv_layers.7.bias
+del keys:  kp_model.deconv_layers.7.running_mean
+del keys:  kp_model.deconv_layers.7.running_var
+del keys:  kp_model.deconv_layers.7.num_batches_tracked
+del keys:  kp_model.deconv_layers.9.weight
+del keys:  kp_model.deconv_layers.10.weight
+del keys:  kp_model.deconv_layers.10.bias
+del keys:  kp_model.deconv_layers.10.running_mean
+del keys:  kp_model.deconv_layers.10.running_var
+del keys:  kp_model.deconv_layers.10.num_batches_tracked
+del keys:  kp_model.deconv_layers.12.weight
+del keys:  kp_model.deconv_layers.13.weight
+del keys:  kp_model.deconv_layers.13.bias
+del keys:  kp_model.deconv_layers.13.running_mean
+del keys:  kp_model.deconv_layers.13.running_var
+del keys:  kp_model.deconv_layers.13.num_batches_tracked
+del keys:  kp_model.deconv_layers.15.weight
+del keys:  kp_model.deconv_layers.16.weight
+del keys:  kp_model.deconv_layers.16.bias
+del keys:  kp_model.deconv_layers.16.running_mean
+del keys:  kp_model.deconv_layers.16.running_var
+del keys:  kp_model.deconv_layers.16.num_batches_tracked
+del keys:  kp_model.hps.0.weight
+del keys:  kp_model.hps.0.bias
+del keys:  kp_model.hps.2.weight
+del keys:  kp_model.hps.2.bias
+del keys:  kp_model.hm_hp.0.weight
+del keys:  kp_model.hm_hp.0.bias
+del keys:  kp_model.hm_hp.2.weight
+del keys:  kp_model.hm_hp.2.bias
+del keys:  kp_model.hp_offset.0.weight
+del keys:  kp_model.hp_offset.0.bias
+del keys:  kp_model.hp_offset.2.weight
+del keys:  kp_model.hp_offset.2.bias
+[2019-07-23 18:48:24,679-rk0-load_helper.py# 13] [Warning] missing keys: {'kp_model.hm_hp.2.bias', 'kp_model.deconv_layers.1.running_var', 'kp_model.deconv_layers.4.running_mean', 'kp_model.deconv_layers.0.weight', 'kp_model.hm_hp.0.weight', 'kp_model.deconv_layers.7.running_mean', 'kp_model.deconv_layers.9.weight', 'kp_model.deconv_layers.7.running_var', 'kp_model.deconv_layers.6.weight', 'kp_model.hps.2.weight', 'kp_model.hp_offset.0.bias', 'kp_model.deconv_layers.7.weight', 'kp_model.deconv_layers.4.running_var', 'kp_model.hm_hp.0.bias', 'kp_model.deconv_layers.7.num_batches_tracked', 'kp_model.deconv_layers.13.weight', 'kp_model.deconv_layers.1.weight', 'kp_model.deconv_layers.16.weight', 'kp_model.deconv_layers.7.bias', 'kp_model.deconv_layers.1.bias', 'kp_model.deconv_layers.16.running_var', 'kp_model.deconv_layers.13.bias', 'kp_model.deconv_layers.3.weight', 'kp_model.hp_offset.2.weight', 'kp_model.deconv_layers.4.num_batches_tracked', 'kp_model.hp_offset.2.bias', 'kp_model.hps.2.bias', 'kp_model.deconv_layers.10.num_batches_tracked', 'kp_model.deconv_layers.10.running_mean', 'kp_model.hps.0.bias', 'kp_model.deconv_layers.13.running_var', 'kp_model.hp_offset.0.weight', 'kp_model.deconv_layers.4.bias', 'kp_model.deconv_layers.10.bias', 'kp_model.deconv_layers.16.bias', 'kp_model.deconv_layers.12.weight', 'kp_model.deconv_layers.16.num_batches_tracked', 'kp_model.deconv_layers.13.num_batches_tracked', 'kp_model.deconv_layers.10.running_var', 'kp_model.deconv_layers.16.running_mean', 'kp_model.deconv_layers.15.weight', 'kp_model.deconv_layers.4.weight', 'kp_model.deconv_layers.1.num_batches_tracked', 'kp_model.deconv_layers.10.weight', 'kp_model.deconv_layers.13.running_mean', 'kp_model.hm_hp.2.weight', 'kp_model.deconv_layers.1.running_mean', 'kp_model.hps.0.weight'}
+[2019-07-23 18:48:24,680-rk0-load_helper.py# 14] missing keys:48
+[2019-07-23 18:48:24,680-rk0-load_helper.py# 16] [Warning] unused_pretrained_keys: {'features.features.layer4.1.bn3.running_mean', 'features.features.layer4.2.bn2.running_mean', 'features.features.layer4.1.bn2.running_var', 'features.features.layer4.2.bn2.bias', 'features.features.layer4.0.bn3.weight', 'features.features.layer4.1.bn1.num_batches_tracked', 'features.features.layer4.0.bn2.running_var', 'features.features.layer4.0.downsample.1.num_batches_tracked', 'features.features.layer4.2.bn2.weight', 'features.features.layer4.1.bn3.num_batches_tracked', 'features.features.layer4.0.downsample.1.weight', 'features.features.layer4.0.bn1.running_mean', 'features.features.layer4.2.conv2.weight', 'features.features.layer4.0.bn1.bias', 'features.features.layer4.2.bn1.running_var', 'features.features.layer4.2.bn2.num_batches_tracked', 'features.features.layer4.0.conv2.weight', 'features.features.layer4.0.conv1.weight', 'features.features.layer4.2.bn3.running_var', 'features.features.layer4.1.bn1.running_var', 'features.features.layer4.0.bn1.running_var', 'features.features.layer4.2.bn3.num_batches_tracked', 'features.features.layer4.1.conv2.weight', 'features.features.layer4.1.bn3.weight', 'features.features.layer4.0.bn1.num_batches_tracked', 'features.features.layer4.1.bn1.weight', 'features.features.layer4.1.bn2.running_mean', 'features.features.layer4.0.bn3.running_var', 'features.features.layer4.2.bn3.bias', 'features.features.layer4.0.downsample.1.bias', 'features.features.layer4.0.bn2.num_batches_tracked', 'features.features.layer4.0.bn2.weight', 'features.features.layer4.1.bn3.bias', 'features.features.layer4.0.bn3.running_mean', 'features.features.layer4.2.conv3.weight', 'features.features.layer4.2.bn1.weight', 'features.features.layer4.1.bn3.running_var', 'features.features.layer4.1.bn1.running_mean', 'features.features.layer4.0.downsample.1.running_var', 'features.features.layer4.0.bn1.weight', 'features.features.layer4.2.bn1.running_mean', 'features.features.layer4.2.bn3.weight', 'features.features.layer4.1.bn2.weight', 'features.features.layer4.2.bn1.bias', 'features.features.layer4.2.bn3.running_mean', 'features.features.layer4.0.conv3.weight', 'features.features.layer4.2.bn1.num_batches_tracked', 'features.features.layer4.0.bn2.bias', 'features.features.layer4.0.bn3.num_batches_tracked', 'features.features.layer4.1.conv3.weight', 'features.features.layer4.2.bn2.running_var', 'features.features.layer4.1.conv1.weight', 'features.features.layer4.0.bn3.bias', 'features.features.layer4.0.downsample.1.running_mean', 'features.features.layer4.1.bn1.bias', 'features.features.layer4.0.bn2.running_mean', 'features.features.layer4.1.bn2.num_batches_tracked', 'features.features.layer4.0.downsample.0.weight', 'features.features.layer4.2.conv1.weight', 'features.features.layer4.1.bn2.bias'}
+[2019-07-23 18:48:24,680-rk0-load_helper.py# 17] unused checkpoint keys:60
+[2019-07-23 18:48:24,680-rk0-load_helper.py# 18] used keys:310
+[2019-07-23 18:48:24,742-rk0-train_siamrcnn.py#326] (WarmUPScheduler) lr spaces: 
+[0.01       0.0137973  0.01903654 0.02626528 0.03623898 0.05
+ 0.04900184 0.04802362 0.04706491 0.04612535 0.04520455 0.04430212
+ 0.04341771 0.04255096 0.04170151 0.04086902 0.04005315 0.03925356
+ 0.03846994 0.03770196 0.03694931 0.03621169 0.03548879 0.03478032
+ 0.034086   0.03340554 0.03273866 0.03208509 0.03144457 0.03081684
+ 0.03020164 0.02959872 0.02900784 0.02842875 0.02786123 0.02730503
+ 0.02675994 0.02622573 0.02570218 0.02518908 0.02468623 0.02419342
+ 0.02371044 0.02323711 0.02277322 0.0223186  0.02187305 0.0214364
+ 0.02100846 0.02058906 0.02017804 0.01977523 0.01938045 0.01899356
+ 0.01861439 0.01824278 0.0178786  0.01752169 0.0171719  0.0168291
+ 0.01649314 0.01616388 0.0158412  0.01552496 0.01521503 0.0149113
+ 0.01461362 0.01432189 0.01403598 0.01375577 0.01348117 0.01321204
+ 0.01294829 0.0126898  0.01243647 0.0121882  0.01194489 0.01170643
+ 0.01147273 0.0112437  0.01101924 0.01079926 0.01058368 0.01037239
+ 0.01016533 0.0099624  0.00976352 0.00956861 0.00937759 0.00919038
+ 0.00900691 0.00882711 0.00865089 0.00847819 0.00830894 0.00814307
+ 0.00798051 0.00782119 0.00766506 0.00751204 0.00736207 0.0072151
+ 0.00707107 0.00692991 0.00679156 0.00665598 0.00652311 0.00639289
+ 0.00626527 0.00614019 0.00601761 0.00589748 0.00577975 0.00566437
+ 0.00555129 0.00544047 0.00533186 0.00522542 0.00512111 0.00501887
+ 0.00491868 0.00482049 0.00472426 0.00462995 0.00453752 0.00444693
+ 0.00435816 0.00427116 0.00418589 0.00410233 0.00402043 0.00394017
+ 0.00386151 0.00378443 0.00370888 0.00363484 0.00356227 0.00349116
+ 0.00342147 0.00335316 0.00328622 0.00322062 0.00315633 0.00309332
+ 0.00303156 0.00297104 0.00291173 0.00285361 0.00279664 0.00274081
+ 0.00268609 0.00263247 0.00257992 0.00252842 0.00247794 0.00242847
+ 0.00237999 0.00233248 0.00228592 0.00224028 0.00219556 0.00215173
+ 0.00210878 0.00206668 0.00202542 0.00198499 0.00194536 0.00190652
+ 0.00186846 0.00183116 0.00179461 0.00175878 0.00172367 0.00168926
+ 0.00165554 0.00162249 0.0015901  0.00155836 0.00152725 0.00149676
+ 0.00146688 0.00143759 0.0014089  0.00138077 0.00135321 0.00132619
+ 0.00129972 0.00127377 0.00124834 0.00122342 0.001199   0.00117506
+ 0.0011516  0.00112861 0.00110608 0.001084   0.00106236 0.00104115
+ 0.00102037 0.001     ]
+[2019-07-23 18:48:24,747-rk0-train_siamrcnn.py#328] model prepare done
+[2019-07-23 18:48:25,346-rk0-resnet.py<forward>#231] p3 torch.Size([1, 1024, 15, 15])
+[2019-07-23 18:48:25,798-rk0-resnet.py<forward>#231] p3 torch.Size([1, 1024, 31, 31])
+output shape:  torch.Size([18, 34, 56, 56])
+ind shape:  torch.Size([1, 1])
+Traceback (most recent call last):
+  File "/cluster/home/it_stu1/bdclub/SiamRCNN//tools/train_siamrcnn.py", line 492, in <module>
+    main()
+  File "/cluster/home/it_stu1/bdclub/SiamRCNN//tools/train_siamrcnn.py", line 330, in main
+    train(train_loader, dist_model, optimizer, lr_scheduler, args.start_epoch, cfg)
+  File "/cluster/home/it_stu1/bdclub/SiamRCNN//tools/train_siamrcnn.py", line 413, in train
+    outputs = model(x_rpn, x_kp)
+  File "/cluster/home/it_stu1/.conda/envs/pytorch0.4/lib/python3.6/site-packages/torch/nn/modules/module.py", line 477, in __call__
+    result = self.forward(*input, **kwargs)
+  File "/cluster/home/it_stu1/.conda/envs/pytorch0.4/lib/python3.6/site-packages/torch/nn/parallel/data_parallel.py", line 121, in forward
+    return self.module(*inputs[0], **kwargs[0])
+  File "/cluster/home/it_stu1/.conda/envs/pytorch0.4/lib/python3.6/site-packages/torch/nn/modules/module.py", line 477, in __call__
+    result = self.forward(*input, **kwargs)
+  File "/cluster/home/it_stu1/bdclub/SiamRCNN/models/siampose_RCNN.py", line 200, in forward
+    kp_loss, kp_loss_status = self.kp_criterion(pred_kp, kp_input)
+  File "/cluster/home/it_stu1/.conda/envs/pytorch0.4/lib/python3.6/site-packages/torch/nn/modules/module.py", line 477, in __call__
+    result = self.forward(*input, **kwargs)
+  File "/cluster/home/it_stu1/bdclub/SiamRCNN/models/siampose_RCNN.py", line 40, in forward
+    batch['ind'], batch['hps'])
+  File "/cluster/home/it_stu1/.conda/envs/pytorch0.4/lib/python3.6/site-packages/torch/nn/modules/module.py", line 477, in __call__
+    result = self.forward(*input, **kwargs)
+  File "/cluster/home/it_stu1/bdclub/SiamRCNN/models/losses.py", line 105, in forward
+    pred = _tranpose_and_gather_feat(output, ind)
+  File "/cluster/home/it_stu1/bdclub/SiamRCNN/models/utils.py", line 41, in _tranpose_and_gather_feat
+    feat = _gather_feat(feat, ind)
+  File "/cluster/home/it_stu1/bdclub/SiamRCNN/models/utils.py", line 31, in _gather_feat
+    feat = feat.gather(1, ind)
+RuntimeError: invalid argument 2: Input tensor must have same size as output tensor apart from the specified dimension at /opt/conda/conda-bld/pytorch_1535491974311/work/aten/src/THC/generic/THCTensorScatterGather.cu:29

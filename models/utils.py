@@ -119,12 +119,12 @@ def proposal_layer(inputs, anchors, thresh=0.5, args=None):
       # print('no positive ix')
       return None
       # print('positive ix')
-    torch.index_select(scores, 0, pos_ix)  # scores = scores[pos_ix]
+    scores = torch.index_select(scores, 0, pos_ix)  # scores = scores[pos_ix]
 
     # Box deltas [batch, num_rois, 4]
     deltas = inputs[1]
     bs = deltas.size(0)
-    deltas = deltas.view(-1, 4, 5, 17, 17)
+    deltas = deltas.view(-1, 4, 5, deltas.size(-2), deltas.size(-1))
     deltas = deltas.permute(0, 2, 3, 4, 1).contiguous()
     deltas = deltas.view(-1, deltas.size(4))
 
@@ -161,6 +161,8 @@ def proposal_layer(inputs, anchors, thresh=0.5, args=None):
 
     # Non-max suppression
     nms_threshold = args.nms_threshold  # float(config['train_datasets']['RPN_NMS'])
+    # print('boxes shape: ', boxes.shape)
+    # print('scores shape: ', scores.shape)
     keep = nms(torch.cat((boxes, scores.unsqueeze(1)), 1).data, nms_threshold)
     boxes = boxes[keep, :]
 
@@ -192,17 +194,25 @@ def roi_align(inputs, pool_size):
 
     # Crop boxes [batch*num_boxes, (y1, x1, y2, x2)] in normalized coords
     boxes = inputs[0]
-
+    boxes = boxes.detach()
+    # boxes = boxes.unsqueeze(0)
+    # boxes = boxes.transpose(0, 1).contiguous()
     # Feature Maps.
     # feature pyramid. Each is [batch, height, width, channels]
     feature_maps = inputs[1]
 
     # Assign each ROI to a level in the pyramid based on the ROI area.
-    y1, x1, y2, x2 = boxes.chunk(4, dim=1)
-    h = y2 - y1
-    w = x2 - x1
-    ind = Variable(torch.zeros(boxes.size()[0]),requires_grad=False).int()
-
+    x1, y1, x2, y2 = boxes.chunk(4, dim=1)
+    # h = y2 - y1
+    # w = x2 - x1
+    boxes = torch.cat([y1, x1, y2, x2], dim=1)
+    # ind = torch.zeros(boxes.size()[0]).int().detach()
+    ind = Variable(torch.arange(boxes.size()[0]), requires_grad=False).int() # .cuda()
+    ind = ind.cuda()
+    
+    # print('boxes before shape: ', boxes.shape, boxes)
+    # print('featmap shape: ', feature_maps.shape, feature_maps)
+    # print('ind shape: ', ind.shape, ind)
     pooled_features = CropAndResizeFunction(pool_size, pool_size,
                                             0)(feature_maps, boxes, ind)
 
