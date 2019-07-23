@@ -66,9 +66,9 @@ class ResDown(MultiStageFeature):
 
     def forward_all(self, x):
         output = self.features(x)
-        # p3 = self.downsample(output[-2])
+        p3 = self.downsample(output[-2])
         p4 = self.downsample_p4(output[-1])
-        return output, p4
+        return p3, p4
 
 class UP(RPN):
     def __init__(self, anchor_num=5, feature_in=256, feature_out=256):
