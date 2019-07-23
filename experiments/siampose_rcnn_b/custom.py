@@ -31,7 +31,7 @@ class ResDownS(nn.Module):
 class ResDown(MultiStageFeature):
     def __init__(self, pretrain=False):
         super(ResDown, self).__init__()
-        self.features = resnet50(layer3=True, layer4=False)
+        self.features = resnet50(layer3=True, layer4=True)
         if pretrain:
             load_pretrain(self.features, '../resnet.model')
 
@@ -66,9 +66,9 @@ class ResDown(MultiStageFeature):
 
     def forward_all(self, x):
         output = self.features(x)
-        p3 = self.downsample(output[-2])
-        # p4 = self.downsample_p4(output[-1])
-        return output, p3
+        # p3 = self.downsample(output[-2])
+        p4 = self.downsample_p4(output[-1])
+        return output, p4
 
 class UP(RPN):
     def __init__(self, anchor_num=5, feature_in=256, feature_out=256):
@@ -93,7 +93,7 @@ class Center_pose_head(nn.Module):
     def __init__(self, head_conv=256):
         super(Center_pose_head, self).__init__()
 
-        self.inplanes = 256
+        self.inplanes = 1024
         self.deconv_with_bias = False
         # self.deconv_layers = self._make_deconv_layer(
         #     3,
@@ -102,7 +102,7 @@ class Center_pose_head(nn.Module):
         # )
         self.deconv_layers = self._make_deconv_layer(
             3,
-            [256, 128, 64],
+            [512, 256, 64],
             [4, 4, 4],
         )
         self.heads = {'hps': 34, 'hm_hp': 17, 'hp_offset': 2}
