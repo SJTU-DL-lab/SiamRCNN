@@ -188,6 +188,7 @@ class SiamMask(nn.Module):
         normalized_boxes = proposal_layer([rpn_pred_score, rpn_pred_loc], anchors, args=self.opt)
         pooled_features = roi_align([normalized_boxes, search_feature], 7)
         pred_kp = self.kp_model(pooled_features)
+        print('hm_hp shape: ', pred_kp[0]['hm_hp'].shape)
         outputs = dict()
 
         outputs['predict'] = [rpn_pred_cls, rpn_pred_loc, pred_kp, template_feature, search_feature, rpn_pred_score]
