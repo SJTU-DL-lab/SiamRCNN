@@ -100,8 +100,6 @@ class RegWeightedL1Loss(nn.Module):
         super(RegWeightedL1Loss, self).__init__()
 
     def forward(self, output, mask, ind, target):
-        print('output shape: ', output.shape)
-        print('ind shape: ', ind)
         pred = _tranpose_and_gather_feat(output, ind)
         mask = mask.float()
         pred = pred.squeeze()

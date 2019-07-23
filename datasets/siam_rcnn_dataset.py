@@ -91,7 +91,7 @@ class SubDataSet(object):
         self.__dict__.update(cfg)
 
         self.has_mask = self.mark in ['coco', 'ytb_vos'] and 'mask' in cfg
-        print('has mask: ', self.has_mask)
+        # print('has mask: ', self.has_mask)
 
         self.num_use = int(self.num_use)
 
