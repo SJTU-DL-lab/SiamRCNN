@@ -27,6 +27,14 @@ class PoseLoss(torch.nn.Module):
         opt = self.opt
         hp_loss, hm_hp_loss, hp_offset_loss = 0, 0, 0
         output = outputs[0]
+        bs = output['hm_hp'].size(0)
+        batch['hps_mask'] = batch['hps_mask'].expand(bs, -1)
+        batch['ind'] = batch['ind'].expand(bs, -1)
+        batch['hps'] = batch['hps'].expand(bs, -1)
+        batch['hp_mask'] = batch['hp_mask'].expand(bs, -1)
+        batch['hp_ind'] = batch['hp_ind'].expand(bs, -1)
+        batch['hp_offset'] = batch['hp_offset'].expand(bs, -1, -1)
+        batch['hm_hp'] = batch['hm_hp'].expand(bs, -1, -1, -1)
         if opt.hm_hp and not opt.mse_loss:
             output['hm_hp'] = _sigmoid(output['hm_hp'])
 
