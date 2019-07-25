@@ -143,6 +143,7 @@ class SiamMask(nn.Module):
         """
         template_feature = self.feature_extractor(template)
         search_feature, p4_feat = self.features.forward_all(search)
+        # print('search feat: ', search_feature)
         rpn_pred_cls, rpn_pred_loc = self.rpn(template_feature, search_feature)
 
         # corr_feature = self.kp_corr.kp.forward_corr(template_feature, search_feature)  # (b, 256, w, h)
@@ -193,9 +194,12 @@ class SiamMask(nn.Module):
         rpn_pred_cls, rpn_pred_loc, template_feature, search_feature, rpn_pred_score, p4_feat = \
             self.run(template, search, softmax=self.training)
 
-        normalized_boxes = proposal_layer([rpn_pred_score, rpn_pred_loc], anchors, args=self.opt)
-        pooled_features = roi_align([normalized_boxes, search_feature], 7)
-        pred_kp = self.kp_model(p4_feat)
+        normalized_boxes, box_flag = proposal_layer([rpn_pred_score, rpn_pred_loc], anchors, args=self.opt)
+        if box_flag:
+            pooled_features = roi_align([normalized_boxes, search_feature], 7)
+            pred_kp = self.kp_model(p4_feat)
+        else:
+            pred_kp = torch.zeros(p4_feat.size(0), 17, 56, 56)
         outputs = dict()
 
         outputs['predict'] = [rpn_pred_cls, rpn_pred_loc, pred_kp, template_feature, search_feature, rpn_pred_score]
@@ -205,7 +209,12 @@ class SiamMask(nn.Module):
             rpn_loss_cls, rpn_loss_loc = \
                 self._add_rpn_loss(label_cls, label_loc, lable_loc_weight, label_mask,
                                    rpn_pred_cls, rpn_pred_loc)
-            kp_loss, kp_loss_status = self.kp_criterion(pred_kp, kp_input)
+            if box_flag:
+                kp_loss, kp_loss_status = self.kp_criterion(pred_kp, kp_input)
+            else:
+                kp_loss = 0
+                kp_loss_status = {'loss': 0, 'hp_loss': 0,
+                      'hm_hp_loss': 0, 'hp_offset_loss': 0}
             outputs['losses'] = [rpn_loss_cls, rpn_loss_loc, kp_loss, kp_loss_status]
             # outputs['accuracy'] = [iou_acc_mean, iou_acc_5, iou_acc_7]
 

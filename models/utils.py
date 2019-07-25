@@ -117,7 +117,7 @@ def proposal_layer(inputs, anchors, thresh=0.5, args=None):
     # print('scores: ', scores.shape, scores[pos_ix])
     if pos_ix.size(0) == 0:
       # print('no positive ix')
-      return None
+      return None, False
       # print('positive ix')
     scores = torch.index_select(scores, 0, pos_ix)  # scores = scores[pos_ix]
 
@@ -171,7 +171,7 @@ def proposal_layer(inputs, anchors, thresh=0.5, args=None):
     norm = norm.cuda()
     normalized_boxes = boxes / norm
 
-    return normalized_boxes
+    return normalized_boxes, True
 
 def roi_align(inputs, pool_size):
     """Implements ROI Pooling on single feature map.
