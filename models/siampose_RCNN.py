@@ -202,7 +202,8 @@ class SiamMask(nn.Module):
             pred_kp = torch.zeros(p4_feat.size(0), 17, 56, 56)
         outputs = dict()
 
-        outputs['predict'] = [rpn_pred_cls, rpn_pred_loc, pred_kp, template_feature, search_feature, rpn_pred_score]
+        outputs['predict'] = [rpn_pred_cls, rpn_pred_loc, pred_kp,
+                              template_feature, search_feature, rpn_pred_score, normalized_boxes]
 
 
         if self.training:
