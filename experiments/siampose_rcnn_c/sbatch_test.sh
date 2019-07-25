@@ -1,9 +1,8 @@
 #!/bin/bash
-#SBATCH -J siam_rcnn
+#SBATCH -J siam_rcnn_test
 #SBATCH -p gpu
-#SBATCH --output=siampose_ct
-#SBATCH --error=siampose_cterr
-#SBATCH --nodelist=node6
+#SBATCH --output=siampose_test.log
+#SBATCH --error=siampose_test.err
 #SBATCH --gres=gpu:1
 date
 module load anaconda3/5.3.0 cuda/9.0 cudnn/7.3.0
@@ -18,10 +17,11 @@ export PYTHONPATH=$ROOT:$PYTHONPATH
 
 mkdir -p logs
 
-python -u $ROOT/tools/train_siamrcnn.py \
-    --config=config.json -b 1 \
+python -u $ROOT/tools/vis_siamrcnn.py \
+    --config=config_test.json -b 1 \
     -j 8 --resume ./snapshot/checkpoint_e44.pth \
     --epochs 200 \
     --log logs/log.txt \
+    --log-dir test_logs \
     2>&1 | tee logs/train.log
 

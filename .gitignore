@@ -23,6 +23,10 @@ vis_output/
 # log
 siampose_ct
 
+# test
+test_imgs/
+test_logs/
+
 !config.json
 !config_refine.json
 !config_bibranch.json
