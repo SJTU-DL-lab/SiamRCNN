@@ -20,6 +20,9 @@ VOT2019/
 ytb_vos/
 vis_output/
 
+# log
+siampose_ct
+
 !config.json
 !config_refine.json
 !config_bibranch.json
