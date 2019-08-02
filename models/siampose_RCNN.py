@@ -95,10 +95,9 @@ class JointsMSELoss(nn.Module):
 class SiamMask(nn.Module):
     def __init__(self, opts=None, anchors=None, o_sz=63, g_sz=127):
         super(SiamMask, self).__init__()
-        self.anchors = anchors  # anchor_cfg
         self.opt = opts
-        self.anchor_num = len(self.anchors["ratios"]) * len(self.anchors["scales"])
         self.anchor = anchors
+        self.anchor_num = anchors.anchor_num
         self.features = None
         self.rpn_model = None
         self.mask_model = None
