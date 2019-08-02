@@ -109,31 +109,26 @@ def proposal_layer(inputs, anchors, thresh=0.5, args=None):
     # inputs[1] = inputs[1].squeeze(0)
 
     # Box Scores, select the fg prob.
-    scores = inputs[0][:, :, :, :, 1]
-    scores = scores.transpose(1, 3).contiguous().view(-1)
-    # print(scores > 0.3)
+    # scores = inputs[0][:, :, :, :, 1]
+    # scores = scores.transpose(1, 3).contiguous().view(-1)
+    scores = inputs[0]
     pos_ix = torch.nonzero(scores > thresh).squeeze()
-    # print('pos_ix: ', pos_ix.shape, pos_ix)
-    # print('scores: ', scores.shape, scores[pos_ix])
+
     if pos_ix.size(0) == 0:
-      # print('no positive ix')
-      return None, False
-      # print('positive ix')
+        # print('no positive ix')
+        return None, False
+        # print('positive ix')
     scores = torch.index_select(scores, 0, pos_ix)  # scores = scores[pos_ix]
 
     # Box deltas [batch, num_rois, 4]
     deltas = inputs[1]
-    bs = deltas.size(0)
-    deltas = deltas.view(-1, 4, 5, deltas.size(-2), deltas.size(-1))
-    deltas = deltas.permute(0, 2, 3, 4, 1).contiguous()
-    deltas = deltas.view(-1, deltas.size(4))
 
-    boxes = torch.from_numpy(anchors).float().cuda().detach()
-    boxes = boxes.expand(bs, -1, -1, -1, -1)
-    boxes = boxes.transpose(0, 4).contiguous().view(-1, 4)
-    assert boxes.size(0) == deltas.size(0)
+    # boxes = torch.from_numpy(anchors).float().cuda().detach()
+    # boxes = boxes.expand(bs, -1, -1, -1, -1)
+    # boxes = boxes.transpose(0, 4).contiguous().view(-1, 4)
+    assert anchors.size(0) == deltas.size(0)
     deltas = torch.index_select(deltas, 0, pos_ix)
-    anchors = torch.index_select(boxes, 0, pos_ix)
+    anchors = torch.index_select(anchors, 0, pos_ix)
 
     # only got 16 positive anchors, no need to remove
     # Improve performance by trimming to top anchors by score
@@ -209,7 +204,7 @@ def roi_align(inputs, pool_size):
     # ind = torch.zeros(boxes.size()[0]).int().detach()
     ind = Variable(torch.arange(boxes.size()[0]), requires_grad=False).int() # .cuda()
     ind = ind.cuda()
-    
+
     # print('boxes before shape: ', boxes.shape, boxes)
     # print('featmap shape: ', feature_maps.shape, feature_maps)
     # print('ind shape: ', ind.shape, ind)
