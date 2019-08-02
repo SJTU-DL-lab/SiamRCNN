@@ -302,7 +302,8 @@ def main():
     args.nms_threshold = float(cfg['train_datasets']['RPN_NMS'])
     if args.arch == 'Custom':
         from custom import Custom
-        model = Custom(pretrain=True, opts=args, anchors=cfg['anchors'])
+        model = Custom(pretrain=True, opts=args,
+                       anchors=train_loader.dataset.anchors)
     else:
         exit()
     logger.info(model)

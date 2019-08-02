@@ -98,7 +98,7 @@ class SiamMask(nn.Module):
         self.anchors = anchors  # anchor_cfg
         self.opt = opts
         self.anchor_num = len(self.anchors["ratios"]) * len(self.anchors["scales"])
-        self.anchor = Anchors(anchors)
+        self.anchor = anchors
         self.features = None
         self.rpn_model = None
         self.mask_model = None
@@ -107,16 +107,15 @@ class SiamMask(nn.Module):
         self.upSample = nn.UpsamplingBilinear2d(size=[g_sz, g_sz])
         self.kp_criterion = PoseLoss(self.opt)
         self.bs = self.opt.batch
-
-        all_anchors = self.anchor.all_anchors[0]
-        self.all_anchors = torch.from_numpy(all_anchors).float().cuda().detach()
-        self.anchors = self.anchors_preprocess()
+        self.anchors_preprocess()
 
     def anchors_preprocess(self):
         """
         Returns:
             boxes: [batch*height*width*anchors, 4]
         """
+        all_anchors = self.anchor.all_anchors[0]
+        self.all_anchors = torch.from_numpy(all_anchors).float().cuda().detach()
         # x1,y1,x2,y2
         # anchors: [?, anchors, 4, height, width, (x1, y1, x2, y2)]
         boxes = self.all_anchors.expand(self.bs, -1, -1, -1, -1)
@@ -124,7 +123,8 @@ class SiamMask(nn.Module):
         boxes = boxes.permute(0, 3, 4, 1, 2).contiguous().view(-1, 4)
         # self.all_anchors = torch.from_numpy(all_anchors).float().cuda()
         # self.all_anchors = [self.all_anchors[i] for i in range(4)]
-        return boxes
+        self.anchors = boxes
+        # return boxes
 
     def proposal_preprocess(rpn_pred_score, rpn_pred_loc):
         """
