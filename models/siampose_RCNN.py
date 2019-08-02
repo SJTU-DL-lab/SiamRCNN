@@ -116,10 +116,10 @@ class SiamMask(nn.Module):
         all_anchors = self.anchor.all_anchors[0]
         self.all_anchors = torch.from_numpy(all_anchors).float().cuda().detach()
         # x1,y1,x2,y2
-        # anchors: [?, anchors, 4, height, width, (x1, y1, x2, y2)]
+        # anchors: [?, 4, anchors, height, width, (x1, y1, x2, y2)]
         boxes = self.all_anchors.expand(self.bs, -1, -1, -1, -1)
         print('boxes shape: ', boxes.shape)
-        boxes = boxes.permute(0, 3, 4, 1, 2).contiguous().view(-1, 4)
+        boxes = boxes.permute(0, 3, 4, 2, 1).contiguous().view(-1, 4)
         # self.all_anchors = torch.from_numpy(all_anchors).float().cuda()
         # self.all_anchors = [self.all_anchors[i] for i in range(4)]
         self.anchors = boxes
