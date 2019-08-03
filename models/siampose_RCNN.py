@@ -4,7 +4,6 @@
 # Written by Qiang Wang (wangqiang2015 at ia.ac.cn)
 # --------------------------------------------------------
 import torch
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
@@ -114,18 +113,19 @@ class SiamMask(nn.Module):
             boxes: [batch*height*width*anchors, 4]
         """
         all_anchors = self.anchor.all_anchors[0]
+        gpu_count = torch.cuda.device_count()
         self.all_anchors = torch.from_numpy(all_anchors).float().cuda().detach()
         # x1,y1,x2,y2
-        # anchors: [?, anchors, 4, height, width, (x1, y1, x2, y2)]
-        boxes = self.all_anchors.expand(self.bs, -1, -1, -1, -1)
-        print('boxes shape: ', boxes.shape)
-        boxes = boxes.permute(0, 3, 4, 1, 2).contiguous().view(-1, 4)
+        # anchors: [?, 4, anchors, height, width, (x1, y1, x2, y2)]
+        assert self.bs // gpu_count > 0
+        boxes = self.all_anchors.expand(self.bs//gpu_count, -1, -1, -1, -1)
+        boxes = boxes.permute(0, 3, 4, 2, 1).contiguous().view(-1, 4)
         # self.all_anchors = torch.from_numpy(all_anchors).float().cuda()
         # self.all_anchors = [self.all_anchors[i] for i in range(4)]
         self.anchors = boxes
         # return boxes
 
-    def proposal_preprocess(rpn_pred_score, rpn_pred_loc):
+    def proposal_preprocess(self, rpn_pred_score, rpn_pred_loc):
         """
         Inputs:
             rpn_pred_score: [batch, 2*anchors, height, width, (fg prob, bg prob)]
@@ -222,7 +222,7 @@ class SiamMask(nn.Module):
 
         rpn_pred_cls, rpn_pred_loc, template_feature, search_feature, rpn_pred_score, p4_feat = \
             self.run(template, search, softmax=self.training)
-
+        
         proposals = self.proposal_preprocess(rpn_pred_score, rpn_pred_loc)
 
         normalized_boxes, box_flag = proposal_layer(proposals, self.anchors, args=self.opt)

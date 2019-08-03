@@ -3,7 +3,7 @@
 #SBATCH -p gpu
 #SBATCH --output=siampose_ct
 #SBATCH --error=siampose_cterr
-#SBATCH --nodelist=node6
+#SBATCH --nodelist=node5
 #SBATCH --gres=gpu:1
 date
 module load anaconda3/5.3.0 cuda/9.0 cudnn/7.3.0
@@ -20,7 +20,7 @@ mkdir -p logs
 
 python -u $ROOT/tools/train_siamrcnn.py \
     --config=config.json -b 1 \
-    -j 8 --resume ./snapshot/checkpoint_e44.pth \
+    -j 4 --resume ./snapshot/checkpoint_e90.pth \
     --epochs 200 \
     --log logs/log.txt \
     2>&1 | tee logs/train.log

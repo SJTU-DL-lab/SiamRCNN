@@ -118,16 +118,16 @@ def proposal_layer(inputs, anchors, thresh=0.5, args=None):
         # print('no positive ix')
         return None, False
         # print('positive ix')
-    scores = torch.index_select(scores, 0, pos_ix)  # scores = scores[pos_ix]
 
     # Box deltas [batch, num_rois, 4]
     deltas = inputs[1]
-
     # boxes = torch.from_numpy(anchors).float().cuda().detach()
     # boxes = boxes.expand(bs, -1, -1, -1, -1)
     # boxes = boxes.transpose(0, 4).contiguous().view(-1, 4)
     assert anchors.size(0) == deltas.size(0)
+    scores = torch.index_select(scores, 0, pos_ix)  # scores = scores[pos_ix]
     deltas = torch.index_select(deltas, 0, pos_ix)
+    anchors = anchors.to(deltas.device)
     anchors = torch.index_select(anchors, 0, pos_ix)
 
     # only got 16 positive anchors, no need to remove
