@@ -180,6 +180,7 @@ def BNtoFixed(m):
 
 def validation(val_loader, model, cfg, avg):
     global tb_val_index, best_acc, logger
+    num_per_epoch = len(val_loader.dataset)
     end = time.time()
     model.eval()
 
@@ -229,11 +230,11 @@ def validation(val_loader, model, cfg, avg):
             end = time.time()
 
             if (iter + 1) % args.print_freq == 0:
-                logger.info('Validation:\t{batch_time:s}\t{data_time:s}'
+                logger.info('Validation: [{0}/{1}]\t{batch_time:s}\t{data_time:s}'
                             '\t{rpn_cls_loss:s}\t{rpn_loc_loss:s}'
                             '\t{kp_hp_loss:s}\t{kp_hm_hp_loss:s}\t{kp_hp_offset_loss:s}'
                             '\t{kp_loss:s}\t{siammask_loss:s}'.format(
-                                batch_time=avg.batch_time, data_time=avg.data_time,
+                                iter, num_per_epoch, batch_time=avg.batch_time, data_time=avg.data_time,
                                 rpn_cls_loss=avg.rpn_cls_loss, rpn_loc_loss=avg.rpn_loc_loss,
                                 kp_hp_loss=avg.kp_hp_loss, kp_hm_hp_loss=avg.kp_hm_hp_loss, kp_hp_offset_loss=avg.kp_hp_offset_loss,
                                 kp_loss=avg.kp_loss, siammask_loss=avg.siammask_loss))
