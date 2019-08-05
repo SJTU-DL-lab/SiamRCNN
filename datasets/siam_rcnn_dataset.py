@@ -499,7 +499,7 @@ class AnchorTargetWithKPLayer:
 
 
 class DataSets(Dataset):
-    def __init__(self, cfg, anchor_cfg, num_epoch=1):
+    def __init__(self, cfg, anchor_cfg):
         super(DataSets, self).__init__()
         global logger
         logger = logging.getLogger('global')
@@ -574,7 +574,7 @@ class DataSets(Dataset):
             self.all_data.append(dataset)
 
             start += dataset.num  # real video number
-            self.num += dataset.num_use  # the number used for subset shuffle
+            self.num += dataset.num_use  # the number used for subset shuffle 
 
         # data augmentation
         aug_cfg = cfg['augmentation']
@@ -587,7 +587,6 @@ class DataSets(Dataset):
         self.pick = None  # list to save id for each img
         if 'num' in cfg:  # number used in training for all dataset
             self.num = int(cfg['num'])
-        self.num *= num_epoch
         self.shuffle()
 
         self.infos = {
@@ -599,7 +598,7 @@ class DataSets(Dataset):
                 'inner_neg': self.inner_neg,
                 'crop_size': self.crop_size,
                 'anchor_target': self.anchor_target.__dict__,
-                'num': self.num // num_epoch
+                'num': self.num
                 }
         logger.info('dataset informations: \n{}'.format(json.dumps(self.infos, indent=4)))
 

@@ -4,7 +4,6 @@
 # Written by Qiang Wang (wangqiang2015 at ia.ac.cn)
 # --------------------------------------------------------
 import torch
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
@@ -114,18 +113,19 @@ class SiamMask(nn.Module):
             boxes: [batch*height*width*anchors, 4]
         """
         all_anchors = self.anchor.all_anchors[0]
+        gpu_count = torch.cuda.device_count()
         self.all_anchors = torch.from_numpy(all_anchors).float().cuda().detach()
         # x1,y1,x2,y2
         # anchors: [?, 4, anchors, height, width, (x1, y1, x2, y2)]
-        boxes = self.all_anchors.expand(self.bs, -1, -1, -1, -1)
-        print('boxes shape: ', boxes.shape)
+        assert self.bs // gpu_count > 0
+        boxes = self.all_anchors.expand(self.bs//gpu_count, -1, -1, -1, -1)
         boxes = boxes.permute(0, 3, 4, 2, 1).contiguous().view(-1, 4)
         # self.all_anchors = torch.from_numpy(all_anchors).float().cuda()
         # self.all_anchors = [self.all_anchors[i] for i in range(4)]
         self.anchors = boxes
         # return boxes
 
-    def proposal_preprocess(rpn_pred_score, rpn_pred_loc):
+    def proposal_preprocess(self, rpn_pred_score, rpn_pred_loc):
         """
         Inputs:
             rpn_pred_score: [batch, 2*anchors, height, width, (fg prob, bg prob)]
@@ -173,18 +173,7 @@ class SiamMask(nn.Module):
         search_feature, p4_feat = self.features.forward_all(search)
         # print('search feat: ', search_feature)
         rpn_pred_cls, rpn_pred_loc = self.rpn(template_feature, search_feature)
-
-        # corr_feature = self.kp_corr.kp.forward_corr(template_feature, search_feature)  # (b, 256, w, h)
-        # print('rpn_pred_cls shape: ', rpn_pred_cls)
-        # print('rpn_pred_loc shape: ', rpn_pred_loc.shape)
-        # print('template shape: ', template.shape)
-        # print('search shape: ', search.shape)
-        # print('template_feature shape: ', template_feature.shape)
-        # print('search_feature shape: ', search_feature.shape)
-        # print('corr_feature output: ', corr_feature.shape)
-        # pred_kp = self.kp_model(corr_feature)
-        # pred_kp = self.kp_model(search_feature)
-
+        rpn_pred_cls_sfmax = None
         if softmax:
             rpn_pred_cls_sfmax = self.softmax(rpn_pred_cls, log=True)
         rpn_pred_cls = self.softmax(rpn_pred_cls, log=False)
@@ -213,16 +202,16 @@ class SiamMask(nn.Module):
         template = rpn_input['template']
         search = rpn_input['search']
         anchors = self.all_anchors
-        if self.training:
-            label_cls = rpn_input['label_cls']
-            label_loc = rpn_input['label_loc']
-            label_mask = rpn_input['label_mask']
-            lable_loc_weight = rpn_input['label_loc_weight']
+
+        label_cls = rpn_input['label_cls']
+        label_loc = rpn_input['label_loc']
+        label_mask = rpn_input['label_mask']
+        lable_loc_weight = rpn_input['label_loc_weight']
             # anchors = rpn_input['anchors']
 
         rpn_pred_cls, rpn_pred_loc, template_feature, search_feature, rpn_pred_score, p4_feat = \
-            self.run(template, search, softmax=self.training)
-
+            self.run(template, search, softmax=True)
+        
         proposals = self.proposal_preprocess(rpn_pred_score, rpn_pred_loc)
 
         normalized_boxes, box_flag = proposal_layer(proposals, self.anchors, args=self.opt)
@@ -236,19 +225,17 @@ class SiamMask(nn.Module):
         outputs['predict'] = [rpn_pred_cls, rpn_pred_loc, pred_kp,
                               template_feature, search_feature, rpn_pred_score, normalized_boxes]
 
-
-        if self.training:
-            rpn_loss_cls, rpn_loss_loc = \
-                self._add_rpn_loss(label_cls, label_loc, lable_loc_weight, label_mask,
-                                   rpn_pred_cls, rpn_pred_loc)
-            if box_flag:
-                kp_loss, kp_loss_status = self.kp_criterion(pred_kp, kp_input)
-            else:
-                kp_loss = 0
-                kp_loss_status = {'loss': 0, 'hp_loss': 0,
-                      'hm_hp_loss': 0, 'hp_offset_loss': 0}
-            outputs['losses'] = [rpn_loss_cls, rpn_loss_loc, kp_loss, kp_loss_status]
-            # outputs['accuracy'] = [iou_acc_mean, iou_acc_5, iou_acc_7]
+        rpn_loss_cls, rpn_loss_loc = \
+            self._add_rpn_loss(label_cls, label_loc, lable_loc_weight, label_mask,
+                               rpn_pred_cls, rpn_pred_loc)
+        if box_flag:
+            kp_loss, kp_loss_status = self.kp_criterion(pred_kp, kp_input)
+        else:
+            kp_loss = 0
+            kp_loss_status = {'loss': 0, 'hp_loss': 0,
+                  'hm_hp_loss': 0, 'hp_offset_loss': 0}
+        outputs['losses'] = [rpn_loss_cls, rpn_loss_loc, kp_loss, kp_loss_status]
+        # outputs['accuracy'] = [iou_acc_mean, iou_acc_5, iou_acc_7]
 
         return outputs
 

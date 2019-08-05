@@ -4,7 +4,7 @@
 #SBATCH --output=siampose_ct
 #SBATCH --error=siampose_cterr
 #SBATCH --nodelist=node5
-#SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:4
 date
 module load anaconda3/5.3.0 cuda/9.0 cudnn/7.3.0
 source activate pytorch0.4
@@ -18,9 +18,10 @@ export PYTHONPATH=$ROOT:$PYTHONPATH
 
 mkdir -p logs
 
-python -u $ROOT/tools/train_siamrcnn.py \
-    --config=config.json -b 1 \
-    -j 4 --resume ./snapshot/checkpoint_e90.pth \
+python -u $ROOT/tools/trainval_siamrcnn.py \
+    --config=config.json -b 24 \
+    --resume ./snapshot/checkpoint_e90.pth \
+    -j 4 --save_freq 2 \
     --epochs 200 \
     --log logs/log.txt \
     2>&1 | tee logs/train.log
