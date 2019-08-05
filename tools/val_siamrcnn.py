@@ -19,7 +19,7 @@ from torch.autograd import Variable
 from utils.log_helper import init_log, add_file_handler
 from utils.load_helper import load_pretrain, restore_from
 from utils.average_meter_helper import AverageMeter
-from utils.image import get_max_preds, save_batch_heatmaps
+from utils.image import save_gt_pred_heatmaps
 from utils.pose_evaluate import accuracy
 
 from datasets.siam_rcnn_dataset import DataSets
@@ -205,6 +205,8 @@ def validation(val_loader, model, cfg, avg):
             outputs = model(x_rpn, x_kp)
 
             pred_kp = outputs['predict'][2]['hm_hp']
+            batch_img = x_rpn['search'].expand(x_kp['hm_hp'].size(0), -1, -1, -1)
+            gt_img, pred_img = save_gt_pred_heatmaps(batch_img, x_kp['hm_hp'], pred_kp, 'test_imgs/test_{}.jpg'.format(iter))
             rpn_cls_loss, rpn_loc_loss, kp_losses = torch.mean(outputs['losses'][0]),\
                                                                torch.mean(outputs['losses'][1]),\
                                                                outputs['losses'][3]
