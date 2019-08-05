@@ -204,7 +204,7 @@ def validation(val_loader, model, cfg, avg):
 
             outputs = model(x_rpn, x_kp)
 
-            pred_kp = outputs['predict'][2]['hm_hp']
+            pred_kp = outputs['predict'][2][0]['hm_hp']
             batch_img = x_rpn['search'].expand(x_kp['hm_hp'].size(0), -1, -1, -1)
             gt_img, pred_img = save_gt_pred_heatmaps(batch_img, x_kp['hm_hp'], pred_kp, 'test_imgs/test_{}.jpg'.format(iter))
             rpn_cls_loss, rpn_loc_loss, kp_losses = torch.mean(outputs['losses'][0]),\

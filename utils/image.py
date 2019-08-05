@@ -11,6 +11,7 @@ from __future__ import print_function
 
 import numpy as np
 import cv2
+import copy
 import random
 import torch
 import torch.nn.functional as F
@@ -194,9 +195,9 @@ def save_gt_pred_heatmaps(batch_image, gt_heatmaps, pred_heatmaps, file_name):
                                                       '', save=False)
     grid_pred_img, pred_img = save_batch_resized_heatmaps(batch_image, pred_heatmaps,
                                                           '', save=False)
-    gt_pred_img = np.zeros(gt_img.shape[0],
-                           gt_img.shape[1] + pred_img.shape[1] + 10,
-                           gt_img.shape[2])
+    gt_pred_img = np.zeros((gt_img.shape[0],
+                            gt_img.shape[1] + pred_img.shape[1] + 10,
+                            gt_img.shape[2]))
     gt_pred_img[:, :pred_img.shape[1], :] = pred_img
     gt_pred_img[:,
                 (pred_img.shape[1]+10):,
