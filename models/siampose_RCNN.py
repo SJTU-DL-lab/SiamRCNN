@@ -171,13 +171,13 @@ class SiamMask(nn.Module):
         """
         template_feature = self.feature_extractor(template)
         search_feature, p4_feat = self.features.forward_all(search)
-        # print('search feat: ', search_feature)
+
         rpn_pred_cls, rpn_pred_loc = self.rpn(template_feature, search_feature)
         rpn_pred_cls_sfmax = None
         if softmax:
             rpn_pred_cls_sfmax = self.softmax(rpn_pred_cls, log=True)
         rpn_pred_cls = self.softmax(rpn_pred_cls, log=False)
-        # print('rpn_pred_cls softmax shape: ', rpn_pred_cls.shape)
+
         return rpn_pred_cls_sfmax, rpn_pred_loc, template_feature, search_feature, rpn_pred_cls, p4_feat
 
     def softmax(self, cls, log=True):
@@ -211,7 +211,7 @@ class SiamMask(nn.Module):
 
         rpn_pred_cls, rpn_pred_loc, template_feature, search_feature, rpn_pred_score, p4_feat = \
             self.run(template, search, softmax=True)
-        
+
         proposals = self.proposal_preprocess(rpn_pred_score, rpn_pred_loc)
 
         normalized_boxes, box_flag = proposal_layer(proposals, self.anchors, args=self.opt)

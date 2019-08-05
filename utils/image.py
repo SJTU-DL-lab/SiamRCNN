@@ -115,6 +115,96 @@ def save_batch_heatmaps(batch_image, batch_heatmaps, file_name,
 
     return out_image
 
+def save_batch_resized_heatmaps(batch_image, batch_heatmaps, file_name,
+                                normalize=True, toTensor=ToTensor(), save=True):
+    '''
+    batch_image: [batch_size, channel, height, width]
+    batch_heatmaps: ['batch_size, num_joints, height, width]
+    file_name: saved file name
+    '''
+    if normalize:
+        batch_image = batch_image.clone()
+        min = float(batch_image.min())
+        max = float(batch_image.max())
+
+        batch_image.add_(-min).div_(max - min + 1e-5)
+
+    batch_heatmaps = F.interpolate(batch_heatmaps, 256, mode='nearest')
+    batch_size = batch_heatmaps.size(0)
+    num_joints = batch_heatmaps.size(1)
+    heatmap_height = batch_heatmaps.size(2)
+    heatmap_width = batch_heatmaps.size(3)
+    resized_height = 256
+    resized_width = 256
+
+    grid_image = np.zeros((batch_size*resized_height,
+                           (num_joints+1)*resized_width,
+                           3),
+                          dtype=np.uint8)
+
+    preds, maxvals = get_max_preds(batch_heatmaps.detach().cpu().numpy())
+
+    for i in range(batch_size):
+        image = batch_image[i].mul(255)\
+                              .clamp(0, 255)\
+                              .byte()\
+                              .permute(1, 2, 0)\
+                              .cpu().numpy()
+        heatmaps = batch_heatmaps[i].mul(255)\
+                                    .clamp(0, 255)\
+                                    .byte()\
+                                    .cpu().numpy()
+
+        resized_image = cv2.resize(image,
+                                   (int(heatmap_width), int(heatmap_height)))
+
+        height_begin = resized_height * i
+        height_end = resized_height * (i + 1)
+        for j in range(num_joints):
+            cv2.circle(resized_image,
+                       (int(preds[i][j][0]), int(preds[i][j][1])),
+                       1, [0, 0, 255], 1)
+            heatmap = heatmaps[j, :, :]
+            colored_heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+            masked_image = colored_heatmap*0.7 + resized_image*0.3
+            cv2.circle(masked_image,
+                       (int(preds[i][j][0]), int(preds[i][j][1])),
+                       1, [0, 0, 255], 1)
+
+            width_begin = resized_width * (j+1)
+            width_end = resized_width * (j+2)
+            masked_image = cv2.resize(masked_image, (resized_width, resized_height))
+            grid_image[height_begin:height_end, width_begin:width_end, :] = \
+                masked_image
+            # grid_image[height_begin:height_end, width_begin:width_end, :] = \
+            #     colored_heatmap*0.7 + resized_image*0.3
+        resized_image = cv2.resize(resized_image, (resized_width, resized_height))
+        grid_image[height_begin:height_end, 0:resized_width, :] = resized_image
+        # print('brefore:', grid_image.shape)
+        grid_image = copy.deepcopy(grid_image[:, :, ::-1])
+        # print('after:', grid_image)
+        out_image = toTensor(grid_image)
+        if save is True:
+            cv2.imwrite(file_name, resized_image)
+
+    return out_image, resized_image
+
+def save_gt_pred_heatmaps(batch_image, gt_heatmaps, pred_heatmaps, file_name):
+    grid_gt_img, gt_img = save_batch_resized_heatmaps(batch_image, gt_heatmaps,
+                                                      '', save=False)
+    grid_pred_img, pred_img = save_batch_resized_heatmaps(batch_image, pred_heatmaps,
+                                                          '', save=False)
+    gt_pred_img = np.zeros(gt_img.shape[0],
+                           gt_img.shape[1] + pred_img.shape[1] + 10,
+                           gt_img.shape[2])
+    gt_pred_img[:, :pred_img.shape[1], :] = pred_img
+    gt_pred_img[:,
+                (pred_img.shape[1]+10):,
+                :] = gt_img
+    cv2.imwrite(file_name, gt_pred_img)
+    return gt_img, pred_img
+
+
 def flip(img):
   return img[:, :, ::-1].copy()
 
