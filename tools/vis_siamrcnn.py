@@ -241,20 +241,6 @@ def train(train_loader, model, optimizer, lr_scheduler, epoch, cfg):
             if epoch != iter // num_per_epoch + start_epoch:  # next epoch
                 epoch = iter // num_per_epoch + start_epoch
 
-                if not os.path.exists(args.save_dir):  # makedir/save model
-                    os.makedirs(args.save_dir)
-
-                save_checkpoint({
-                        'epoch': epoch,
-                        'arch': args.arch,
-                        'state_dict': model.module.state_dict(),
-                        'best_acc': best_acc,
-                        'optimizer': optimizer.state_dict(),
-                        'anchor_cfg': cfg['anchors']
-                    }, False,
-                    os.path.join(args.save_dir, 'checkpoint_e%d.pth' % (epoch)),
-                    os.path.join(args.save_dir, 'best.pth'))
-
                 if epoch == args.epochs:
                     return
 
