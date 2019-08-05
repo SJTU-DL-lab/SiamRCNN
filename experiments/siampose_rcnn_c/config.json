@@ -57,9 +57,9 @@
         },
         "template_size": 127,
         "search_size": 255,
-        "size": 17,
-
-        "num" : 1000,
+        "base_size": 8,
+        "size": 25,
+        "RPN_NMS": 0.7,
 
         "augmentation": {
             "template": {
