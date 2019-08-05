@@ -17,9 +17,9 @@ export PYTHONPATH=$ROOT:$PYTHONPATH
 
 mkdir -p logs
 
-python -u $ROOT/tools/vis_siamrcnn.py \
-    --config=config_test.json -b 1 \
-    -j 8 --resume ./snapshot/checkpoint_e60.pth \
+python -u $ROOT/tools/val_siamrcnn.py \
+    --config=config.json -b 1 \
+    -j 8 --pretrained ./snapshot/checkpoint_e199.pth \
     --epochs 200 \
     --log logs/log.txt \
     --log-dir test_logs \
