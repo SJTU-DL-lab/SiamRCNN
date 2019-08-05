@@ -110,16 +110,16 @@ class SiamMask(nn.Module):
     def anchors_preprocess(self):
         """
         Returns:
-            boxes: [batch*height*width*anchors, 4]
+            boxes: [batch//gpu_count, *height*width*anchors, 4]
         """
         all_anchors = self.anchor.all_anchors[0]
         gpu_count = torch.cuda.device_count()
         self.all_anchors = torch.from_numpy(all_anchors).float().cuda().detach()
         # x1,y1,x2,y2
-        # anchors: [?, 4, anchors, height, width, (x1, y1, x2, y2)]
+        # anchors: [4, anchors, height, width, (x1, y1, x2, y2)]
         assert self.bs // gpu_count > 0
         boxes = self.all_anchors.expand(self.bs//gpu_count, -1, -1, -1, -1)
-        boxes = boxes.permute(0, 3, 4, 2, 1).contiguous().view(-1, 4)
+        boxes = boxes.permute(0, 3, 4, 2, 1).contiguous().view(self.bs//gpu_count, -1, 4)
         # self.all_anchors = torch.from_numpy(all_anchors).float().cuda()
         # self.all_anchors = [self.all_anchors[i] for i in range(4)]
         self.anchors = boxes
@@ -130,18 +130,27 @@ class SiamMask(nn.Module):
         Inputs:
             rpn_pred_score: [batch, 2*anchors, height, width, (fg prob, bg prob)]
             rpn_pred_loc: [batch, 4*anchors, height, width]
+            # gt_kps: [batch, num_keypoints, height, width]
 
         Returns:
-            scores: [batch*height*width*anchors]
-            deltas: [batch*height*width*anchors, 4]
+            scores: [batch, height*width*anchors]
+            deltas: [batch, height*width*anchors, 4]
+            # kps:    [batch, height*width*anchors, num_keypoints]
+            # masks:  to be done
         """
+        bs = rpn_pred_score.size(0)
         scores = rpn_pred_score[:, :, :, :, 1]
-        scores = scores.transpose(1, 3).contiguous().view(-1)
+        scores = scores.transpose(1, 3).contiguous().view(bs, -1)
 
         deltas = rpn_pred_loc
         deltas = deltas.view(-1, 4, self.anchor_num, deltas.size(-2), deltas.size(-1))
         deltas = deltas.permute(0, 3, 4, 2, 1).contiguous()
-        deltas = deltas.view(-1, deltas.size(4))
+        deltas = deltas.view(bs, -1, deltas.size(4))
+
+        # num_kps = gt_kps.size(1)
+        # kps = gt_kps.transpose(1, 3).contiguous()
+        # kps = kps.expand(-1, -1, -1, self.anchor_num, num_kps)
+        # kps = kps.view(-1, num_kps)
 
         return [scores, deltas]
 
@@ -215,8 +224,11 @@ class SiamMask(nn.Module):
         proposals = self.proposal_preprocess(rpn_pred_score, rpn_pred_loc)
 
         normalized_boxes, box_flag = proposal_layer(proposals, self.anchors, args=self.opt)
+        print('per batch nms boxes shape: ', normalized_boxes.shape)
+        normalized_boxes = normalized_boxes.view(-1, normalized_boxes.size(-1))
         if box_flag:
             pooled_features = roi_align([normalized_boxes, search_feature], 7)
+            print('poolded features shape: ', pooled_features.shape)
             pred_kp = self.kp_model(p4_feat)
         else:
             pred_kp = torch.zeros(p4_feat.size(0), 17, 56, 56)

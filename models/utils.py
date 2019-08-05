@@ -89,19 +89,19 @@ def apply_box_deltas(boxes, deltas):
     result = torch.stack([y1, x1, y2, x2], dim=1)
     return result
 
-def proposal_layer(inputs, anchors, thresh=0.5, args=None):
+def proposal_layer_bak(inputs, anchors, thresh=0.5, args=None):
     """Receives anchor scores and selects a subset to pass as proposals
     to the second stage. Filtering is done based on anchor scores and
     non-max suppression to remove overlaps. It also applies bounding
     box refinment detals to anchors.
 
     Inputs:
-        rpn_probs: [batch, 2*anchors, height, width, (fg prob, bg prob)]
-        rpn_bbox: [batch, 4*anchors, height, width]
-        anchors: [?, anchors, 4, height, width, (x1, y1, x2, y2)]
+        rpn_probs: [batch, anchors*height*width(fg prob)]
+        rpn_bbox_deltas: [batch, anchors*height*width, 4]
+        anchors: [batch*anchors*height*width, 4, (x1, y1, x2, y2)]
 
     Returns:
-        Proposals in normalized coordinates [batch, rois, (y1, x1, y2, x2)]
+        Proposals in normalized coordinates [num_rois, 4, (y1, x1, y2, x2)]
     """
 
     # Currently only supports batchsize 1
@@ -112,6 +112,7 @@ def proposal_layer(inputs, anchors, thresh=0.5, args=None):
     # scores = inputs[0][:, :, :, :, 1]
     # scores = scores.transpose(1, 3).contiguous().view(-1)
     scores = inputs[0]
+    deltas = inputs[1]
     pos_ix = torch.nonzero(scores > thresh).squeeze()
 
     if pos_ix.size(0) == 0:
@@ -120,7 +121,6 @@ def proposal_layer(inputs, anchors, thresh=0.5, args=None):
         # print('positive ix')
 
     # Box deltas [batch, num_rois, 4]
-    deltas = inputs[1]
     # boxes = torch.from_numpy(anchors).float().cuda().detach()
     # boxes = boxes.expand(bs, -1, -1, -1, -1)
     # boxes = boxes.transpose(0, 4).contiguous().view(-1, 4)
@@ -160,6 +160,7 @@ def proposal_layer(inputs, anchors, thresh=0.5, args=None):
     # print('scores shape: ', scores.shape)
     keep = nms(torch.cat((boxes, scores.unsqueeze(1)), 1).data, nms_threshold)
     boxes = boxes[keep, :]
+    select_bs = keep // total_anchors
 
     # Normalize dimensions to range of 0 to 1.
     norm = Variable(torch.from_numpy(np.array([height, width, height, width])).float(), requires_grad=False)
@@ -167,6 +168,113 @@ def proposal_layer(inputs, anchors, thresh=0.5, args=None):
     normalized_boxes = boxes / norm
 
     return normalized_boxes, True
+
+def proposal_layer(inputs, anchors, thresh=0.5, args=None):
+    """Receives anchor scores and selects a subset to pass as proposals
+    to the second stage. Filtering is done based on anchor scores and
+    non-max suppression to remove overlaps. It also applies bounding
+    box refinment detals to anchors.
+
+    Inputs:
+        rpn_probs: [batch, anchors*height*width(fg prob)]
+        rpn_bbox_deltas: [batch, anchors*height*width, 4]
+        # gt_kps: [batch, num_keypoints, height, width]
+        anchors: [batch, anchors*height*width, 4, (x1, y1, x2, y2)]
+
+    Returns:
+        Proposals in normalized coordinates [bs, num_rois, 4, (y1, x1, y2, x2)]
+    """
+
+    # Currently only supports batchsize 1
+    # inputs[0] = inputs[0].squeeze(0)
+    # inputs[1] = inputs[1].squeeze(0)
+
+    # Box Scores, select the fg prob.
+    # scores = inputs[0][:, :, :, :, 1]
+    # scores = scores.transpose(1, 3).contiguous().view(-1)
+    scores = inputs[0]
+    deltas = inputs[1]
+    boxes_out = []
+    # kps = inputs[2]
+    gpu_count = torch.cuda.device_count()
+    bs = args.batch // gpu_count
+    # total_anchors = scores.size(1) // bs
+    for i in range(bs):
+        pos_ix = torch.nonzero(scores[i] > thresh).squeeze()
+
+        if pos_ix.size(0) == 0:
+            # print('no positive ix')
+            return None, False
+            # print('positive ix')
+
+        # Box deltas [batch, num_rois, 4]
+        # boxes = torch.from_numpy(anchors).float().cuda().detach()
+        # boxes = boxes.expand(bs, -1, -1, -1, -1)
+        # boxes = boxes.transpose(0, 4).contiguous().view(-1, 4)
+        # assert anchors.size(0) == deltas.size(0)
+        scores_i = torch.index_select(scores[i], 0, pos_ix)  # scores = scores[pos_ix]
+        deltas_i = torch.index_select(deltas[i], 0, pos_ix)
+        anchors = anchors.to(deltas.device)
+        anchors_i = torch.index_select(anchors[i], 0, pos_ix)
+
+        # only got 16 positive anchors, no need to remove
+        # Improve performance by trimming to top anchors by score
+        # and doing the rest on the smaller subset.
+        # pre_nms_limit = min(6000, anchors.size()[0])
+        # scores, order = scores.sort(descending=True)
+        # order = order[:pre_nms_limit]
+        # scores = scores[:pre_nms_limit]
+        # deltas = deltas[order.data, :] # TODO: Support batch size > 1 ff.
+        # anchors = anchors[order.data, :]
+
+        # Apply deltas to anchors to get refined anchors.
+        # [batch, N, (y1, x1, y2, x2)]
+        boxes = apply_box_deltas(anchors_i, deltas_i)
+
+        # Clip to image boundaries. [batch, N, (y1, x1, y2, x2)]
+        size = args.img_size  # int(config['train_datasets']['search_size'])
+        height, width = size, size
+        window = np.array([0, 0, height, width]).astype(np.float32)
+        boxes = clip_boxes(boxes, window)
+
+        # Filter out small boxes
+        # According to Xinlei Chen's paper, this reduces detection accuracy
+        # for small objects, so we're skipping it.
+
+        # Non-max suppression
+        nms_threshold = args.nms_threshold  # float(config['train_datasets']['RPN_NMS'])
+        # print('boxes shape: ', boxes.shape)
+        # print('scores shape: ', scores.shape)
+        keep = nms(torch.cat((boxes, scores_i.unsqueeze(1)), 1).data, nms_threshold)
+        assert len(keep) == 1
+        boxes = boxes[keep, :].unsqueeze(0)
+        boxes_out.append(boxes)
+        # select_bs = keep // total_anchors
+        # kps_i = torch.index_select(kps, 0, select_bs)
+
+    boxes = torch.cat(boxes_out, 0)
+    # Normalize dimensions to range of 0 to 1.
+    norm = Variable(torch.from_numpy(np.array([height, width, height, width])).float(), requires_grad=False)
+    norm = norm.cuda()
+    normalized_boxes = boxes / norm
+
+    return normalized_boxes, True
+
+def generate_target(rois_boxes, gt_kps=None, gt_masks=None):
+    """Generates target masks, keypoints according to ROIs
+
+    Inputs:
+    - rois_boxes: [num_rois, 4, (x1, y1, x2, y2)] in normalized coordinates
+    - gt_kps: [bs, num_keypoints, height, width]
+    - gt_masks: [?, channel, height, width]
+
+    Returns:
+    target_kp:
+    target_mask:
+    """
+    if not gt_kps and not gt_masks:
+        raise Exception('Ground truth keypoints and ground truth masks can not both be empty!')
+
 
 def roi_align(inputs, pool_size):
     """Implements ROI Pooling on single feature map.
