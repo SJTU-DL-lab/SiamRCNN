@@ -131,7 +131,6 @@ def collect_env_info():
     env_str += "\n        OpenCV ({})".format(cv2.__version__)
     return env_str
 
-
 def build_data_loader(cfg):
     logger = logging.getLogger('global')
 
