@@ -329,7 +329,7 @@ def draw_boxes(img, bboxes, boxes_ind):
     height, width = img.size()[-2:]
 
     bboxes = bboxes.cpu().detach().numpy()
-    boxes_ind = boxes_ind.cpu().detach.numpy()
+    boxes_ind = boxes_ind.int().cpu().detach().numpy().tolist()
     img = img.transpose(1, 3)
     img = img.detach().cpu().numpy()
     for box_i, img_id in enumerate(boxes_ind):
@@ -340,7 +340,7 @@ def draw_boxes(img, bboxes, boxes_ind):
         y1 *= height
         y2 *= height
         img[img_id] = cv2.rectangle(img_i, (int(x1), int(y1)),
-                                           (int(x2), int(y2)), (0, 255, 0), 3)
+                                           (int(x2), int(y2)), (0, 255, 0), 2)
 
     return img
 

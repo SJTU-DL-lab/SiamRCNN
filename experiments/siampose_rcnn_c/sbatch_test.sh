@@ -20,7 +20,7 @@ mkdir -p logs
 
 python -u $ROOT/tools/val_siamrcnn.py \
     --config=config.json -b 4 \
-    -j 8 \
+    -j 8 --debug \
     --epochs 200 --pretrained ./snapshot/checkpoint_e99.pth \
     --log logs/log.txt \
     --log-dir test_logs \

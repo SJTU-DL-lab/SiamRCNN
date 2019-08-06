@@ -34,9 +34,9 @@ class PoseLoss(torch.nn.Module):
         batch['hp_mask'] = batch['hp_mask'].index_select(0, ind)
         batch['hp_ind'] = batch['hp_ind'].index_select(0, ind)
         batch['hp_offset'] = batch['hp_offset'].index_select(0, ind)
-        print('hps_mask shape: {}, ind shape: {} , hps shape: {}'.format(batch['hps_mask'].shape,
-               batch['ind'].shape, batch['hps'].shape))
-        print('output hps shape: ', output['hps'].shape)
+        # print('hps_mask shape: {}, ind shape: {} , hps shape: {}'.format(batch['hps_mask'].shape,
+        #        batch['ind'].shape, batch['hps'].shape))
+        # print('output hps shape: ', output['hps'].shape)
         # batch['hm_hp'] = batch['hm_hp'].expand(bs_hm_hp, -1, -1, -1)
         if opt.hm_hp and not opt.mse_loss:
             output['hm_hp'] = _sigmoid(output['hm_hp'])
@@ -235,7 +235,6 @@ class SiamMask(nn.Module):
         # normalized_boxes = normalized_boxes.view(-1, normalized_boxes.size(-1))
         # print('normalized bbox: ', normalized_boxes)
         if box_flag:
-            # print('p4 feat shape: ', p4_feat.shape)
             pooled_features = roi_align([normalized_boxes, p4_feat, boxes_ind], 7)
             # print('poolded features shape: ', pooled_features.shape)
             pred_kp = self.kp_model(pooled_features)
@@ -263,8 +262,12 @@ class SiamMask(nn.Module):
         if self.debug:
             # draw roi boxes on the search images
             box_imgs = draw_boxes(search, normalized_boxes, boxes_ind)
-            roi_imgs = roi_align([normalized_boxes, search, boxes_ind], 56)
-            outputs['debug'] = [box_imgs, roi_imgs]
+            if box_flag:
+                roi_imgs = roi_align([normalized_boxes, search, boxes_ind], 56)
+                roi_imgs = roi_imgs.transpose(1, 3)
+            else:
+                roi_imgs = None
+            outputs['debug'] = [torch.from_numpy(box_imgs).cuda(), roi_imgs]
 
         # outputs['accuracy'] = [iou_acc_mean, iou_acc_5, iou_acc_7]
 
