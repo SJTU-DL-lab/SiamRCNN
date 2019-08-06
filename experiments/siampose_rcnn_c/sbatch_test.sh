@@ -3,6 +3,7 @@
 #SBATCH -p gpu
 #SBATCH --output=siampose_test.log
 #SBATCH --error=siampose_test.err
+#SBATCH --nodelist=node2
 #SBATCH --gres=gpu:1
 date
 module load anaconda3/5.3.0 cuda/9.0 cudnn/7.3.0

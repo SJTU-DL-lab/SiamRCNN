@@ -186,6 +186,8 @@ def validation(val_loader, model, cfg, avg):
 
     with torch.no_grad():
         for iter, input in enumerate(val_loader):
+            if iter > 100:
+                break
             tb_val_index += iter
 
             data_time = time.time() - end

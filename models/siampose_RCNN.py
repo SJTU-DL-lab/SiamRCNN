@@ -226,6 +226,7 @@ class SiamMask(nn.Module):
         normalized_boxes, box_flag = proposal_layer(proposals, self.anchors, args=self.opt)
         print('per batch nms boxes shape: ', normalized_boxes.shape)
         normalized_boxes = normalized_boxes.view(-1, normalized_boxes.size(-1))
+        # print('normalized bbox: ', normalized_boxes)
         if box_flag:
             pooled_features = roi_align([normalized_boxes, search_feature], 7)
             print('poolded features shape: ', pooled_features.shape)

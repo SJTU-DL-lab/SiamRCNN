@@ -245,8 +245,9 @@ def proposal_layer(inputs, anchors, thresh=0.5, args=None):
         nms_threshold = args.nms_threshold  # float(config['train_datasets']['RPN_NMS'])
         # print('boxes shape: ', boxes.shape)
         # print('scores shape: ', scores.shape)
+        print('before nms boxes shape: ', boxes.shape)
         keep = nms(torch.cat((boxes, scores_i.unsqueeze(1)), 1).data, nms_threshold)
-        assert len(keep) == 1
+        print('keep length: ', len(keep))
         boxes = boxes[keep, :].unsqueeze(0)
         boxes_out.append(boxes)
         # select_bs = keep // total_anchors
