@@ -329,22 +329,20 @@ def draw_boxes(img, bboxes, boxes_ind):
     height, width = img.size()[-2:]
 
     bboxes = bboxes.cpu().detach().numpy()
+    boxes_ind = boxes_ind.cpu().detach.numpy()
     img = img.transpose(1, 3)
-    img = torch.index_select(img, 0, boxes_ind.long())
-    num_rois = img.size(0)
     img = img.detach().cpu().numpy()
-    img_out = np.zeros_like(img)
-    for i in range(num_rois):
-        img_i = img[i]
-        x1, y1, x2, y2 = bboxes[i, :]
+    for box_i, img_id in enumerate(boxes_ind):
+        img_i = img[img_id]
+        x1, y1, x2, y2 = bboxes[box_i, :]
         x1 *= width
         x2 *= width
         y1 *= height
         y2 *= height
-        img_out[i] = cv2.rectangle(img_i, (int(x1), int(y1)),
-                                   (int(x2), int(y2)), (0, 255, 0), 1)
+        img[img_id] = cv2.rectangle(img_i, (int(x1), int(y1)),
+                                           (int(x2), int(y2)), (0, 255, 0), 3)
 
-    return img_out
+    return img
 
 def draw_umich_gaussian(heatmap, center, radius, k=1):
   diameter = 2 * radius + 1

@@ -253,7 +253,7 @@ def proposal_layer(inputs, anchors, thresh=0.5, args=None):
         nms_threshold = args.nms_threshold  # float(config['train_datasets']['RPN_NMS'])
         # print('boxes shape: ', boxes.shape)
         # print('scores shape: ', scores.shape)
-        print('before nms boxes shape: ', boxes.shape)
+        # print('before nms boxes shape: ', boxes.shape)
         keep = nms(torch.cat((boxes, scores_i.unsqueeze(1)), 1).data, nms_threshold)
         # num_keep = len(keep)
         # if num_keep > max_rois:

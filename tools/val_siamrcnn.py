@@ -211,7 +211,7 @@ def validation(val_loader, model, cfg, avg):
             outputs = model(x_rpn, x_kp)
 
             pred_kp = outputs['predict'][2][0]['hm_hp']
-            print('pred kp shape: ', pred_kp.shape)
+            # print('pred kp shape: ', pred_kp.shape)
             # batch_img = x_rpn['search'].expand(x_kp['hm_hp'].size(0), -1, -1, -1)
             # gt_img, pred_img = save_gt_pred_heatmaps(batch_img, x_kp['hm_hp'], pred_kp, 'test_imgs/test_{}.jpg'.format(iter))
             rpn_cls_loss, rpn_loc_loss, kp_losses = torch.mean(outputs['losses'][0]),\
@@ -228,6 +228,13 @@ def validation(val_loader, model, cfg, avg):
             siammask_loss = loss.item()
 
             batch_time = time.time() - end
+
+            if args.debug:
+                box_imgs, roi_imgs = outputs['debug']
+                for img_id in range(len(box_imgs)):
+                    cv2.imwrite('./debug/box_img{}_{}.png'.format(iter, img_id), box_imgs[img_id])
+                for img_id in range(len(roi_imgs)):
+                    cv2.imwrite('./debug/roi_img{}_{}.png'.format(iter, img_id), roi_imgs[img_id])
 
             avg.update(batch_time=batch_time, rpn_cls_loss=rpn_cls_loss, rpn_loc_loss=rpn_loc_loss,
                        kp_hp_loss=kp_hp_loss, kp_hm_hp_loss=kp_hm_hp_loss, kp_hp_offset_loss=kp_hp_offset_loss,
