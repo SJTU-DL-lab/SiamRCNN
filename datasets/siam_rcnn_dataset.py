@@ -574,7 +574,7 @@ class DataSets(Dataset):
             self.all_data.append(dataset)
 
             start += dataset.num  # real video number
-            self.num += dataset.num_use  # the number used for subset shuffle 
+            self.num += dataset.num_use  # the number used for subset shuffle
 
         # data augmentation
         aug_cfg = cfg['augmentation']
@@ -949,7 +949,8 @@ class DataSets(Dataset):
             trans_output = get_affine_transform(c, s, 0, [output_res, output_res])
 
             ind = np.zeros(1, dtype=np.int64)
-            hm_hp = np.zeros((num_joints, output_res, output_res), dtype=np.float32)
+            # hm_hp = np.zeros((num_joints, output_res, output_res), dtype=np.float32)
+            hm_hp = np.zeros((num_joints, self.search_size, self.search_size), dtype=np.float32)
             kps = np.zeros(num_joints * 2, dtype=np.float32)
             kps_mask = np.zeros((self.num_joints * 2), dtype=np.uint8)
             hp_offset = np.zeros((num_joints, 2), dtype=np.float32)

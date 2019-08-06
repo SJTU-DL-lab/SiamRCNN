@@ -69,6 +69,8 @@ parser.add_argument('-s', '--save_dir', default='snapshot', type=str,
                     help='save dir')
 parser.add_argument('--log-dir', default='board', help='TensorBoard log dir')
 # multi_pose
+parser.add_argument('--output_size', default=56, type=int,
+                    help='the output size of pose or mask branch')
 parser.add_argument('--dense_hp', action='store_true',
                          help='apply weighted pose regression near center '
                               'or just apply regression on center point.')
@@ -96,6 +98,7 @@ parser.add_argument('--hp_weight', type=float, default=1,
                              help='loss weight for human pose offset.')
 parser.add_argument('--hm_hp_weight', type=float, default=1,
                              help='loss weight for human keypoint heatmap.')
+parser.add_argument('--debug', action='store_true')
 
 
 def collect_env_info():

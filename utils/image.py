@@ -316,16 +316,17 @@ def gaussian2D(shape, sigma=1):
     h[h < np.finfo(h.dtype).eps * h.max()] = 0
     return h
 
-def draw_boxes(img, bboxes, file_name=''):
+def draw_boxes(img, bboxes):
     """draw boxes on imgs
 
     Inputs:
         img: [bs, channel, height, width]
-        bboxes: [bs, num_boxes, 4 (x1, y1, x2, y2)]
+        bboxes: [bs, num_boxes, 4 (x1, y1, x2, y2)] in normalized coordinates
 
     Outputs:
     """
     bs = img.size(0)
+    height, width = img.size()[-2:]
     img = img.transpose(1, 3)
     img = img.detach().cpu().numpy()
     img_out = np.zeros_like(img)
@@ -334,7 +335,13 @@ def draw_boxes(img, bboxes, file_name=''):
         img_i = img[i]
         for j in range(num_boxes):
             x1, y1, x2, y2 = bboxes[i][j][:]
-            img_out[i] = cv2.rectangle(img_i, (x1, y1), (x2, y2), (0, 255, 0), 1)
+            x1 *= width
+            x2 *= width
+            y1 *= height
+            y2 *= height
+            img_out[i] = cv2.rectangle(img_i, (int(x1), int(y1)),
+                                       (int(x2), int(y2)), (0, 255, 0), 1)
+
     return img_out
 
 def draw_umich_gaussian(heatmap, center, radius, k=1):

@@ -8,8 +8,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 from utils.anchors import Anchors
+from utils.image import draw_boxes
 from models.losses import FocalLoss, RegL1Loss, RegLoss, RegWeightedL1Loss
-from models.utils import _sigmoid, proposal_layer, roi_align
+from models.utils import _sigmoid, proposal_layer, roi_align, generate_target_gt
 
 
 class PoseLoss(torch.nn.Module):
@@ -102,10 +103,13 @@ class SiamMask(nn.Module):
         self.mask_model = None
         self.o_sz = o_sz
         self.g_sz = g_sz
+        self.output_size = opts.output_size
         self.upSample = nn.UpsamplingBilinear2d(size=[g_sz, g_sz])
         self.kp_criterion = PoseLoss(self.opt)
         self.bs = self.opt.batch
         self.anchors_preprocess()
+
+        self.debug = opts.debug
 
     def anchors_preprocess(self):
         """
@@ -223,21 +227,24 @@ class SiamMask(nn.Module):
 
         proposals = self.proposal_preprocess(rpn_pred_score, rpn_pred_loc)
 
-        normalized_boxes, box_flag = proposal_layer(proposals, self.anchors, args=self.opt)
+        normalized_boxes, boxes_ind, box_flag = proposal_layer(proposals, self.anchors, args=self.opt)
         print('per batch nms boxes shape: ', normalized_boxes.shape)
-        normalized_boxes = normalized_boxes.view(-1, normalized_boxes.size(-1))
+        # normalized_boxes = normalized_boxes.view(-1, normalized_boxes.size(-1))
         # print('normalized bbox: ', normalized_boxes)
         if box_flag:
-            pooled_features = roi_align([normalized_boxes, search_feature], 7)
+            print('p4 feat shape: ', p4_feat.shape)
+            pooled_features = roi_align([normalized_boxes, p4_feat, boxes_ind], 7)
             print('poolded features shape: ', pooled_features.shape)
-            pred_kp = self.kp_model(p4_feat)
+            pred_kp = self.kp_model(pooled_features)
         else:
             pred_kp = torch.zeros(p4_feat.size(0), 17, 56, 56)
         outputs = dict()
 
         outputs['predict'] = [rpn_pred_cls, rpn_pred_loc, pred_kp,
                               template_feature, search_feature, rpn_pred_score, normalized_boxes]
-
+        gt_sample = kp_input['hm_hp']
+        gt_hm_hp = generate_target_gt(gt_sample, normalized_boxes, boxes_ind, self.output_size)
+        print('gt heatmap kp shape: ', gt_hm_hp)
         rpn_loss_cls, rpn_loss_loc = \
             self._add_rpn_loss(label_cls, label_loc, lable_loc_weight, label_mask,
                                rpn_pred_cls, rpn_pred_loc)
@@ -248,6 +255,11 @@ class SiamMask(nn.Module):
             kp_loss_status = {'loss': 0, 'hp_loss': 0,
                   'hm_hp_loss': 0, 'hp_offset_loss': 0}
         outputs['losses'] = [rpn_loss_cls, rpn_loss_loc, kp_loss, kp_loss_status]
+
+        if self.debug:
+            # draw roi boxes on the search images
+            draw_boxes(search, normalized_boxes, boxes_ind)
+
         # outputs['accuracy'] = [iou_acc_mean, iou_acc_5, iou_acc_7]
 
         return outputs

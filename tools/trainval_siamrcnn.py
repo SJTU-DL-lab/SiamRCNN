@@ -70,6 +70,8 @@ parser.add_argument('-s', '--save_dir', default='snapshot', type=str,
                     help='save dir')
 parser.add_argument('--log-dir', default='board', help='TensorBoard log dir')
 # multi_pose
+parser.add_argument('--output_size', default=56, type=int,
+                    help='the output size of pose or mask branch')
 parser.add_argument('--dense_hp', action='store_true',
                          help='apply weighted pose regression near center '
                               'or just apply regression on center point.')
@@ -97,6 +99,7 @@ parser.add_argument('--hp_weight', type=float, default=1,
                              help='loss weight for human pose offset.')
 parser.add_argument('--hm_hp_weight', type=float, default=1,
                              help='loss weight for human keypoint heatmap.')
+parser.add_argument('--debug', action='store_true')
 
 
 
@@ -374,7 +377,7 @@ def validation(val_loader, model, epoch, cfg, avg, num_per_epoch_val):
     with torch.no_grad():
         for iter, input in enumerate(val_loader):
             tb_val_index += iter
-    
+
             data_time = time.time() - end
             avg.update(data_time=data_time)
             x_rpn = {
@@ -389,9 +392,9 @@ def validation(val_loader, model, epoch, cfg, avg, num_per_epoch_val):
             x_kp = input[7]
             x_kp = {x: torch.autograd.Variable(y).cuda() for x, y in x_kp.items()}
             x_rpn['anchors'] = val_loader.dataset.anchors.all_anchors[0]
-    
+
             outputs = model(x_rpn, x_kp)
-    
+
             rpn_cls_loss, rpn_loc_loss, kp_losses = torch.mean(outputs['losses'][0]),\
                                                         torch.mean(outputs['losses'][1]),\
                                                         outputs['losses'][3]
@@ -399,21 +402,21 @@ def validation(val_loader, model, epoch, cfg, avg, num_per_epoch_val):
             kp_hp_loss = torch.mean(kp_losses['hp_loss'])
             kp_hm_hp_loss = torch.mean(kp_losses['hm_hp_loss'])
             kp_hp_offset_loss = torch.mean(kp_losses['hp_offset_loss'])
-    
+
             # mask_iou_mean, mask_iou_at_5, mask_iou_at_7 = torch.mean(outputs['accuracy'][0]), torch.mean(outputs['accuracy'][1]), torch.mean(outputs['accuracy'][2])
-    
+
             cls_weight, reg_weight, kp_weight = cfg['loss']['weight']
-    
+
             loss = rpn_cls_loss * cls_weight + rpn_loc_loss * reg_weight + kp_loss * kp_weight
             siammask_loss = loss.item()
-    
+
             batch_time = time.time() - end
-    
+
             avg.update(batch_time=batch_time, rpn_cls_loss=rpn_cls_loss, rpn_loc_loss=rpn_loc_loss,
                        kp_hp_loss=kp_hp_loss, kp_hm_hp_loss=kp_hm_hp_loss, kp_hp_offset_loss=kp_hp_offset_loss,
                        kp_loss=kp_loss, siammask_loss=siammask_loss)
                        # mask_iou_mean=mask_iou_mean, mask_iou_at_5=mask_iou_at_5, mask_iou_at_7=mask_iou_at_7)
-    
+
             tb_writer.add_scalar('val_loss/cls', rpn_cls_loss, tb_val_index)
             tb_writer.add_scalar('val_loss/loc', rpn_loc_loss, tb_val_index)
             tb_writer.add_scalar('val_loss/kp_hp_loss', kp_hp_loss, tb_val_index)
@@ -421,7 +424,7 @@ def validation(val_loader, model, epoch, cfg, avg, num_per_epoch_val):
             tb_writer.add_scalar('val_loss/kp_hp_offset_loss', kp_hp_offset_loss, tb_val_index)
             # tb_writer.add_scalar('loss/kp', kp_loss, tb_index)
             end = time.time()
-    
+
             if (iter + 1) % args.print_freq == 0:
                 logger.info('Epoch: [{0}][{1}/{2}] Validation:\t{batch_time:s}\t{data_time:s}'
                             '\t{rpn_cls_loss:s}\t{rpn_loc_loss:s}'

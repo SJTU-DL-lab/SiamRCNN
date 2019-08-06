@@ -1,3 +1,7 @@
+# --------------------------------------------------------
+# Licensed under The MIT License
+# Written by Shunyu Yao (ysy at sjtu.edu.cn)
+# --------------------------------------------------------
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -194,14 +198,14 @@ def proposal_layer(inputs, anchors, thresh=0.5, args=None):
     # scores = scores.transpose(1, 3).contiguous().view(-1)
     scores = inputs[0]
     deltas = inputs[1]
-    # boxes_out = []
-    # box_ind = []
+    boxes_out = []
+    boxes_ind = []
     # kps = inputs[2]
-    max_rois = args.max_rois
+    # max_rois = args.max_rois
     gpu_count = torch.cuda.device_count()
     bs = args.batch // gpu_count
-    boxes_out = np.zeros((bs, max_rois, 4))
-    box_ind = np.ones(bs, max_rois) * -1
+    # boxes_out = np.zeros((bs, max_rois, 4))
+    # box_ind = np.ones(bs, max_rois) * -1
     # total_anchors = scores.size(1) // bs
     for i in range(bs):
         pos_ix = torch.nonzero(scores[i] > thresh).squeeze()
@@ -251,40 +255,47 @@ def proposal_layer(inputs, anchors, thresh=0.5, args=None):
         # print('scores shape: ', scores.shape)
         print('before nms boxes shape: ', boxes.shape)
         keep = nms(torch.cat((boxes, scores_i.unsqueeze(1)), 1).data, nms_threshold)
-        num_keep = len(keep)
-        if num_keep > max_rois:
-            keep = keep[:max_rois]
-        print('keep length: ', num_keep)
+        # num_keep = len(keep)
+        # if num_keep > max_rois:
+        #     keep = keep[:max_rois]
+        # print('keep length: ', num_keep)
         boxes = boxes[keep, :]
-        ind_start = i * max_rois
-        boxes_out[i, ind_start:num_keep] = boxes
-        box_ind[i, ind_start:num_keep] = i
+        boxes_out.append(boxes)
+        boxes_ind.append(i)
+        # ind_start = i * max_rois
+        # boxes_out[i, ind_start:num_keep] = boxes
+        # box_ind[i, ind_start:num_keep] = i
         # select_bs = keep // total_anchors
         # kps_i = torch.index_select(kps, 0, select_bs)
 
-    # boxes = torch.cat(boxes_out, 0)
-    boxes = boxes_out
+    boxes = torch.cat(boxes_out, 0)
+    boxes_ind = torch.Tensor(boxes_ind)
     # Normalize dimensions to range of 0 to 1.
     norm = Variable(torch.from_numpy(np.array([height, width, height, width])).float(), requires_grad=False)
     norm = norm.cuda()
     normalized_boxes = boxes / norm
 
-    return normalized_boxes, True
+    return normalized_boxes, boxes_ind, True
 
-def generate_target(rois_boxes, gt_kps=None, gt_masks=None):
+
+def generate_target_gt(gt_sample, boxes, boxes_ind, pool_size):
     """Generates target masks, keypoints according to ROIs
 
     Inputs:
-    - rois_boxes: [num_rois, 4, (x1, y1, x2, y2)] in normalized coordinates
-    - gt_kps: [bs, num_keypoints, height, width]
-    - gt_masks: [?, channel, height, width]
+        - gt_sample: gt_kps of [bs, num_keypoints, height, width] or
+        - boxes: [num_rois, 4, (x1, y1, x2, y2)] in normalized coordinates, roi boxes
+        - boxes_ind: [num_rois] indicate batch id of boxes
 
     Returns:
-    target_kp:
-    target_mask:
+        target_gt: [num_rois, channels, height, width]
     """
-    if not gt_kps and not gt_masks:
-        raise Exception('Ground truth keypoints and ground truth masks can not both be empty!')
+    gt_sample = torch.index_select(gt_sample, 0, boxes_ind)
+    x1, y1, x2, y2 = boxes.chunk(4, dim=1)
+    boxes = torch.cat([y1, x1, y2, x2], dim=1).detach().contiguous()
+    boxes_ind = boxes_ind.cuda().detach()
+    target_gt = CropAndResizeFunction(pool_size, pool_size,
+                                      0)(gt_sample, boxes, boxes_ind)
+    return target_gt
 
 
 def roi_align(inputs, pool_size):
@@ -299,6 +310,7 @@ def roi_align(inputs, pool_size):
              coordinates.
     - Feature maps: feature map from a single feature map.
                     Each is [batch, channels, height, width]
+    - boxes_ind: [num_boxes], each represents the batch id of the box
 
     Output:
     Pooled regions in the shape: [num_boxes, height, width, channels].
@@ -314,21 +326,23 @@ def roi_align(inputs, pool_size):
     # Feature Maps.
     # feature pyramid. Each is [batch, height, width, channels]
     feature_maps = inputs[1]
+    boxes_ind = inputs[3]
 
     # Assign each ROI to a level in the pyramid based on the ROI area.
     x1, y1, x2, y2 = boxes.chunk(4, dim=1)
     # h = y2 - y1
     # w = x2 - x1
-    boxes = torch.cat([y1, x1, y2, x2], dim=1)
+    boxes = torch.cat([y1, x1, y2, x2], dim=1).detach().contiguous()
+    boxes_ind = boxes_ind.cuda().detach()
     # ind = torch.zeros(boxes.size()[0]).int().detach()
-    ind = Variable(torch.arange(boxes.size()[0]), requires_grad=False).int() # .cuda()
-    ind = ind.cuda()
+    # ind = Variable(torch.arange(boxes.size()[0]), requires_grad=False).int() # .cuda()
+    # ind = ind.cuda()
 
     # print('boxes before shape: ', boxes.shape, boxes)
     # print('featmap shape: ', feature_maps.shape, feature_maps)
     # print('ind shape: ', ind.shape, ind)
     pooled_features = CropAndResizeFunction(pool_size, pool_size,
-                                            0)(feature_maps, boxes, ind)
+                                            0)(feature_maps, boxes, boxes_ind)
 
     # Equation 1 in the Feature Pyramid Networks paper. Account for
     # the fact that our coordinates are normalized here.
