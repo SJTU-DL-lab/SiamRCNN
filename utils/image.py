@@ -316,31 +316,33 @@ def gaussian2D(shape, sigma=1):
     h[h < np.finfo(h.dtype).eps * h.max()] = 0
     return h
 
-def draw_boxes(img, bboxes):
+def draw_boxes(img, bboxes, boxes_ind):
     """draw boxes on imgs
 
     Inputs:
         img: [bs, channel, height, width]
-        bboxes: [bs, num_boxes, 4 (x1, y1, x2, y2)] in normalized coordinates
+        bboxes: [num_boxes, 4 (x1, y1, x2, y2)] in normalized coordinates
+        boxes_ind: [num_boxes]
 
     Outputs:
     """
-    bs = img.size(0)
     height, width = img.size()[-2:]
+
+    bboxes = bboxes.cpu().detach().numpy()
     img = img.transpose(1, 3)
+    img = torch.index_select(img, 0, boxes_ind.long())
+    num_rois = img.size(0)
     img = img.detach().cpu().numpy()
     img_out = np.zeros_like(img)
-    for i in range(bs):
-        num_boxes = bboxes.shape[1]
+    for i in range(num_rois):
         img_i = img[i]
-        for j in range(num_boxes):
-            x1, y1, x2, y2 = bboxes[i][j][:]
-            x1 *= width
-            x2 *= width
-            y1 *= height
-            y2 *= height
-            img_out[i] = cv2.rectangle(img_i, (int(x1), int(y1)),
-                                       (int(x2), int(y2)), (0, 255, 0), 1)
+        x1, y1, x2, y2 = bboxes[i, :]
+        x1 *= width
+        x2 *= width
+        y1 *= height
+        y2 *= height
+        img_out[i] = cv2.rectangle(img_i, (int(x1), int(y1)),
+                                   (int(x2), int(y2)), (0, 255, 0), 1)
 
     return img_out
 
