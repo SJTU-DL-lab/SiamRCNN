@@ -328,10 +328,15 @@ def draw_boxes(img, bboxes, file_name=''):
     bs = img.size(0)
     img = img.transpose(1, 3)
     img = img.detach().cpu().numpy()
+    img_out = np.zeros_like(img)
     for i in range(bs):
-        num_boxes = 
-        for j
-        img = cv2.rectangle(img, (x1, y1))
+        num_boxes = bboxes.shape[1]
+        img_i = img[i]
+        for j in range(num_boxes):
+            x1, y1, x2, y2 = bboxes[i][j][:]
+            img_out[i] = cv2.rectangle(img_i, (x1, y1), (x2, y2), (0, 255, 0), 1)
+    return img_out
+
 def draw_umich_gaussian(heatmap, center, radius, k=1):
   diameter = 2 * radius + 1
   gaussian = gaussian2D((diameter, diameter), sigma=diameter / 6)

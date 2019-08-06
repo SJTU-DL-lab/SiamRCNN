@@ -70,6 +70,7 @@ class ResDown(MultiStageFeature):
         p4 = self.downsample_p4(output[-1])
         return p3, p4
 
+
 class UP(RPN):
     def __init__(self, anchor_num=5, feature_in=256, feature_out=256):
         super(UP, self).__init__()
@@ -88,6 +89,7 @@ class UP(RPN):
         cls = self.cls(z_f, x_f)
         loc = self.loc(z_f, x_f)
         return cls, loc
+
 
 class Center_pose_head(nn.Module):
     def __init__(self, head_conv=256):
@@ -197,6 +199,7 @@ class Center_pose_head(nn.Module):
             params = [v for k, v in self.named_parameters() if (key in k) and v.requires_grad]
         params = [{'params': params, 'lr': start_lr * feature_mult}]
         return params
+
 
 class KpCorr(Mask):
     def __init__(self):

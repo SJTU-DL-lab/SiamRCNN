@@ -194,10 +194,14 @@ def proposal_layer(inputs, anchors, thresh=0.5, args=None):
     # scores = scores.transpose(1, 3).contiguous().view(-1)
     scores = inputs[0]
     deltas = inputs[1]
-    boxes_out = []
+    # boxes_out = []
+    # box_ind = []
     # kps = inputs[2]
+    max_rois = args.max_rois
     gpu_count = torch.cuda.device_count()
     bs = args.batch // gpu_count
+    boxes_out = np.zeros((bs, max_rois, 4))
+    box_ind = np.ones(bs, max_rois) * -1
     # total_anchors = scores.size(1) // bs
     for i in range(bs):
         pos_ix = torch.nonzero(scores[i] > thresh).squeeze()
@@ -247,13 +251,19 @@ def proposal_layer(inputs, anchors, thresh=0.5, args=None):
         # print('scores shape: ', scores.shape)
         print('before nms boxes shape: ', boxes.shape)
         keep = nms(torch.cat((boxes, scores_i.unsqueeze(1)), 1).data, nms_threshold)
-        print('keep length: ', len(keep))
-        boxes = boxes[keep, :].unsqueeze(0)
-        boxes_out.append(boxes)
+        num_keep = len(keep)
+        if num_keep > max_rois:
+            keep = keep[:max_rois]
+        print('keep length: ', num_keep)
+        boxes = boxes[keep, :]
+        ind_start = i * max_rois
+        boxes_out[i, ind_start:num_keep] = boxes
+        box_ind[i, ind_start:num_keep] = i
         # select_bs = keep // total_anchors
         # kps_i = torch.index_select(kps, 0, select_bs)
 
-    boxes = torch.cat(boxes_out, 0)
+    # boxes = torch.cat(boxes_out, 0)
+    boxes = boxes_out
     # Normalize dimensions to range of 0 to 1.
     norm = Variable(torch.from_numpy(np.array([height, width, height, width])).float(), requires_grad=False)
     norm = norm.cuda()
