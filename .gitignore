@@ -21,7 +21,6 @@ ytb_vos/
 vis_output/
 
 # debug
-debug/
 
 # log
 siampose_ct
