@@ -316,6 +316,22 @@ def gaussian2D(shape, sigma=1):
     h[h < np.finfo(h.dtype).eps * h.max()] = 0
     return h
 
+def draw_boxes(img, bboxes, file_name=''):
+    """draw boxes on imgs
+
+    Inputs:
+        img: [bs, channel, height, width]
+        bboxes: [bs, num_boxes, 4 (x1, y1, x2, y2)]
+
+    Outputs:
+    """
+    bs = img.size(0)
+    img = img.transpose(1, 3)
+    img = img.detach().cpu().numpy()
+    for i in range(bs):
+        num_boxes = 
+        for j
+        img = cv2.rectangle(img, (x1, y1))
 def draw_umich_gaussian(heatmap, center, radius, k=1):
   diameter = 2 * radius + 1
   gaussian = gaussian2D((diameter, diameter), sigma=diameter / 6)
