@@ -261,7 +261,7 @@ def proposal_layer(inputs, anchors, thresh=0.5, args=None):
         # print('keep length: ', num_keep)
         boxes = boxes[keep, :]
         boxes_out.append(boxes)
-        boxes_ind.append(i)
+        boxes_ind.extend([i] * len(keep))
         # ind_start = i * max_rois
         # boxes_out[i, ind_start:num_keep] = boxes
         # box_ind[i, ind_start:num_keep] = i

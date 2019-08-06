@@ -23,19 +23,21 @@ class PoseLoss(torch.nn.Module):
             RegLoss() if opt.reg_loss == 'sl1' else None
         self.opt = opt
 
-    def forward(self, outputs, batch):
+    def forward(self, outputs, batch, ind):
         opt = self.opt
         hp_loss, hm_hp_loss, hp_offset_loss = 0, 0, 0
         output = outputs[0]
-        bs = output['hps'].size(0)
-        bs_hm_hp = output['hm_hp'].size(0)
-        batch['hps_mask'] = batch['hps_mask'].expand(bs, -1)
-        batch['ind'] = batch['ind'].expand(bs, -1)
-        batch['hps'] = batch['hps'].expand(bs, -1)
-        batch['hp_mask'] = batch['hp_mask'].expand(bs, -1)
-        batch['hp_ind'] = batch['hp_ind'].expand(bs, -1)
-        batch['hp_offset'] = batch['hp_offset'].expand(bs, -1, -1)
-        batch['hm_hp'] = batch['hm_hp'].expand(bs_hm_hp, -1, -1, -1)
+        ind = ind.long()
+        batch['hps_mask'] = batch['hps_mask'].index_select(0, ind)
+        batch['ind'] = batch['ind'].index_select(0, ind)
+        batch['hps'] = batch['hps'].index_select(0, ind)
+        batch['hp_mask'] = batch['hp_mask'].index_select(0, ind)
+        batch['hp_ind'] = batch['hp_ind'].index_select(0, ind)
+        batch['hp_offset'] = batch['hp_offset'].index_select(0, ind)
+        print('hps_mask shape: {}, ind shape: {} , hps shape: {}'.format(batch['hps_mask'].shape,
+               batch['ind'].shape, batch['hps'].shape))
+        print('output hps shape: ', output['hps'].shape)
+        # batch['hm_hp'] = batch['hm_hp'].expand(bs_hm_hp, -1, -1, -1)
         if opt.hm_hp and not opt.mse_loss:
             output['hm_hp'] = _sigmoid(output['hm_hp'])
 
@@ -251,7 +253,7 @@ class SiamMask(nn.Module):
             self._add_rpn_loss(label_cls, label_loc, lable_loc_weight, label_mask,
                                rpn_pred_cls, rpn_pred_loc)
         if box_flag:
-            kp_loss, kp_loss_status = self.kp_criterion(pred_kp, kp_input)
+            kp_loss, kp_loss_status = self.kp_criterion(pred_kp, kp_input, boxes_ind)
         else:
             kp_loss = 0
             kp_loss_status = {'loss': 0, 'hp_loss': 0,
