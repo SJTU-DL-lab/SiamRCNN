@@ -169,7 +169,7 @@ class ResNet(nn.Module):
             self.layer3 = lambda x:x # identity
 
         if layer4:
-            self.layer4 = self._make_layer(block, 512, layers[3], stride=1, dilation=1) # 7x7, 3x3
+            self.layer4 = self._make_layer(block, 512, layers[3], stride=1, dilation=4) # 7x7, 3x3
             self.feature_size = 512 * block.expansion
         else:
             self.layer4 = lambda x:x  # identity

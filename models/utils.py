@@ -269,7 +269,7 @@ def proposal_layer(inputs, anchors, thresh=0.5, args=None):
         # kps_i = torch.index_select(kps, 0, select_bs)
 
     boxes = torch.cat(boxes_out, 0)
-    boxes_ind = torch.Tensor(boxes_ind)
+    boxes_ind = torch.Tensor(boxes_ind).cuda()
     # Normalize dimensions to range of 0 to 1.
     norm = Variable(torch.from_numpy(np.array([height, width, height, width])).float(), requires_grad=False)
     norm = norm.cuda()
@@ -289,10 +289,10 @@ def generate_target_gt(gt_sample, boxes, boxes_ind, pool_size):
     Returns:
         target_gt: [num_rois, channels, height, width]
     """
-    gt_sample = torch.index_select(gt_sample, 0, boxes_ind)
+    gt_sample = torch.index_select(gt_sample, 0, boxes_ind.long())
     x1, y1, x2, y2 = boxes.chunk(4, dim=1)
     boxes = torch.cat([y1, x1, y2, x2], dim=1).detach().contiguous()
-    boxes_ind = boxes_ind.cuda().detach()
+    boxes_ind = boxes_ind.cuda().int().detach()
     target_gt = CropAndResizeFunction(pool_size, pool_size,
                                       0)(gt_sample, boxes, boxes_ind)
     return target_gt
@@ -326,14 +326,14 @@ def roi_align(inputs, pool_size):
     # Feature Maps.
     # feature pyramid. Each is [batch, height, width, channels]
     feature_maps = inputs[1]
-    boxes_ind = inputs[3]
+    boxes_ind = inputs[2]
 
     # Assign each ROI to a level in the pyramid based on the ROI area.
     x1, y1, x2, y2 = boxes.chunk(4, dim=1)
     # h = y2 - y1
     # w = x2 - x1
     boxes = torch.cat([y1, x1, y2, x2], dim=1).detach().contiguous()
-    boxes_ind = boxes_ind.cuda().detach()
+    boxes_ind = boxes_ind.int().detach()
     # ind = torch.zeros(boxes.size()[0]).int().detach()
     # ind = Variable(torch.arange(boxes.size()[0]), requires_grad=False).int() # .cuda()
     # ind = ind.cuda()
