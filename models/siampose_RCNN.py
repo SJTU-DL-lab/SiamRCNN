@@ -244,7 +244,8 @@ class SiamMask(nn.Module):
                               template_feature, search_feature, rpn_pred_score, normalized_boxes]
         gt_sample = kp_input['hm_hp']
         gt_hm_hp = generate_target_gt(gt_sample, normalized_boxes, boxes_ind, self.output_size)
-        print('gt heatmap kp shape: ', gt_hm_hp)
+        print('gt heatmap kp shape: ', gt_hm_hp.shape)
+        kp_input['hm_hp'] = gt_hm_hp
         rpn_loss_cls, rpn_loss_loc = \
             self._add_rpn_loss(label_cls, label_loc, lable_loc_weight, label_mask,
                                rpn_pred_cls, rpn_pred_loc)
