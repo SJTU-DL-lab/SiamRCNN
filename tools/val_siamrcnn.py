@@ -19,7 +19,7 @@ from torch.autograd import Variable
 from utils.log_helper import init_log, add_file_handler
 from utils.load_helper import load_pretrain, restore_from
 from utils.average_meter_helper import AverageMeter
-from utils.image import save_gt_pred_heatmaps
+from utils.image import save_gt_pred_heatmaps, save_batch_resized_heatmaps
 from utils.pose_evaluate import accuracy
 
 from datasets.siam_rcnn_dataset import DataSets
@@ -230,7 +230,9 @@ def validation(val_loader, model, cfg, avg):
             batch_time = time.time() - end
 
             if args.debug:
-                box_imgs, roi_imgs = outputs['debug']
+                box_imgs, roi_imgs, feat_imgs = outputs['debug']
+                gt_img, pred_img = save_batch_resized_heatmaps(roi_imgs.transpose(1, 3),
+                                                               feat_imgs, 'debug/feat_{}.jpg'.format(iter))
                 box_imgs = box_imgs.transpose(1, 2).int().cpu().detach().numpy()
                 roi_imgs = roi_imgs.transpose(1, 2).int().cpu().detach().numpy()
                 for img_id in range(box_imgs.shape[0]):
