@@ -265,9 +265,10 @@ class SiamMask(nn.Module):
             if box_flag:
                 roi_imgs = roi_align([normalized_boxes, search, boxes_ind], 56)
                 roi_imgs = roi_imgs.transpose(1, 3)
+                feat_imgs = gt_hm_hp
             else:
                 roi_imgs = None
-            outputs['debug'] = [torch.from_numpy(box_imgs).cuda(), roi_imgs]
+            outputs['debug'] = [torch.from_numpy(box_imgs).cuda(), roi_imgs, feat_imgs]
 
         # outputs['accuracy'] = [iou_acc_mean, iou_acc_5, iou_acc_7]
 
