@@ -20,9 +20,10 @@ mkdir -p logs
 
 python -u $ROOT/tools/trainval_siamrcnn.py \
     --config=config.json -b 48 \
-    --resume ./snapshot/checkpoint_e3.pth \
-    -j 8 --save_freq 2 \
-    --epochs 200 --hm_hp_weight 20 \
+    -j 8 --save_freq 10 \
+    --pretrained snapshot_full_img/checkpoint_e88.pth \
+    --epochs 200 --hm_hp_weight 100 \
+    --mse_loss \
     --log-dir board/show \
     --log logs/log.txt \
     2>&1 | tee logs/train.log

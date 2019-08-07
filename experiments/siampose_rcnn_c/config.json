@@ -25,7 +25,7 @@
         "datasets": {
             "coco": {
                 "root": "../../data/coco/crop_pose",
-                "anno": "../../data/coco/train2017_pose_siamfc.json",
+                "anno": "../../data/coco/val2017_pose_siamfc.json",
                 "frame_range": 1
             }
         },
@@ -33,7 +33,7 @@
         "search_size": 255,
         "base_size": 8,
         "size": 25,
-        "RPN_NMS": 0.2,
+        "RPN_NMS": 0.1,
 
         "augmentation": {
             "template": {
@@ -59,7 +59,7 @@
         "search_size": 255,
         "base_size": 8,
         "size": 25,
-        "RPN_NMS": 0.2,
+        "RPN_NMS": 0.1,
 
         "augmentation": {
             "template": {

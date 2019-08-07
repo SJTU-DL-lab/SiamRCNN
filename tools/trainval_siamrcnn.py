@@ -268,7 +268,7 @@ def main():
                 os.path.join(args.save_dir, 'checkpoint_e%d.pth' % (epoch)),
                 os.path.join(args.save_dir, 'best.pth'))
 
-            validation(val_loader, dist_model, epoch, cfg, val_avg, num_per_epoch_val)
+            # validation(val_loader, dist_model, epoch, cfg, val_avg, num_per_epoch_val)
 
 
 def BNtoFixed(m):
@@ -283,6 +283,9 @@ def train(train_loader, model, optimizer, lr_scheduler, epoch, cfg, avg, num_per
     end = time.time()
     cur_lr = lr_scheduler.get_cur_lr()
     model.train()
+    
+    model.module.rpn_model.eval()
+    model.module.kp_model.train()
 
     logger.info('val epoch:{}'.format(epoch))
 
@@ -319,7 +322,7 @@ def train(train_loader, model, optimizer, lr_scheduler, epoch, cfg, avg, num_per
         kp_hp_offset_loss = torch.mean(kp_losses['hp_offset_loss'])
 
         # mask_iou_mean, mask_iou_at_5, mask_iou_at_7 = torch.mean(outputs['accuracy'][0]), torch.mean(outputs['accuracy'][1]), torch.mean(outputs['accuracy'][2])
-        kp_avg_acc = outputs['accuracy'][1]
+        kp_avg_acc = torch.mean(outputs['accuracy'][1])
 
         cls_weight, reg_weight, kp_weight = cfg['loss']['weight']
 
@@ -406,7 +409,7 @@ def validation(val_loader, model, epoch, cfg, avg, num_per_epoch_val):
             kp_hp_offset_loss = torch.mean(kp_losses['hp_offset_loss'])
 
             # mask_iou_mean, mask_iou_at_5, mask_iou_at_7 = torch.mean(outputs['accuracy'][0]), torch.mean(outputs['accuracy'][1]), torch.mean(outputs['accuracy'][2])
-            kp_avg_acc = outputs['accuracy'][1]
+            kp_avg_acc = torch.mean(outputs['accuracy'][1])
 
             cls_weight, reg_weight, kp_weight = cfg['loss']['weight']
 
@@ -437,7 +440,7 @@ def validation(val_loader, model, epoch, cfg, avg, num_per_epoch_val):
                             epoch+1, (iter + 1) % num_per_epoch_val, num_per_epoch_val, batch_time=avg.batch_time,
                             data_time=avg.data_time, rpn_cls_loss=avg.rpn_cls_loss, rpn_loc_loss=avg.rpn_loc_loss,
                             kp_hp_loss=avg.kp_hp_loss, kp_hm_hp_loss=avg.kp_hm_hp_loss, kp_hp_offset_loss=avg.kp_hp_offset_loss,
-                            kp_loss=avg.kp_loss, siammask_loss=avg.siammask_loss))
+                            kp_loss=avg.kp_loss, siammask_loss=avg.siammask_loss, kp_avg_acc=avg.kp_avg_acc))
                             # mask_iou_mean=avg.mask_iou_mean,
                             # mask_iou_at_5=avg.mask_iou_at_5,mask_iou_at_7=avg.mask_iou_at_7))
                 print_speed(iter + 1, avg.batch_time.avg, args.epochs * num_per_epoch_val)

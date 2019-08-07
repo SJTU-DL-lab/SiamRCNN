@@ -22,6 +22,7 @@ vis_output/
 
 # debug
 debug/
+output/
 
 # log
 siampose_ct
