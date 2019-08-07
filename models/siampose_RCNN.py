@@ -260,8 +260,8 @@ class SiamMask(nn.Module):
         pred_hm = pred_kp[0]['hm_hp'].detach().cpu().numpy()
         gt_hm = kp_input['hm_hp'].detach().cpu().numpy()
         pck = accuracy(pred_hm, gt_hm)
-        acc = pck[0]
-        avg_acc = pck[1]
+        acc = torch.Tensor(pck[0]).float().cuda()
+        avg_acc = torch.Tensor(pck[1]).float().cuda()
         outputs['accuracy'] = [acc, avg_acc]
 
         if box_flag:

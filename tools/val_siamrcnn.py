@@ -211,6 +211,7 @@ def validation(val_loader, model, cfg, avg):
             outputs = model(x_rpn, x_kp)
 
             pred_kp = outputs['predict'][2][0]['hm_hp']
+            kp_avg_acc = outputs['accuracy'][1]
 
             # print('pred kp shape: ', pred_kp.shape)
             # batch_img = x_rpn['search'].expand(x_kp['hm_hp'].size(0), -1, -1, -1)
@@ -235,7 +236,7 @@ def validation(val_loader, model, cfg, avg):
                 grid_img, resized_img = save_batch_resized_heatmaps(roi_imgs.transpose(1, 3),
                                                                     hp_imgs, 'debug/feat_{}.jpg'.format(iter))
                 cv2.imwrite('debug/heatmap_{}.jpg'.format(iter), grid_img)
-                
+
                 grid_img, resized_img = save_batch_resized_heatmaps(roi_imgs.transpose(1, 3),
                                                                     pred_kp, 'debug/pred_hm_{}.jpg'.format(iter))
                 cv2.imwrite('debug/heatmap_{}.jpg'.format(iter), grid_img)
@@ -251,7 +252,7 @@ def validation(val_loader, model, cfg, avg):
 
             avg.update(batch_time=batch_time, rpn_cls_loss=rpn_cls_loss, rpn_loc_loss=rpn_loc_loss,
                        kp_hp_loss=kp_hp_loss, kp_hm_hp_loss=kp_hm_hp_loss, kp_hp_offset_loss=kp_hp_offset_loss,
-                       kp_loss=kp_loss, siammask_loss=siammask_loss)
+                       kp_loss=kp_loss, siammask_loss=siammask_loss, kp_avg_acc=kp_avg_acc)
 
             end = time.time()
 
@@ -259,11 +260,12 @@ def validation(val_loader, model, cfg, avg):
                 logger.info('Validation: [{0}/{1}]\t{batch_time:s}\t{data_time:s}'
                             '\t{rpn_cls_loss:s}\t{rpn_loc_loss:s}'
                             '\t{kp_hp_loss:s}\t{kp_hm_hp_loss:s}\t{kp_hp_offset_loss:s}'
-                            '\t{kp_loss:s}\t{siammask_loss:s}'.format(
+                            '\t{kp_loss:s}\t{siammask_loss:s}'
+                            '\t{kp_avg_acc:s}'.format(
                                 iter, num_per_epoch, batch_time=avg.batch_time, data_time=avg.data_time,
                                 rpn_cls_loss=avg.rpn_cls_loss, rpn_loc_loss=avg.rpn_loc_loss,
                                 kp_hp_loss=avg.kp_hp_loss, kp_hm_hp_loss=avg.kp_hm_hp_loss, kp_hp_offset_loss=avg.kp_hp_offset_loss,
-                                kp_loss=avg.kp_loss, siammask_loss=avg.siammask_loss))
+                                kp_loss=avg.kp_loss, siammask_loss=avg.siammask_loss, kp_avg_acc=avg.kp_avg_acc))
 
 
 def save_checkpoint(state, is_best, filename='checkpoint.pth', best_file='model_best.pth'):
