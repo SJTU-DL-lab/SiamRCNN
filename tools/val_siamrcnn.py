@@ -230,15 +230,16 @@ def validation(val_loader, model, cfg, avg):
             batch_time = time.time() - end
 
             if args.debug:
-                box_imgs, roi_imgs, feat_imgs = outputs['debug']
-                gt_img, pred_img = save_batch_resized_heatmaps(roi_imgs.transpose(1, 3),
-                                                               feat_imgs, 'debug/feat_{}.jpg'.format(iter))
-                box_imgs = box_imgs.transpose(1, 2).int().cpu().detach().numpy()
-                roi_imgs = roi_imgs.transpose(1, 2).int().cpu().detach().numpy()
-                for img_id in range(box_imgs.shape[0]):
-                    cv2.imwrite('./debug/box_img{}_{}.png'.format(iter, img_id), box_imgs[img_id])
-                for img_id in range(len(roi_imgs)):
-                    cv2.imwrite('./debug/roi_img{}_{}.png'.format(iter, img_id), roi_imgs[img_id])
+                box_imgs, roi_imgs, hp_imgs = outputs['debug']
+                grid_img, resized_img = save_batch_resized_heatmaps(roi_imgs.transpose(1, 3),
+                                                                    hp_imgs, 'debug/feat_{}.jpg'.format(iter))
+                cv2.imwrite('debug/heatmap_{}.jpg'.format(iter), grid_img)
+                # box_imgs = box_imgs.transpose(1, 2).int().cpu().detach().numpy()
+                # roi_imgs = roi_imgs.transpose(1, 2).int().cpu().detach().numpy()
+                # for img_id in range(box_imgs.shape[0]):
+                #     cv2.imwrite('./debug/box_img{}_{}.png'.format(iter, img_id), box_imgs[img_id])
+                # for img_id in range(len(roi_imgs)):
+                #     cv2.imwrite('./debug/roi_img{}_{}.png'.format(iter, img_id), roi_imgs[img_id])
 
             avg.update(batch_time=batch_time, rpn_cls_loss=rpn_cls_loss, rpn_loc_loss=rpn_loc_loss,
                        kp_hp_loss=kp_hp_loss, kp_hm_hp_loss=kp_hm_hp_loss, kp_hp_offset_loss=kp_hp_offset_loss,

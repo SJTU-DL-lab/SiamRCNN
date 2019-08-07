@@ -243,12 +243,16 @@ class SiamMask(nn.Module):
             kp_input['hm_hp'] = gt_hm_hp
         else:
             print('no box flag')
-            pred_kp = torch.zeros(p4_feat.size(0), 17, 56, 56)
+            # 'hps': 34, 'hm_hp': 17, 'hp_offset': 2
+            pred_hm_hp = torch.zeros(p4_feat.size(0), 17, 56, 56)
+            pred_hps = torch.zeros(p4_feat.size(0), 34, 56, 56)
+            pred_hp_offset = torch.zeros(p4_feat.size(0), 2, 56, 56)
+            pred_kp = {'hps': pred_hps, 'hm_hp': pred_hm_hp, 'hp_offset': pred_hp_offset}
         outputs = dict()
 
         outputs['predict'] = [rpn_pred_cls, rpn_pred_loc, pred_kp,
                               template_feature, search_feature, rpn_pred_score, normalized_boxes]
-        
+
         rpn_loss_cls, rpn_loss_loc = \
             self._add_rpn_loss(label_cls, label_loc, lable_loc_weight, label_mask,
                                rpn_pred_cls, rpn_pred_loc)
@@ -266,10 +270,10 @@ class SiamMask(nn.Module):
             if box_flag:
                 roi_imgs = roi_align([normalized_boxes, search, boxes_ind], 56)
                 roi_imgs = roi_imgs.transpose(1, 3)
-                feat_imgs = gt_hm_hp
+                hp_imgs = gt_hm_hp
             else:
                 roi_imgs = None
-            outputs['debug'] = [torch.from_numpy(box_imgs).cuda(), roi_imgs, feat_imgs]
+            outputs['debug'] = [torch.from_numpy(box_imgs).cuda(), roi_imgs, hp_imgs]
 
         # outputs['accuracy'] = [iou_acc_mean, iou_acc_5, iou_acc_7]
         return outputs
