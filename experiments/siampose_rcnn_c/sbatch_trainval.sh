@@ -19,10 +19,11 @@ export PYTHONPATH=$ROOT:$PYTHONPATH
 mkdir -p logs
 
 python -u $ROOT/tools/trainval_siamrcnn.py \
-    --config=config.json -b 24 \
-    --resume ./snapshot/checkpoint_e90.pth \
-    -j 4 --save_freq 2 \
-    --epochs 200 \
+    --config=config.json -b 48 \
+    --pretrained ./snapshot_full_img/checkpoint_e90.pth \
+    -j 8 --save_freq 2 \
+    --epochs 200 --hm_hp_weight 20 \
+    --log-dir board/show \
     --log logs/log.txt \
     2>&1 | tee logs/train.log
 

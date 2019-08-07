@@ -238,16 +238,17 @@ class SiamMask(nn.Module):
             pooled_features = roi_align([normalized_boxes, p4_feat, boxes_ind], 7)
             # print('poolded features shape: ', pooled_features.shape)
             pred_kp = self.kp_model(pooled_features)
+            gt_sample = kp_input['hm_hp']
+            gt_hm_hp = generate_target_gt(gt_sample, normalized_boxes, boxes_ind, self.output_size)
+            kp_input['hm_hp'] = gt_hm_hp
         else:
+            print('no box flag')
             pred_kp = torch.zeros(p4_feat.size(0), 17, 56, 56)
         outputs = dict()
 
         outputs['predict'] = [rpn_pred_cls, rpn_pred_loc, pred_kp,
                               template_feature, search_feature, rpn_pred_score, normalized_boxes]
-        gt_sample = kp_input['hm_hp']
-        gt_hm_hp = generate_target_gt(gt_sample, normalized_boxes, boxes_ind, self.output_size)
-        # print('gt heatmap kp shape: ', gt_hm_hp.shape)
-        kp_input['hm_hp'] = gt_hm_hp
+        
         rpn_loss_cls, rpn_loss_loc = \
             self._add_rpn_loss(label_cls, label_loc, lable_loc_weight, label_mask,
                                rpn_pred_cls, rpn_pred_loc)
@@ -270,7 +271,6 @@ class SiamMask(nn.Module):
             outputs['debug'] = [torch.from_numpy(box_imgs).cuda(), roi_imgs]
 
         # outputs['accuracy'] = [iou_acc_mean, iou_acc_5, iou_acc_7]
-
         return outputs
 
     def template(self, z):

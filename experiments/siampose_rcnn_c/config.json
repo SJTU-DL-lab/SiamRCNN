@@ -51,7 +51,7 @@
         "datasets": {
             "coco": {
                 "root": "../../data/coco/crop_pose",
-                "anno": "../../data/coco/train2017_pose_siamfc.json",
+                "anno": "../../data/coco/val2017_pose_siamfc.json",
                 "frame_range": 1
             }
         },

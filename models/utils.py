@@ -212,7 +212,7 @@ def proposal_layer(inputs, anchors, thresh=0.5, args=None):
 
         if pos_ix.size(0) == 0:
             # print('no positive ix')
-            return None, False
+            return None, None, False
             # print('positive ix')
 
         # Box deltas [batch, num_rois, 4]
