@@ -184,7 +184,8 @@ def save_batch_resized_heatmaps(batch_image, batch_heatmaps, file_name,
         # print('brefore:', grid_image.shape)
         grid_image = copy.deepcopy(grid_image[:, :, ::-1])
         # print('after:', grid_image)
-        out_image = toTensor(grid_image)
+        # out_image = toTensor(grid_image)
+        out_image = grid_image
         if save is True:
             cv2.imwrite(file_name, resized_image)
 

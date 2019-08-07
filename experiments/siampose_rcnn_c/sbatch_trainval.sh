@@ -6,7 +6,7 @@
 #SBATCH --nodelist=node5
 #SBATCH --gres=gpu:4
 date
-module load anaconda3/5.3.0 cuda/9.0 cudnn/7.3.0
+module load anaconda2/5.3.0 cuda/9.0 cudnn/7.3.0
 source activate pytorch0.4
 
 # ROOT=/cluster/home/it_stu2/SiamPose
@@ -20,7 +20,7 @@ mkdir -p logs
 
 python -u $ROOT/tools/trainval_siamrcnn.py \
     --config=config.json -b 48 \
-    --pretrained ./snapshot_full_img/checkpoint_e90.pth \
+    --resume ./snapshot/checkpoint_e3.pth \
     -j 8 --save_freq 2 \
     --epochs 200 --hm_hp_weight 20 \
     --log-dir board/show \

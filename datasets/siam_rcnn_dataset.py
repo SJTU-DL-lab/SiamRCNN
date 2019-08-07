@@ -972,7 +972,7 @@ class DataSets(Dataset):
                 ct = np.array(
                     [(bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2], dtype=np.float32)
                 ct_int = ct.astype(np.int32)
-            hp_radius = gaussian_radius((math.ceil(h), math.ceil(w)))
+            hp_radius = gaussian_radius((math.ceil(h)*2.3, math.ceil(w)*2.3))
             hp_radius = self.hm_gauss \
                         if self.mse_loss else max(0, int(hp_radius))
             ind[0] = ct_int[1] * output_res + ct_int[0]
@@ -990,7 +990,9 @@ class DataSets(Dataset):
                         hp_ind[j] = pt_int[1] * output_res + pt_int[0]
                         hp_mask[j] = 1
 
-                        draw_gaussian(hm_hp[j], pt_int, hp_radius)
+                        # draw_gaussian(hm_hp[j], pt_int, hp_radius)
+                        pt_ori = joints_3d[j, :2].astype(np.int32)
+                        draw_gaussian(hm_hp[j], pt_ori, hp_radius)
 
             ret = {'hps': kps, 'hm_hp': hm_hp, 'hp_mask': hp_mask}
             # print('kps: ', ret['hps'])

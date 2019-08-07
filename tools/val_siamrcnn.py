@@ -211,7 +211,7 @@ def validation(val_loader, model, cfg, avg):
             outputs = model(x_rpn, x_kp)
 
             pred_kp = outputs['predict'][2][0]['hm_hp']
-            print('pred kp shape: ', pred_kp.shape)
+            # print('pred kp shape: ', pred_kp.shape)
             # batch_img = x_rpn['search'].expand(x_kp['hm_hp'].size(0), -1, -1, -1)
             # gt_img, pred_img = save_gt_pred_heatmaps(batch_img, x_kp['hm_hp'], pred_kp, 'test_imgs/test_{}.jpg'.format(iter))
             rpn_cls_loss, rpn_loc_loss, kp_losses = torch.mean(outputs['losses'][0]),\
@@ -234,6 +234,10 @@ def validation(val_loader, model, cfg, avg):
                 grid_img, resized_img = save_batch_resized_heatmaps(roi_imgs.transpose(1, 3),
                                                                     hp_imgs, 'debug/feat_{}.jpg'.format(iter))
                 cv2.imwrite('debug/heatmap_{}.jpg'.format(iter), grid_img)
+
+                # grid_img, resized_img = save_batch_resized_heatmaps(x_rpn['search'],
+                #                                                     x_kp['hm_hp'], 'debug/feat_{}.jpg'.format(iter))
+                # cv2.imwrite('debug/heatmap_{}.jpg'.format(iter), grid_img)
                 # box_imgs = box_imgs.transpose(1, 2).int().cpu().detach().numpy()
                 # roi_imgs = roi_imgs.transpose(1, 2).int().cpu().detach().numpy()
                 # for img_id in range(box_imgs.shape[0]):
