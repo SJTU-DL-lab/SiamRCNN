@@ -9,6 +9,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 from utils.anchors import Anchors
 from utils.image import draw_boxes
+from utils.pose_evaluate import accuracy
 from models.losses import FocalLoss, RegL1Loss, RegLoss, RegWeightedL1Loss
 from models.utils import _sigmoid, proposal_layer, roi_align, generate_target_gt
 
@@ -256,6 +257,12 @@ class SiamMask(nn.Module):
         rpn_loss_cls, rpn_loss_loc = \
             self._add_rpn_loss(label_cls, label_loc, lable_loc_weight, label_mask,
                                rpn_pred_cls, rpn_pred_loc)
+
+        pck = accuracy(pred_kp['hm_hp'], kp_input['hm_hp'])
+        acc = pck[0]
+        avg_acc = pck[1]
+        outputs['accuracy'] = [acc, avg_acc]
+
         if box_flag:
             kp_loss, kp_loss_status = self.kp_criterion(pred_kp, kp_input, boxes_ind)
         else:
