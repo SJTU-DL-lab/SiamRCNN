@@ -257,8 +257,9 @@ class SiamMask(nn.Module):
         rpn_loss_cls, rpn_loss_loc = \
             self._add_rpn_loss(label_cls, label_loc, lable_loc_weight, label_mask,
                                rpn_pred_cls, rpn_pred_loc)
-
-        pck = accuracy(pred_kp['hm_hp'], kp_input['hm_hp'])
+        pred_hm = pred_kp[0]['hm_hp'].detach().cpu().numpy()
+        gt_hm = kp_input['hm_hp'].detach().cpu().numpy()
+        pck = accuracy(pred_hm, gt_hm)
         acc = pck[0]
         avg_acc = pck[1]
         outputs['accuracy'] = [acc, avg_acc]
