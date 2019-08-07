@@ -8,11 +8,11 @@
     },
     "lr": {
         "type": "log",
-        "start_lr": 0.001,
-        "end_lr": 0.00000001,
+        "start_lr": 0.01,
+        "end_lr": 0.000001,
         "warmup": {
             "start_lr": 0.001,
-            "end_lr": 0.001,
+            "end_lr": 0.01,
             "type": "step",
             "step": 1,
             "epoch": 5
@@ -25,7 +25,7 @@
         "datasets": {
             "coco": {
                 "root": "../../data/coco/crop_pose",
-                "anno": "../../data/coco/val2017_pose_siamfc.json",
+                "anno": "../../data/coco/train2017_pose_siamfc.json",
                 "frame_range": 1
             }
         },
@@ -33,7 +33,7 @@
         "search_size": 255,
         "base_size": 8,
         "size": 25,
-        "RPN_NMS": 0.1,
+        "RPN_NMS": 0.01,
 
         "augmentation": {
             "template": {
@@ -59,7 +59,7 @@
         "search_size": 255,
         "base_size": 8,
         "size": 25,
-        "RPN_NMS": 0.1,
+        "RPN_NMS": 0.01,
 
         "augmentation": {
             "template": {

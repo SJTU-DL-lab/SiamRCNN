@@ -39,25 +39,24 @@ class PoseLoss(torch.nn.Module):
         # print('hps_mask shape: {}, ind shape: {} , hps shape: {}'.format(batch['hps_mask'].shape,
         #        batch['ind'].shape, batch['hps'].shape))
         # print('output hps shape: ', output['hps'].shape)
-        # batch['hm_hp'] = batch['hm_hp'].expand(bs_hm_hp, -1, -1, -1)
+        batch['hm_hp'] = batch['hm_hp'].index_select(0, ind)
         if opt.hm_hp and not opt.mse_loss:
             output['hm_hp'] = _sigmoid(output['hm_hp'])
         
-        with torch.no_grad():
-            if opt.dense_hp:
-                mask_weight = batch['dense_hps_mask'].sum() + 1e-4
-                hp_loss += (self.crit_kp(output['hps'] * batch['dense_hps_mask'],
-                            batch['dense_hps'] * batch['dense_hps_mask']) /
-                            mask_weight)
-            else:
-                hp_loss += self.crit_kp(output['hps'], batch['hps_mask'],
-                                        batch['ind'], batch['hps'])
-    
-            if opt.reg_hp_offset and opt.off_weight > 0:
-                hp_offset_loss += self.crit_reg(
-                  output['hp_offset'], batch['hp_mask'],
-                  batch['hp_ind'], batch['hp_offset'])
+        if opt.dense_hp:
+            mask_weight = batch['dense_hps_mask'].sum() + 1e-4
+            hp_loss += (self.crit_kp(output['hps'] * batch['dense_hps_mask'],
+                        batch['dense_hps'] * batch['dense_hps_mask']) /
+                        mask_weight)
+        else:
+            hp_loss += self.crit_kp(output['hps'], batch['hps_mask'],
+                                    batch['ind'], batch['hps'])
 
+        if opt.reg_hp_offset and opt.off_weight > 0:
+            hp_offset_loss += self.crit_reg(
+              output['hp_offset'], batch['hp_mask'],
+              batch['hp_ind'], batch['hp_offset'])
+        # print('out hm hp shape: {}, batch hm hp shape: {}'.format(output['hm_hp'].shape, batch['hm_hp']))
         if opt.hm_hp and opt.hm_hp_weight > 0:
             hm_hp_loss += self.crit_hm_hp(
               output['hm_hp'], batch['hm_hp'])
@@ -244,14 +243,14 @@ class SiamMask(nn.Module):
             pred_kp = self.kp_model(pooled_features)
             gt_sample = kp_input['hm_hp']
             gt_hm_hp = generate_target_gt(gt_sample, normalized_boxes, boxes_ind, self.output_size)
-            kp_input['hm_hp'] = gt_hm_hp
+            # kp_input['hm_hp'] = gt_hm_hp
         else:
             print('no box flag')
             # 'hps': 34, 'hm_hp': 17, 'hp_offset': 2
-            pred_hm_hp = torch.zeros(p4_feat.size(0), 17, 56, 56)
-            pred_hps = torch.zeros(p4_feat.size(0), 34, 56, 56)
-            pred_hp_offset = torch.zeros(p4_feat.size(0), 2, 56, 56)
-            pred_kp = {'hps': pred_hps, 'hm_hp': pred_hm_hp, 'hp_offset': pred_hp_offset}
+            pred_hm_hp = torch.zeros(p4_feat.size(0), 17, 56, 56).cuda()
+            pred_hps = torch.zeros(p4_feat.size(0), 34, 56, 56).cuda()
+            pred_hp_offset = torch.zeros(p4_feat.size(0), 2, 56, 56).cuda()
+            pred_kp = [{'hps': pred_hps, 'hm_hp': pred_hm_hp, 'hp_offset': pred_hp_offset}]
         outputs = dict()
 
         outputs['predict'] = [rpn_pred_cls, rpn_pred_loc, pred_kp,
@@ -270,9 +269,9 @@ class SiamMask(nn.Module):
         if box_flag:
             kp_loss, kp_loss_status = self.kp_criterion(pred_kp, kp_input, boxes_ind)
         else:
-            kp_loss = 0
-            kp_loss_status = {'loss': 0, 'hp_loss': 0,
-                              'hm_hp_loss': 0, 'hp_offset_loss': 0}
+            kp_loss = torch.zeros(1, 1).cuda()
+            kp_loss_status = {'loss': torch.zeros(1, 1).cuda(), 'hp_loss': torch.zeros(1, 1).cuda(),
+                              'hm_hp_loss': torch.zeros(1, 1).cuda(), 'hp_offset_loss': torch.zeros(1, 1).cuda()}
         outputs['losses'] = [rpn_loss_cls, rpn_loss_loc, kp_loss, kp_loss_status]
 
         if self.debug:

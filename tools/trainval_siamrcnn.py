@@ -284,8 +284,8 @@ def train(train_loader, model, optimizer, lr_scheduler, epoch, cfg, avg, num_per
     cur_lr = lr_scheduler.get_cur_lr()
     model.train()
     
-    model.module.rpn_model.eval()
-    model.module.kp_model.train()
+    # model.module.rpn_model.eval()
+    # model.module.kp_model.train()
 
     logger.info('val epoch:{}'.format(epoch))
 

@@ -21,10 +21,10 @@ mkdir -p logs
 python -u $ROOT/tools/trainval_siamrcnn.py \
     --config=config.json -b 48 \
     -j 8 --save_freq 10 \
-    --pretrained snapshot_full_img/checkpoint_e88.pth \
-    --epochs 200 --hm_hp_weight 100 \
-    --mse_loss \
+    --epochs 200 --hm_hp_weight 1.5 \
     --log-dir board/show \
     --log logs/log.txt \
+    --resume snapshot/checkpoint_e9.pth
+    # --pretrained snapshot_full_img/checkpoint_e88.pth
     2>&1 | tee logs/train.log
 
