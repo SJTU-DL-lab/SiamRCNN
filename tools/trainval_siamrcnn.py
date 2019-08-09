@@ -248,12 +248,12 @@ def main():
         logger = logging.getLogger('global')
         train_avg = AverageMeter()
         val_avg = AverageMeter()
+        
+        if dist_model.module.features.unfix(epoch/args.epochs):
+            logger.info('unfix part model.')
+            optimizer, lr_scheduler = build_opt_lr(dist_model.module, cfg, args, epoch)
 
         train(train_loader, dist_model, optimizer, lr_scheduler, epoch, cfg, train_avg, num_per_epoch)
-
-        # if dist_model.module.features.unfix(epoch/args.epochs):
-        #     logger.info('unfix part model.')
-        #     optimizer, lr_scheduler = build_opt_lr(dist_model.module, cfg, args, epoch)
 
         if (epoch+1) % args.save_freq == 0:
             save_checkpoint({
@@ -282,6 +282,7 @@ def train(train_loader, model, optimizer, lr_scheduler, epoch, cfg, avg, num_per
     end = time.time()
     cur_lr = lr_scheduler.get_cur_lr()
     model.train()
+    model = model.cuda()
     
     # model.module.rpn_model.eval()
     # model.module.kp_model.train()
@@ -376,6 +377,7 @@ def validation(val_loader, model, epoch, cfg, avg, num_per_epoch_val):
     global tb_val_index, best_acc, logger
     end = time.time()
     model.eval()
+    model = model.cuda()
 
     logger.info('val epoch:{}'.format(epoch))
     with torch.no_grad():
