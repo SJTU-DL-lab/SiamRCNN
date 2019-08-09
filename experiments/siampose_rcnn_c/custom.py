@@ -38,8 +38,9 @@ class ResDown(MultiStageFeature):
         self.downsample = ResDownS(1024, 256)
         self.downsample_p4 = ResDownS(2048, 1024)
 
-        self.layers = [self.downsample, self.features.layer2, self.features.layer3]
-        self.train_nums = [1, 3]
+        self.layers = [self.downsample, self.downsample_p4,
+                       self.features.layer2, self.features.layer3, self.features.layer4]
+        self.train_nums = [1, 5]
         self.change_point = [0, 0.5]
 
         self.unfix(0.0)
