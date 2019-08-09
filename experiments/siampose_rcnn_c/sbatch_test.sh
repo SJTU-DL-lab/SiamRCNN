@@ -21,7 +21,7 @@ mkdir -p logs
 python -u $ROOT/tools/val_siamrcnn.py \
     --config=config.json -b 1 \
     -j 4 --debug \
-    --epochs 200 --pretrained ./snapshot/checkpoint_e51.pth \
+    --epochs 200 --pretrained ./snapshot/checkpoint_e99.pth \
     --log logs/log.txt \
     --log-dir test_logs \
     2>&1 | tee logs/train.log

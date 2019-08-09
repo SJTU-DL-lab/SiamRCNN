@@ -208,17 +208,22 @@ def proposal_layer(inputs, anchors, thresh=0.5, args=None):
     # box_ind = np.ones(bs, max_rois) * -1
     # total_anchors = scores.size(1) // bs
     for i in range(bs):
-        pos_ix = torch.nonzero(scores[i] > thresh).squeeze()
+        pos_ix = torch.nonzero(scores[i] > thresh)
+        if pos_ix.dim() > 1:
+            pos_ix = pos_ix.squeeze(1)
         
         try:
+            # if pox_ix.dim() == 0:
+            #     pos_ix = pos_ix.unsqueeze(0)
             if pos_ix.size(0) == 0:
                 # print('no positive ix')
-                if len(bs) == 1:
+                if bs == 1:
                     raise Exception('no roi in this img')
                 continue
         except:
             print('pos ix: ', pos_ix)
-            raise Exception('pos ix error')
+            continue
+            # raise Exception('pos ix error')
             # print('positive ix')
 
         # Box deltas [batch, num_rois, 4]

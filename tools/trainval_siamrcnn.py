@@ -243,6 +243,7 @@ def main():
     num_per_epoch_val = len(val_loader.dataset) // args.batch
 
     for epoch in range(args.start_epoch, args.epochs):
+        lr_scheduler.step(epoch)
         cur_lr = lr_scheduler.get_cur_lr()
         logger = logging.getLogger('global')
         train_avg = AverageMeter()
@@ -250,11 +251,9 @@ def main():
 
         train(train_loader, dist_model, optimizer, lr_scheduler, epoch, cfg, train_avg, num_per_epoch)
 
-        if dist_model.module.features.unfix(epoch/args.epochs):
-            logger.info('unfix part model.')
-            optimizer, lr_scheduler = build_opt_lr(dist_model.module, cfg, args, epoch)
-        lr_scheduler.step(epoch)
-        cur_lr = lr_scheduler.get_cur_lr()
+        # if dist_model.module.features.unfix(epoch/args.epochs):
+        #     logger.info('unfix part model.')
+        #     optimizer, lr_scheduler = build_opt_lr(dist_model.module, cfg, args, epoch)
 
         if (epoch+1) % args.save_freq == 0:
             save_checkpoint({
@@ -268,7 +267,7 @@ def main():
                 os.path.join(args.save_dir, 'checkpoint_e%d.pth' % (epoch)),
                 os.path.join(args.save_dir, 'best.pth'))
 
-            # validation(val_loader, dist_model, epoch, cfg, val_avg, num_per_epoch_val)
+            validation(val_loader, dist_model, epoch, cfg, val_avg, num_per_epoch_val)
 
 
 def BNtoFixed(m):
@@ -287,7 +286,7 @@ def train(train_loader, model, optimizer, lr_scheduler, epoch, cfg, avg, num_per
     # model.module.rpn_model.eval()
     # model.module.kp_model.train()
 
-    logger.info('val epoch:{}'.format(epoch))
+    logger.info('train epoch:{}'.format(epoch))
 
     for iter, input in enumerate(train_loader):
         tb_index += iter
@@ -370,7 +369,7 @@ def train(train_loader, model, optimizer, lr_scheduler, epoch, cfg, avg, num_per
                         kp_loss=avg.kp_loss, siammask_loss=avg.siammask_loss, kp_avg_acc=avg.kp_avg_acc))
                         # mask_iou_mean=avg.mask_iou_mean,
                         # mask_iou_at_5=avg.mask_iou_at_5,mask_iou_at_7=avg.mask_iou_at_7))
-            print_speed(iter + 1, avg.batch_time.avg, args.epochs * num_per_epoch)
+            print_speed(num_per_epoch * epoch + iter + 1, avg.batch_time.avg, args.epochs * num_per_epoch)
 
 
 def validation(val_loader, model, epoch, cfg, avg, num_per_epoch_val):
@@ -378,7 +377,7 @@ def validation(val_loader, model, epoch, cfg, avg, num_per_epoch_val):
     end = time.time()
     model.eval()
 
-    logger.info('epoch:{}'.format(epoch))
+    logger.info('val epoch:{}'.format(epoch))
     with torch.no_grad():
         for iter, input in enumerate(val_loader):
             tb_val_index += iter
@@ -443,7 +442,7 @@ def validation(val_loader, model, epoch, cfg, avg, num_per_epoch_val):
                             kp_loss=avg.kp_loss, siammask_loss=avg.siammask_loss, kp_avg_acc=avg.kp_avg_acc))
                             # mask_iou_mean=avg.mask_iou_mean,
                             # mask_iou_at_5=avg.mask_iou_at_5,mask_iou_at_7=avg.mask_iou_at_7))
-                print_speed(iter + 1, avg.batch_time.avg, args.epochs * num_per_epoch_val)
+                # print_speed(iter + 1, avg.batch_time.avg, args.epochs * num_per_epoch_val)
 
 
 def save_checkpoint(state, is_best, filename='checkpoint.pth', best_file='model_best.pth'):
