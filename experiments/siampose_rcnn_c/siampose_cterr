@@ -611,3 +611,10 @@ Versions of relevant libraries:
 [2019-08-09 17:05:30,194-rk0-trainval_siamrcnn.py#376] Epoch: [1][240/45900] lr: 0.001000	batch_time: 2.614703 (2.682425)	data_time: 0.000787 (0.003793)	rpn_cls_loss: 0.491266 (0.550546)	rpn_loc_loss: 0.525927 (0.723403)	kp_hp_loss: 3.311636 (3.202795)	kp_hm_hp_loss: 3.023548 (4.083847)	kp_hp_offset_loss: 0.236609 (0.402727)	kp_loss: 8.083568 (9.731291)	siammask_loss: 9.205946 (11.149925)	kp_avg_acc: 0.000000 (0.000000)
 [2019-08-09 17:05:30,198-rk0-log_helper.py# 97] Progress: 240 / 9180000 [0%], Speed: 2.682 s/iter, ETA 285:00:00 (D:H:M)
 
+[2019-08-09 17:05:57,283-rk0-trainval_siamrcnn.py#376] Epoch: [1][250/45900] lr: 0.001000	batch_time: 2.518139 (2.683266)	data_time: 0.000756 (0.003709)	rpn_cls_loss: 0.564937 (0.547283)	rpn_loc_loss: 0.768264 (0.717963)	kp_hp_loss: 3.701582 (3.193093)	kp_hm_hp_loss: 3.043183 (4.043232)	kp_hp_offset_loss: 0.278330 (0.399338)	kp_loss: 8.544686 (9.657276)	siammask_loss: 10.031540 (11.066120)	kp_avg_acc: 0.000000 (0.000000)
+[2019-08-09 17:05:57,287-rk0-log_helper.py# 97] Progress: 250 / 9180000 [0%], Speed: 2.683 s/iter, ETA 285:02:08 (D:H:M)
+
+[2019-08-09 17:06:23,440-rk0-trainval_siamrcnn.py#376] Epoch: [1][260/45900] lr: 0.001000	batch_time: 2.535811 (2.680458)	data_time: 0.000750 (0.003631)	rpn_cls_loss: 0.596996 (0.544769)	rpn_loc_loss: 0.922923 (0.712470)	kp_hp_loss: 2.565726 (3.190294)	kp_hm_hp_loss: 3.179113 (4.004499)	kp_hp_offset_loss: 0.229078 (0.395412)	kp_loss: 7.563474 (9.592451)	siammask_loss: 9.267977 (10.992190)	kp_avg_acc: 0.000000 (0.000000)
+[2019-08-09 17:06:23,444-rk0-log_helper.py# 97] Progress: 260 / 9180000 [0%], Speed: 2.680 s/iter, ETA 284:18:58 (D:H:M)
+
+slurmstepd: error: *** JOB 24697 ON node1 CANCELLED AT 2019-08-09T17:06:30 ***
