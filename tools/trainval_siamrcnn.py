@@ -1,6 +1,8 @@
 import argparse
 import logging
 import os
+os.environ['CUDA_VISIBLE_DEVICES']='2'
+os.environ['GPU_DEBUG']='2'
 import cv2
 import shutil
 import time
@@ -28,6 +30,9 @@ from tensorboardX import SummaryWriter
 from utils.config_helper import load_config
 from torch.utils.collect_env import get_pretty_env_info
 from torchvision.transforms import ToTensor
+
+import sys
+from gpu_profile import gpu_profile
 
 torch.backends.cudnn.benchmark = True
 
@@ -251,9 +256,9 @@ def main():
 
         train(train_loader, dist_model, optimizer, lr_scheduler, epoch, cfg, train_avg, num_per_epoch)
 
-        # if dist_model.module.features.unfix(epoch/args.epochs):
-        #     logger.info('unfix part model.')
-        #     optimizer, lr_scheduler = build_opt_lr(dist_model.module, cfg, args, epoch)
+        if dist_model.module.features.unfix(epoch/args.epochs):
+            logger.info('unfix part model.')
+            optimizer, lr_scheduler = build_opt_lr(dist_model.module, cfg, args, epoch)
 
         if (epoch+1) % args.save_freq == 0:
             save_checkpoint({
@@ -309,6 +314,7 @@ def train(train_loader, model, optimizer, lr_scheduler, epoch, cfg, avg, num_per
         x_kp = input[7]
         x_kp = {x: torch.autograd.Variable(y).cuda() for x, y in x_kp.items()}
         x_rpn['anchors'] = train_loader.dataset.anchors.all_anchors[0]
+        optimizer.zero_grad()
 
         outputs = model(x_rpn, x_kp)
 
@@ -326,9 +332,8 @@ def train(train_loader, model, optimizer, lr_scheduler, epoch, cfg, avg, num_per
         cls_weight, reg_weight, kp_weight = cfg['loss']['weight']
 
         loss = rpn_cls_loss * cls_weight + rpn_loc_loss * reg_weight + kp_loss * kp_weight
-
-        optimizer.zero_grad()
         loss.backward()
+        gpu_profile(frame=sys._getframe(), event='line', arg=None)
 
         if cfg['clip']['split']:
             torch.nn.utils.clip_grad_norm_(model.module.features.parameters(), cfg['clip']['feature'])
@@ -339,6 +344,8 @@ def train(train_loader, model, optimizer, lr_scheduler, epoch, cfg, avg, num_per
 
         if is_valid_number(loss.item()):
             optimizer.step()
+        else:
+            print('not valid loss')
 
         siammask_loss = loss.item()
 
@@ -458,4 +465,5 @@ def args_process(opt):
 
 
 if __name__ == '__main__':
+    sys.settrace(gpu_profile)
     main()

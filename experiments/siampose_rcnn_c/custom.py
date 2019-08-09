@@ -2,7 +2,7 @@ from models.siampose_RCNN import SiamMask
 from models.features import MultiStageFeature
 from models.rpn import RPN, DepthCorr
 from models.mask import Mask
-# from models.DCNv2.dcn_v2 import DCN
+from models.DCNv2.dcn_v2 import DCN
 import torch
 import torch.nn as nn
 import math
@@ -40,7 +40,7 @@ class ResDown(MultiStageFeature):
 
         self.layers = [self.downsample, self.downsample_p4,
                        self.features.layer2, self.features.layer3, self.features.layer4]
-        self.train_nums = [3, 5]
+        self.train_nums = [5, 5]
         self.change_point = [0, 0.5]
 
         self.unfix(0.0)
@@ -159,13 +159,14 @@ class Center_pose_head(nn.Module):
                 self._get_deconv_cfg(num_kernels[i], i)
 
             planes = num_filters[i]
-            # fc = DCN(self.inplanes, planes,
-            #         kernel_size=(3,3), stride=1,
-            #         padding=1, dilation=1, deformable_groups=1)
-            fc = nn.Conv2d(self.inplanes, planes,
-                    kernel_size=3, stride=1,
-                    padding=1, dilation=1, bias=False)
-            fill_fc_weights(fc)
+            with torch.no_grad():
+                fc = DCN(self.inplanes, planes,
+                        kernel_size=(3,3), stride=1,
+                        padding=1, dilation=1, deformable_groups=1)
+            # fc = nn.Conv2d(self.inplanes, planes,
+            #         kernel_size=3, stride=1,
+            #         padding=1, dilation=1, bias=False)
+            # fill_fc_weights(fc)
             up = nn.ConvTranspose2d(
                     in_channels=planes,
                     out_channels=planes,
