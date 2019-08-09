@@ -253,6 +253,10 @@ def main():
         logger = logging.getLogger('global')
         train_avg = AverageMeter()
         val_avg = AverageMeter()
+        
+        if dist_model.module.features.unfix(epoch/args.epochs):
+            logger.info('unfix part model.')
+            optimizer, lr_scheduler = build_opt_lr(dist_model.module, cfg, args, epoch)
 
         train(train_loader, dist_model, optimizer, lr_scheduler, epoch, cfg, train_avg, num_per_epoch)
 
@@ -287,9 +291,10 @@ def train(train_loader, model, optimizer, lr_scheduler, epoch, cfg, avg, num_per
     end = time.time()
     cur_lr = lr_scheduler.get_cur_lr()
     model.train()
+    model = model.cuda()
     
     # model.module.rpn_model.eval()
-    # model.module.kp_model.train()
+    # model.module.kp_model.eval()
 
     logger.info('train epoch:{}'.format(epoch))
 
@@ -314,8 +319,10 @@ def train(train_loader, model, optimizer, lr_scheduler, epoch, cfg, avg, num_per
         x_kp = input[7]
         x_kp = {x: torch.autograd.Variable(y).cuda() for x, y in x_kp.items()}
         x_rpn['anchors'] = train_loader.dataset.anchors.all_anchors[0]
+        #gpu_profile(frame=sys._getframe(), event='line', arg=None)
         optimizer.zero_grad()
-
+        #gpu_profile(frame=sys._getframe(), event='line', arg=None)
+          
         outputs = model(x_rpn, x_kp)
 
         rpn_cls_loss, rpn_loc_loss, kp_losses = torch.mean(outputs['losses'][0]),\
@@ -331,7 +338,9 @@ def train(train_loader, model, optimizer, lr_scheduler, epoch, cfg, avg, num_per
 
         cls_weight, reg_weight, kp_weight = cfg['loss']['weight']
 
-        loss = rpn_cls_loss * cls_weight + rpn_loc_loss * reg_weight + kp_loss * kp_weight
+        loss = rpn_cls_loss * cls_weight # + rpn_loc_loss * reg_weight # + kp_loss * kp_weight
+        print('loss: ', loss)
+        gpu_profile(frame=sys._getframe(), event='line', arg=None)
         loss.backward()
         gpu_profile(frame=sys._getframe(), event='line', arg=None)
 
@@ -346,6 +355,7 @@ def train(train_loader, model, optimizer, lr_scheduler, epoch, cfg, avg, num_per
             optimizer.step()
         else:
             print('not valid loss')
+        # gpu_profile(frame=sys._getframe(), event='line', arg=None)
 
         siammask_loss = loss.item()
 
@@ -383,6 +393,7 @@ def validation(val_loader, model, epoch, cfg, avg, num_per_epoch_val):
     global tb_val_index, best_acc, logger
     end = time.time()
     model.eval()
+    model = model.cuda()
 
     logger.info('val epoch:{}'.format(epoch))
     with torch.no_grad():
@@ -462,7 +473,6 @@ def args_process(opt):
     opt.hm_hp = not opt.not_hm_hp
     opt.reg_hp_offset = (not opt.not_reg_hp_offset) and opt.hm_hp
     return opt
-
 
 if __name__ == '__main__':
     sys.settrace(gpu_profile)

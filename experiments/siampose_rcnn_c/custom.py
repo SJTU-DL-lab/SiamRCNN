@@ -2,16 +2,21 @@ from models.siampose_RCNN import SiamMask
 from models.features import MultiStageFeature
 from models.rpn import RPN, DepthCorr
 from models.mask import Mask
-from models.DCNv2.dcn_v2 import DCN
+# from models.DCNv2.dcn_v2 import DCN
+from models.DCN.modules.modulated_dcn import ModulatedDeformConvPack
 import torch
 import torch.nn as nn
 import math
 from utils.load_helper import load_pretrain
 from resnet import resnet50
 
+# import sys
+# from gpu_profile import gpu_profile
+
 BN_MOMENTUM = 0.1
+DCN = ModulatedDeformConvPack
 
-
+# sys.settrace(gpu_profile)
 class ResDownS(nn.Module):
     def __init__(self, inplane, outplane):
         super(ResDownS, self).__init__()
@@ -159,10 +164,9 @@ class Center_pose_head(nn.Module):
                 self._get_deconv_cfg(num_kernels[i], i)
 
             planes = num_filters[i]
-            with torch.no_grad():
-                fc = DCN(self.inplanes, planes,
-                        kernel_size=(3,3), stride=1,
-                        padding=1, dilation=1, deformable_groups=1)
+            fc = DCN(self.inplanes, planes,
+                    kernel_size=(3,3), stride=1,
+                    padding=1, dilation=1, deformable_groups=1)
             # fc = nn.Conv2d(self.inplanes, planes,
             #         kernel_size=3, stride=1,
             #         padding=1, dilation=1, bias=False)

@@ -1,4 +1,4 @@
-[2019-08-09 16:53:45,159-rk0-trainval_siamrcnn.py#200] 
+[2019-08-09 19:51:05,396-rk0-trainval_siamrcnn.py#200] 
 PyTorch version: 0.4.1.post2
 Is debug build: No
 CUDA used to build PyTorch: 9.0.176
@@ -30,8 +30,8 @@ Versions of relevant libraries:
 [conda] pytorch                   0.4.1           py36_py35_py27__9.0.176_7.1.2_2    pytorch
 [conda] torchvision               0.2.1                    py36_1    pytorch
         OpenCV (3.4.3)
-[2019-08-09 16:53:45,165-rk0-trainval_siamrcnn.py#201] Namespace(arch='', batch=1, clip=10.0, config='config.json', debug=False, dense_hp=False, epochs=200, hm_hp=True, hm_hp_weight=1.5, hp_weight=1, log='logs/log.txt', log_dir='board/show', lr=0.001, momentum=0.9, mse_loss=False, not_hm_hp=False, not_reg_bbox=False, not_reg_hp_offset=False, off_weight=1, output_size=56, pretrained='', print_freq=10, reg_bbox=True, reg_hp_offset=True, reg_loss='l1', resume='', save_dir='snapshot', save_freq=1, start_epoch=0, weight_decay=0.0001, workers=1)
-[2019-08-09 16:53:45,199-rk0-trainval_siamrcnn.py#204] config 
+[2019-08-09 19:51:05,401-rk0-trainval_siamrcnn.py#201] Namespace(arch='', batch=1, clip=10.0, config='config.json', debug=False, dense_hp=False, epochs=200, hm_hp=True, hm_hp_weight=1.5, hp_weight=1, log='logs/log.txt', log_dir='board/show', lr=0.001, momentum=0.9, mse_loss=False, not_hm_hp=False, not_reg_bbox=False, not_reg_hp_offset=False, off_weight=1, output_size=56, pretrained='', print_freq=10, reg_bbox=True, reg_hp_offset=True, reg_loss='l1', resume='', save_dir='snapshot', save_freq=1, start_epoch=0, weight_decay=0.0001, workers=1)
+[2019-08-09 19:51:05,433-rk0-trainval_siamrcnn.py#204] config 
 {
     "network": {
         "arch": "Custom"
@@ -45,11 +45,11 @@ Versions of relevant libraries:
         "rpn_lr_mult": 1.0,
         "mask_lr_mult": 1.0,
         "type": "log",
-        "start_lr": 0.01,
-        "end_lr": 1e-06,
+        "start_lr": 0.001,
+        "end_lr": 1e-05,
         "warmup": {
             "start_lr": 0.001,
-            "end_lr": 0.01,
+            "end_lr": 0.001,
             "type": "step",
             "step": 1,
             "epoch": 5
@@ -143,13 +143,13 @@ Versions of relevant libraries:
         "split": false
     }
 }
-[2019-08-09 16:53:45,250-rk0-trainval_siamrcnn.py#148] build train dataset
-[2019-08-09 16:53:45,257-rk0-siam_rcnn_dataset.py# 38] loading ../../data/coco/train2017_pose_siamfc.json
-[2019-08-09 16:54:15,690-rk0-siam_rcnn_dataset.py# 76] ../../data/coco/train2017_pose_siamfc.json loaded.
-[2019-08-09 16:54:19,671-rk0-siam_rcnn_dataset.py#140] SubDataSet coco start-index 0 select [45900/45900] path {}.{}.{}.jpg
-[2019-08-09 16:54:27,540-rk0-siam_rcnn_dataset.py#749] shuffle done!
-[2019-08-09 16:54:27,543-rk0-siam_rcnn_dataset.py#750] dataset length 45900
-[2019-08-09 16:54:27,550-rk0-siam_rcnn_dataset.py#603] dataset informations: 
+[2019-08-09 19:51:05,531-rk0-trainval_siamrcnn.py#148] build train dataset
+[2019-08-09 19:51:05,550-rk0-siam_rcnn_dataset.py# 38] loading ../../data/coco/train2017_pose_siamfc.json
+[2019-08-09 19:51:35,597-rk0-siam_rcnn_dataset.py# 76] ../../data/coco/train2017_pose_siamfc.json loaded.
+[2019-08-09 19:51:39,570-rk0-siam_rcnn_dataset.py#140] SubDataSet coco start-index 0 select [45900/45900] path {}.{}.{}.jpg
+[2019-08-09 19:51:47,489-rk0-siam_rcnn_dataset.py#749] shuffle done!
+[2019-08-09 19:51:47,492-rk0-siam_rcnn_dataset.py#750] dataset length 45900
+[2019-08-09 19:51:47,499-rk0-siam_rcnn_dataset.py#603] dataset informations: 
 {
     "template": 127,
     "search": 255,
@@ -167,15 +167,15 @@ Versions of relevant libraries:
     },
     "num": 45900
 }
-[2019-08-09 16:54:35,431-rk0-siam_rcnn_dataset.py#749] shuffle done!
-[2019-08-09 16:54:35,434-rk0-siam_rcnn_dataset.py#750] dataset length 45900
-[2019-08-09 16:54:35,438-rk0-trainval_siamrcnn.py#152] build val dataset
-[2019-08-09 16:54:35,445-rk0-siam_rcnn_dataset.py# 38] loading ../../data/coco/val2017_pose_siamfc.json
-[2019-08-09 16:54:36,664-rk0-siam_rcnn_dataset.py# 76] ../../data/coco/val2017_pose_siamfc.json loaded.
-[2019-08-09 16:54:36,833-rk0-siam_rcnn_dataset.py#140] SubDataSet coco start-index 0 select [1899/1899] path {}.{}.{}.jpg
-[2019-08-09 16:54:37,161-rk0-siam_rcnn_dataset.py#749] shuffle done!
-[2019-08-09 16:54:37,164-rk0-siam_rcnn_dataset.py#750] dataset length 1899
-[2019-08-09 16:54:37,171-rk0-siam_rcnn_dataset.py#603] dataset informations: 
+[2019-08-09 19:51:55,408-rk0-siam_rcnn_dataset.py#749] shuffle done!
+[2019-08-09 19:51:55,411-rk0-siam_rcnn_dataset.py#750] dataset length 45900
+[2019-08-09 19:51:55,415-rk0-trainval_siamrcnn.py#152] build val dataset
+[2019-08-09 19:51:55,422-rk0-siam_rcnn_dataset.py# 38] loading ../../data/coco/val2017_pose_siamfc.json
+[2019-08-09 19:51:56,637-rk0-siam_rcnn_dataset.py# 76] ../../data/coco/val2017_pose_siamfc.json loaded.
+[2019-08-09 19:51:56,804-rk0-siam_rcnn_dataset.py#140] SubDataSet coco start-index 0 select [1899/1899] path {}.{}.{}.jpg
+[2019-08-09 19:51:57,135-rk0-siam_rcnn_dataset.py#749] shuffle done!
+[2019-08-09 19:51:57,138-rk0-siam_rcnn_dataset.py#750] dataset length 1899
+[2019-08-09 19:51:57,145-rk0-siam_rcnn_dataset.py#603] dataset informations: 
 {
     "template": 127,
     "search": 255,
@@ -193,19 +193,19 @@ Versions of relevant libraries:
     },
     "num": 1899
 }
-[2019-08-09 16:54:37,540-rk0-siam_rcnn_dataset.py#749] shuffle done!
-[2019-08-09 16:54:37,543-rk0-siam_rcnn_dataset.py#750] dataset length 1899
-[2019-08-09 16:54:37,548-rk0-trainval_siamrcnn.py#163] build dataset done
-[2019-08-09 16:54:43,081-rk0-load_helper.py# 40] load pretrained model from ../resnet.model
-[2019-08-09 16:54:43,761-rk0-load_helper.py# 25] remove prefix 'module.'
-[2019-08-09 16:54:43,795-rk0-load_helper.py# 13] [Warning] missing keys: {'layer3.1.bn1.num_batches_tracked', 'layer1.1.bn1.num_batches_tracked', 'layer1.0.downsample.1.num_batches_tracked', 'layer3.1.bn3.num_batches_tracked', 'layer3.4.bn1.num_batches_tracked', 'layer4.0.bn1.num_batches_tracked', 'layer3.3.bn3.num_batches_tracked', 'layer3.3.bn1.num_batches_tracked', 'layer1.1.bn2.num_batches_tracked', 'layer4.2.bn1.num_batches_tracked', 'layer4.1.bn1.num_batches_tracked', 'layer1.0.bn1.num_batches_tracked', 'layer2.3.bn1.num_batches_tracked', 'layer3.3.bn2.num_batches_tracked', 'layer2.1.bn1.num_batches_tracked', 'layer4.2.bn2.num_batches_tracked', 'layer3.0.bn2.num_batches_tracked', 'layer2.0.bn1.num_batches_tracked', 'layer2.1.bn2.num_batches_tracked', 'layer2.0.bn3.num_batches_tracked', 'layer1.1.bn3.num_batches_tracked', 'layer3.5.bn3.num_batches_tracked', 'layer1.0.bn2.num_batches_tracked', 'layer3.4.bn3.num_batches_tracked', 'layer3.4.bn2.num_batches_tracked', 'layer4.0.downsample.1.num_batches_tracked', 'layer2.0.downsample.1.num_batches_tracked', 'layer4.0.bn3.num_batches_tracked', 'layer3.2.bn3.num_batches_tracked', 'bn1.num_batches_tracked', 'layer3.5.bn1.num_batches_tracked', 'layer4.2.bn3.num_batches_tracked', 'layer2.2.bn1.num_batches_tracked', 'layer2.0.bn2.num_batches_tracked', 'layer3.0.downsample.1.num_batches_tracked', 'layer3.2.bn1.num_batches_tracked', 'layer3.5.bn2.num_batches_tracked', 'layer1.0.bn3.num_batches_tracked', 'layer3.2.bn2.num_batches_tracked', 'layer2.2.bn2.num_batches_tracked', 'layer1.2.bn1.num_batches_tracked', 'layer3.0.bn1.num_batches_tracked', 'layer3.0.bn3.num_batches_tracked', 'layer2.1.bn3.num_batches_tracked', 'layer1.2.bn3.num_batches_tracked', 'layer2.3.bn2.num_batches_tracked', 'layer1.2.bn2.num_batches_tracked', 'layer3.1.bn2.num_batches_tracked', 'layer2.3.bn3.num_batches_tracked', 'layer2.2.bn3.num_batches_tracked', 'layer4.1.bn3.num_batches_tracked', 'layer4.0.bn2.num_batches_tracked', 'layer4.1.bn2.num_batches_tracked'}
-[2019-08-09 16:54:43,798-rk0-load_helper.py# 14] missing keys:53
-[2019-08-09 16:54:43,802-rk0-load_helper.py# 18] used keys:265
-[2019-08-09 16:54:43,998-rk0-features.py# 66] Current training 0 layers:
+[2019-08-09 19:51:57,475-rk0-siam_rcnn_dataset.py#749] shuffle done!
+[2019-08-09 19:51:57,479-rk0-siam_rcnn_dataset.py#750] dataset length 1899
+[2019-08-09 19:51:57,483-rk0-trainval_siamrcnn.py#163] build dataset done
+[2019-08-09 19:52:03,856-rk0-load_helper.py# 40] load pretrained model from ../resnet.model
+[2019-08-09 19:52:04,606-rk0-load_helper.py# 25] remove prefix 'module.'
+[2019-08-09 19:52:04,640-rk0-load_helper.py# 13] [Warning] missing keys: {'layer2.3.bn1.num_batches_tracked', 'layer4.1.bn2.num_batches_tracked', 'layer4.2.bn3.num_batches_tracked', 'layer3.5.bn1.num_batches_tracked', 'layer3.1.bn1.num_batches_tracked', 'layer3.5.bn3.num_batches_tracked', 'layer1.2.bn2.num_batches_tracked', 'layer3.2.bn1.num_batches_tracked', 'layer3.4.bn1.num_batches_tracked', 'layer4.1.bn1.num_batches_tracked', 'layer4.0.bn1.num_batches_tracked', 'layer2.2.bn1.num_batches_tracked', 'layer1.0.bn3.num_batches_tracked', 'layer4.0.bn2.num_batches_tracked', 'layer1.0.downsample.1.num_batches_tracked', 'layer2.1.bn2.num_batches_tracked', 'layer1.0.bn1.num_batches_tracked', 'layer2.3.bn2.num_batches_tracked', 'layer3.2.bn3.num_batches_tracked', 'layer2.0.bn1.num_batches_tracked', 'layer1.0.bn2.num_batches_tracked', 'layer3.0.bn3.num_batches_tracked', 'layer4.0.downsample.1.num_batches_tracked', 'bn1.num_batches_tracked', 'layer1.1.bn2.num_batches_tracked', 'layer2.0.bn2.num_batches_tracked', 'layer4.2.bn1.num_batches_tracked', 'layer3.3.bn2.num_batches_tracked', 'layer3.2.bn2.num_batches_tracked', 'layer3.1.bn3.num_batches_tracked', 'layer3.1.bn2.num_batches_tracked', 'layer3.0.downsample.1.num_batches_tracked', 'layer4.0.bn3.num_batches_tracked', 'layer3.0.bn1.num_batches_tracked', 'layer1.2.bn3.num_batches_tracked', 'layer4.1.bn3.num_batches_tracked', 'layer2.1.bn3.num_batches_tracked', 'layer3.0.bn2.num_batches_tracked', 'layer3.5.bn2.num_batches_tracked', 'layer2.3.bn3.num_batches_tracked', 'layer2.1.bn1.num_batches_tracked', 'layer4.2.bn2.num_batches_tracked', 'layer3.4.bn2.num_batches_tracked', 'layer1.1.bn3.num_batches_tracked', 'layer3.4.bn3.num_batches_tracked', 'layer2.2.bn2.num_batches_tracked', 'layer2.2.bn3.num_batches_tracked', 'layer2.0.downsample.1.num_batches_tracked', 'layer2.0.bn3.num_batches_tracked', 'layer1.1.bn1.num_batches_tracked', 'layer3.3.bn1.num_batches_tracked', 'layer1.2.bn1.num_batches_tracked', 'layer3.3.bn3.num_batches_tracked'}
+[2019-08-09 19:52:04,644-rk0-load_helper.py# 14] missing keys:53
+[2019-08-09 19:52:04,647-rk0-load_helper.py# 18] used keys:265
+[2019-08-09 19:52:04,843-rk0-features.py# 66] Current training 0 layers:
 	
-[2019-08-09 16:54:44,079-rk0-features.py# 66] Current training 5 layers:
+[2019-08-09 19:52:04,936-rk0-features.py# 66] Current training 5 layers:
 	
-[2019-08-09 16:54:44,406-rk0-trainval_siamrcnn.py#222] Custom(
+[2019-08-09 19:52:05,279-rk0-trainval_siamrcnn.py#222] Custom(
   (upSample): UpsamplingBilinear2d(size=[127, 127], mode=bilinear)
   (kp_criterion): PoseLoss(
     (crit_hm_hp): FocalLoss()
@@ -440,7 +440,7 @@ Versions of relevant libraries:
   )
   (kp_model): Center_pose_head(
     (deconv_layers): Sequential(
-      (0): DCN(
+      (0): ModulatedDeformConvPack(
         (conv_offset_mask): Conv2d(1024, 27, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
       )
       (1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
@@ -448,7 +448,7 @@ Versions of relevant libraries:
       (3): ConvTranspose2d(512, 512, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1), bias=False)
       (4): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
       (5): ReLU(inplace)
-      (6): DCN(
+      (6): ModulatedDeformConvPack(
         (conv_offset_mask): Conv2d(512, 27, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
       )
       (7): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
@@ -456,7 +456,7 @@ Versions of relevant libraries:
       (9): ConvTranspose2d(256, 256, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1), bias=False)
       (10): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
       (11): ReLU(inplace)
-      (12): DCN(
+      (12): ModulatedDeformConvPack(
         (conv_offset_mask): Conv2d(256, 27, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
       )
       (13): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
@@ -482,139 +482,76 @@ Versions of relevant libraries:
     )
   )
 )
-[2019-08-09 16:54:44,888-rk0-trainval_siamrcnn.py#240] (WarmUPScheduler) lr spaces: 
-[1.00000000e-03 1.58489319e-03 2.51188643e-03 3.98107171e-03
- 6.30957344e-03 1.00000000e-02 9.53633378e-03 9.09416619e-03
- 8.67250043e-03 8.27038588e-03 7.88691602e-03 7.52122637e-03
- 7.17249250e-03 6.83992826e-03 6.52278389e-03 6.22034443e-03
- 5.93192807e-03 5.65688460e-03 5.39459397e-03 5.14446487e-03
- 4.90593341e-03 4.67846185e-03 4.46153738e-03 4.25467096e-03
- 4.05739624e-03 3.86926848e-03 3.68986357e-03 3.51877706e-03
- 3.35562326e-03 3.20003434e-03 3.05165956e-03 2.91016441e-03
- 2.77522992e-03 2.64655188e-03 2.52384021e-03 2.40681827e-03
- 2.29522223e-03 2.18880053e-03 2.08731324e-03 1.99053158e-03
- 1.89823735e-03 1.81022250e-03 1.72628860e-03 1.64624643e-03
- 1.56991554e-03 1.49712386e-03 1.42770728e-03 1.36150932e-03
- 1.29838073e-03 1.23817920e-03 1.18076902e-03 1.12602075e-03
- 1.07381097e-03 1.02402198e-03 9.76541539e-04 9.31262607e-04
- 8.88083105e-04 8.46905692e-04 8.07637535e-04 7.70190111e-04
- 7.34478997e-04 7.00423687e-04 6.67947407e-04 6.36976942e-04
- 6.07442473e-04 5.79277417e-04 5.52418280e-04 5.26804510e-04
- 5.02378365e-04 4.79084777e-04 4.56871234e-04 4.35687658e-04
- 4.15486293e-04 3.96221597e-04 3.77850140e-04 3.60330505e-04
- 3.43623197e-04 3.27690550e-04 3.12496646e-04 2.98007232e-04
- 2.84189644e-04 2.71012730e-04 2.58446785e-04 2.46463481e-04
- 2.35035802e-04 2.24137985e-04 2.13745464e-04 2.03834809e-04
- 1.94383677e-04 1.85370763e-04 1.76775747e-04 1.68579252e-04
- 1.60762802e-04 1.53308774e-04 1.46200364e-04 1.39421547e-04
- 1.32957041e-04 1.26792272e-04 1.20913342e-04 1.15306999e-04
- 1.09960603e-04 1.04862101e-04 1.00000000e-04 9.53633378e-05
- 9.09416619e-05 8.67250043e-05 8.27038588e-05 7.88691602e-05
- 7.52122637e-05 7.17249250e-05 6.83992826e-05 6.52278389e-05
- 6.22034443e-05 5.93192807e-05 5.65688460e-05 5.39459397e-05
- 5.14446487e-05 4.90593341e-05 4.67846185e-05 4.46153738e-05
- 4.25467096e-05 4.05739624e-05 3.86926848e-05 3.68986357e-05
- 3.51877706e-05 3.35562326e-05 3.20003434e-05 3.05165956e-05
- 2.91016441e-05 2.77522992e-05 2.64655188e-05 2.52384021e-05
- 2.40681827e-05 2.29522223e-05 2.18880053e-05 2.08731324e-05
- 1.99053158e-05 1.89823735e-05 1.81022250e-05 1.72628860e-05
- 1.64624643e-05 1.56991554e-05 1.49712386e-05 1.42770728e-05
- 1.36150932e-05 1.29838073e-05 1.23817920e-05 1.18076902e-05
- 1.12602075e-05 1.07381097e-05 1.02402198e-05 9.76541539e-06
- 9.31262607e-06 8.88083105e-06 8.46905692e-06 8.07637535e-06
- 7.70190111e-06 7.34478997e-06 7.00423687e-06 6.67947407e-06
- 6.36976942e-06 6.07442473e-06 5.79277417e-06 5.52418280e-06
- 5.26804510e-06 5.02378365e-06 4.79084777e-06 4.56871234e-06
- 4.35687658e-06 4.15486293e-06 3.96221597e-06 3.77850140e-06
- 3.60330505e-06 3.43623197e-06 3.27690550e-06 3.12496646e-06
- 2.98007232e-06 2.84189644e-06 2.71012730e-06 2.58446785e-06
- 2.46463481e-06 2.35035802e-06 2.24137985e-06 2.13745464e-06
- 2.03834809e-06 1.94383677e-06 1.85370763e-06 1.76775747e-06
- 1.68579252e-06 1.60762802e-06 1.53308774e-06 1.46200364e-06
- 1.39421547e-06 1.32957041e-06 1.26792272e-06 1.20913342e-06
- 1.15306999e-06 1.09960603e-06 1.04862101e-06 1.00000000e-06]
-[2019-08-09 16:54:45,072-rk0-trainval_siamrcnn.py#242] model prepare done
-[2019-08-09 16:54:45,117-rk0-trainval_siamrcnn.py#294] train epoch:0
-[2019-08-09 16:54:45,938-rk0-resnet.py<forward>#231] p3 torch.Size([1, 1024, 15, 15])
-[2019-08-09 16:54:46,631-rk0-resnet.py<forward>#231] p3 torch.Size([1, 1024, 31, 31])
+[2019-08-09 19:52:05,757-rk0-trainval_siamrcnn.py#240] (WarmUPScheduler) lr spaces: 
+[1.00000000e-03 1.00000000e-03 1.00000000e-03 1.00000000e-03
+ 1.00000000e-03 1.00000000e-03 9.76541539e-04 9.53633378e-04
+ 9.31262607e-04 9.09416619e-04 8.88083105e-04 8.67250043e-04
+ 8.46905692e-04 8.27038588e-04 8.07637535e-04 7.88691602e-04
+ 7.70190111e-04 7.52122637e-04 7.34478997e-04 7.17249250e-04
+ 7.00423687e-04 6.83992826e-04 6.67947407e-04 6.52278389e-04
+ 6.36976942e-04 6.22034443e-04 6.07442473e-04 5.93192807e-04
+ 5.79277417e-04 5.65688460e-04 5.52418280e-04 5.39459397e-04
+ 5.26804510e-04 5.14446487e-04 5.02378365e-04 4.90593341e-04
+ 4.79084777e-04 4.67846185e-04 4.56871234e-04 4.46153738e-04
+ 4.35687658e-04 4.25467096e-04 4.15486293e-04 4.05739624e-04
+ 3.96221597e-04 3.86926848e-04 3.77850140e-04 3.68986357e-04
+ 3.60330505e-04 3.51877706e-04 3.43623197e-04 3.35562326e-04
+ 3.27690550e-04 3.20003434e-04 3.12496646e-04 3.05165956e-04
+ 2.98007232e-04 2.91016441e-04 2.84189644e-04 2.77522992e-04
+ 2.71012730e-04 2.64655188e-04 2.58446785e-04 2.52384021e-04
+ 2.46463481e-04 2.40681827e-04 2.35035802e-04 2.29522223e-04
+ 2.24137985e-04 2.18880053e-04 2.13745464e-04 2.08731324e-04
+ 2.03834809e-04 1.99053158e-04 1.94383677e-04 1.89823735e-04
+ 1.85370763e-04 1.81022250e-04 1.76775747e-04 1.72628860e-04
+ 1.68579252e-04 1.64624643e-04 1.60762802e-04 1.56991554e-04
+ 1.53308774e-04 1.49712386e-04 1.46200364e-04 1.42770728e-04
+ 1.39421547e-04 1.36150932e-04 1.32957041e-04 1.29838073e-04
+ 1.26792272e-04 1.23817920e-04 1.20913342e-04 1.18076902e-04
+ 1.15306999e-04 1.12602075e-04 1.09960603e-04 1.07381097e-04
+ 1.04862101e-04 1.02402198e-04 1.00000000e-04 9.76541539e-05
+ 9.53633378e-05 9.31262607e-05 9.09416619e-05 8.88083105e-05
+ 8.67250043e-05 8.46905692e-05 8.27038588e-05 8.07637535e-05
+ 7.88691602e-05 7.70190111e-05 7.52122637e-05 7.34478997e-05
+ 7.17249250e-05 7.00423687e-05 6.83992826e-05 6.67947407e-05
+ 6.52278389e-05 6.36976942e-05 6.22034443e-05 6.07442473e-05
+ 5.93192807e-05 5.79277417e-05 5.65688460e-05 5.52418280e-05
+ 5.39459397e-05 5.26804510e-05 5.14446487e-05 5.02378365e-05
+ 4.90593341e-05 4.79084777e-05 4.67846185e-05 4.56871234e-05
+ 4.46153738e-05 4.35687658e-05 4.25467096e-05 4.15486293e-05
+ 4.05739624e-05 3.96221597e-05 3.86926848e-05 3.77850140e-05
+ 3.68986357e-05 3.60330505e-05 3.51877706e-05 3.43623197e-05
+ 3.35562326e-05 3.27690550e-05 3.20003434e-05 3.12496646e-05
+ 3.05165956e-05 2.98007232e-05 2.91016441e-05 2.84189644e-05
+ 2.77522992e-05 2.71012730e-05 2.64655188e-05 2.58446785e-05
+ 2.52384021e-05 2.46463481e-05 2.40681827e-05 2.35035802e-05
+ 2.29522223e-05 2.24137985e-05 2.18880053e-05 2.13745464e-05
+ 2.08731324e-05 2.03834809e-05 1.99053158e-05 1.94383677e-05
+ 1.89823735e-05 1.85370763e-05 1.81022250e-05 1.76775747e-05
+ 1.72628860e-05 1.68579252e-05 1.64624643e-05 1.60762802e-05
+ 1.56991554e-05 1.53308774e-05 1.49712386e-05 1.46200364e-05
+ 1.42770728e-05 1.39421547e-05 1.36150932e-05 1.32957041e-05
+ 1.29838073e-05 1.26792272e-05 1.23817920e-05 1.20913342e-05
+ 1.18076902e-05 1.15306999e-05 1.12602075e-05 1.09960603e-05
+ 1.07381097e-05 1.04862101e-05 1.02402198e-05 1.00000000e-05]
+[2019-08-09 19:52:05,943-rk0-trainval_siamrcnn.py#242] model prepare done
+[2019-08-09 19:52:06,037-rk0-trainval_siamrcnn.py#299] train epoch:0
+[2019-08-09 19:52:06,798-rk0-resnet.py<forward>#231] p3 torch.Size([1, 1024, 15, 15])
+[2019-08-09 19:52:07,482-rk0-resnet.py<forward>#231] p3 torch.Size([1, 1024, 31, 31])
 /cluster/home/u1/.conda/envs/deepimit/lib/python3.6/site-packages/torch/nn/functional.py:52: UserWarning: size_average and reduce args will be deprecated, please use reduction='sum' instead.
   warnings.warn(warning.format(ret))
-[2019-08-09 16:55:16,957-rk0-trainval_siamrcnn.py#376] Epoch: [1][10/45900] lr: 0.001000	batch_time: 2.690330 (3.181550)	data_time: 0.000763 (0.050368)	rpn_cls_loss: 0.634796 (0.729412)	rpn_loc_loss: 0.878526 (0.964871)	kp_hp_loss: 3.601576 (3.299888)	kp_hm_hp_loss: 5.508787 (6.206610)	kp_hp_offset_loss: 0.476955 (0.577993)	kp_loss: 12.341710 (13.187796)	siammask_loss: 14.030737 (15.075052)	kp_avg_acc: 0.000000 (0.000000)
-[2019-08-09 16:55:16,962-rk0-log_helper.py# 97] Progress: 10 / 9180000 [0%], Speed: 3.182 s/iter, ETA 338:00:56 (D:H:M)
+[2019-08-09 19:52:57,039-rk0-trainval_siamrcnn.py#386] Epoch: [1][10/45900] lr: 0.001000	batch_time: 4.682440 (5.102690)	data_time: 0.000825 (0.050001)	rpn_cls_loss: 0.853987 (0.714908)	rpn_loc_loss: 0.989275 (1.266173)	kp_hp_loss: 3.043423 (3.234055)	kp_hm_hp_loss: 7.986590 (6.667959)	kp_hp_offset_loss: 0.541218 (0.484894)	kp_loss: 15.564526 (13.720888)	siammask_loss: 0.853987 (0.714908)	kp_avg_acc: 0.000000 (0.000000)
+[2019-08-09 19:52:57,043-rk0-log_helper.py# 97] Progress: 10 / 9180000 [0%], Speed: 5.103 s/iter, ETA 542:03:50 (D:H:M)
 
-[2019-08-09 16:55:43,609-rk0-trainval_siamrcnn.py#376] Epoch: [1][20/45900] lr: 0.001000	batch_time: 2.803333 (2.920582)	data_time: 0.000754 (0.026128)	rpn_cls_loss: 0.851953 (0.719495)	rpn_loc_loss: 0.853980 (0.950407)	kp_hp_loss: 3.178848 (3.271589)	kp_hm_hp_loss: 5.409456 (6.121676)	kp_hp_offset_loss: 0.601746 (0.579037)	kp_loss: 11.894778 (13.033141)	siammask_loss: 13.771507 (14.893123)	kp_avg_acc: 0.000000 (0.000000)
-[2019-08-09 16:55:43,614-rk0-log_helper.py# 97] Progress: 20 / 9180000 [0%], Speed: 2.921 s/iter, ETA 310:07:28 (D:H:M)
+[2019-08-09 19:53:44,321-rk0-trainval_siamrcnn.py#386] Epoch: [1][20/45900] lr: 0.001000	batch_time: 4.658305 (4.912336)	data_time: 0.000895 (0.025901)	rpn_cls_loss: 0.481331 (0.643010)	rpn_loc_loss: 1.537691 (1.196820)	kp_hp_loss: 3.352753 (3.245251)	kp_hm_hp_loss: 6.960763 (6.558831)	kp_hp_offset_loss: 0.504948 (0.480131)	kp_loss: 14.298846 (13.563629)	siammask_loss: 0.481331 (0.643010)	kp_avg_acc: 0.000000 (0.000000)
+[2019-08-09 19:53:44,326-rk0-log_helper.py# 97] Progress: 20 / 9180000 [0%], Speed: 4.912 s/iter, ETA 521:22:25 (D:H:M)
 
-[2019-08-09 16:56:10,200-rk0-trainval_siamrcnn.py#376] Epoch: [1][30/45900] lr: 0.001000	batch_time: 2.635876 (2.831573)	data_time: 0.000785 (0.017995)	rpn_cls_loss: 0.667188 (0.708277)	rpn_loc_loss: 0.775632 (0.906487)	kp_hp_loss: 3.265340 (3.291510)	kp_hm_hp_loss: 5.667193 (5.996717)	kp_hp_offset_loss: 0.510338 (0.567294)	kp_loss: 12.276467 (12.853880)	siammask_loss: 13.874414 (14.649941)	kp_avg_acc: 0.000000 (0.000000)
-[2019-08-09 16:56:10,204-rk0-log_helper.py# 97] Progress: 30 / 9180000 [0%], Speed: 2.832 s/iter, ETA 300:20:29 (D:H:M)
+[2019-08-09 19:54:22,670-rk0-trainval_siamrcnn.py#386] Epoch: [1][30/45900] lr: 0.001000	batch_time: 2.396407 (4.551158)	data_time: 0.000984 (0.017895)	rpn_cls_loss: 0.442039 (0.600126)	rpn_loc_loss: 1.657216 (1.180894)	kp_hp_loss: 3.362835 (3.238231)	kp_hm_hp_loss: 6.942629 (6.553972)	kp_hp_offset_loss: 0.437883 (0.486511)	kp_loss: 14.214662 (13.555698)	siammask_loss: 0.442039 (0.600126)	kp_avg_acc: 0.000000 (0.000000)
+[2019-08-09 19:54:22,674-rk0-log_helper.py# 97] Progress: 30 / 9180000 [0%], Speed: 4.551 s/iter, ETA 483:13:24 (D:H:M)
 
-[2019-08-09 16:56:37,165-rk0-trainval_siamrcnn.py#376] Epoch: [1][40/45900] lr: 0.001000	batch_time: 2.714911 (2.796457)	data_time: 0.000789 (0.013928)	rpn_cls_loss: 0.615328 (0.696247)	rpn_loc_loss: 0.992214 (0.881350)	kp_hp_loss: 3.123726 (3.301987)	kp_hm_hp_loss: 4.713080 (5.858581)	kp_hp_offset_loss: 0.490170 (0.558922)	kp_loss: 10.683516 (12.648782)	siammask_loss: 12.489501 (14.402650)	kp_avg_acc: 0.000000 (0.000000)
-[2019-08-09 16:56:37,171-rk0-log_helper.py# 97] Progress: 40 / 9180000 [0%], Speed: 2.796 s/iter, ETA 297:02:56 (D:H:M)
+[2019-08-09 19:54:47,400-rk0-trainval_siamrcnn.py#386] Epoch: [1][40/45900] lr: 0.001000	batch_time: 2.367211 (4.030068)	data_time: 0.000951 (0.013880)	rpn_cls_loss: 0.477441 (0.569722)	rpn_loc_loss: 1.079718 (1.153749)	kp_hp_loss: 4.587672 (3.254108)	kp_hm_hp_loss: 6.899976 (6.610636)	kp_hp_offset_loss: 0.525742 (0.495896)	kp_loss: 15.463379 (13.665955)	siammask_loss: 0.477441 (0.569722)	kp_avg_acc: 0.000000 (0.000000)
+[2019-08-09 19:54:47,404-rk0-log_helper.py# 97] Progress: 40 / 9180000 [0%], Speed: 4.030 s/iter, ETA 428:04:37 (D:H:M)
 
-[2019-08-09 16:57:03,826-rk0-trainval_siamrcnn.py#376] Epoch: [1][50/45900] lr: 0.001000	batch_time: 2.651176 (2.769211)	data_time: 0.000893 (0.011537)	rpn_cls_loss: 0.557021 (0.682027)	rpn_loc_loss: 1.611703 (0.884487)	kp_hp_loss: 3.436194 (3.283968)	kp_hm_hp_loss: 4.436557 (5.683525)	kp_hp_offset_loss: 0.544819 (0.549140)	kp_loss: 10.635849 (12.358397)	siammask_loss: 13.126913 (14.101809)	kp_avg_acc: 0.000000 (0.000000)
-[2019-08-09 16:57:03,831-rk0-log_helper.py# 97] Progress: 50 / 9180000 [0%], Speed: 2.769 s/iter, ETA 294:05:26 (D:H:M)
+[2019-08-09 19:55:12,190-rk0-trainval_siamrcnn.py#386] Epoch: [1][50/45900] lr: 0.001000	batch_time: 2.324456 (3.718471)	data_time: 0.000789 (0.011500)	rpn_cls_loss: 0.437529 (0.533590)	rpn_loc_loss: 1.239461 (1.181334)	kp_hp_loss: 3.455964 (3.200452)	kp_hm_hp_loss: 6.562652 (6.559680)	kp_hp_offset_loss: 0.403831 (0.495965)	kp_loss: 13.703772 (13.535935)	siammask_loss: 0.437529 (0.533590)	kp_avg_acc: 0.000000 (0.000000)
+[2019-08-09 19:55:12,195-rk0-log_helper.py# 97] Progress: 50 / 9180000 [0%], Speed: 3.718 s/iter, ETA 395:02:02 (D:H:M)
 
-[2019-08-09 16:57:30,167-rk0-trainval_siamrcnn.py#376] Epoch: [1][60/45900] lr: 0.001000	batch_time: 2.672607 (2.745762)	data_time: 0.000766 (0.009935)	rpn_cls_loss: 0.685621 (0.671806)	rpn_loc_loss: 0.746795 (0.878377)	kp_hp_loss: 3.617074 (3.286058)	kp_hm_hp_loss: 4.772998 (5.528091)	kp_hp_offset_loss: 0.507014 (0.538050)	kp_loss: 11.283585 (12.116245)	siammask_loss: 12.865360 (13.842102)	kp_avg_acc: 0.000000 (0.000000)
-[2019-08-09 16:57:30,171-rk0-log_helper.py# 97] Progress: 60 / 9180000 [0%], Speed: 2.746 s/iter, ETA 291:17:38 (D:H:M)
-
-[2019-08-09 16:57:56,758-rk0-trainval_siamrcnn.py#376] Epoch: [1][70/45900] lr: 0.001000	batch_time: 2.631896 (2.732607)	data_time: 0.000755 (0.008763)	rpn_cls_loss: 0.614885 (0.662730)	rpn_loc_loss: 0.693074 (0.856602)	kp_hp_loss: 2.901016 (3.252315)	kp_hm_hp_loss: 4.088277 (5.391263)	kp_hp_offset_loss: 0.487786 (0.528014)	kp_loss: 9.521217 (11.867223)	siammask_loss: 10.967792 (13.557875)	kp_avg_acc: 0.000000 (0.000000)
-[2019-08-09 16:57:56,762-rk0-log_helper.py# 97] Progress: 70 / 9180000 [0%], Speed: 2.733 s/iter, ETA 290:08:05 (D:H:M)
-
-[2019-08-09 16:58:23,864-rk0-trainval_siamrcnn.py#376] Epoch: [1][80/45900] lr: 0.001000	batch_time: 2.565448 (2.729159)	data_time: 0.000761 (0.007883)	rpn_cls_loss: 0.604521 (0.649114)	rpn_loc_loss: 0.536155 (0.842924)	kp_hp_loss: 3.689057 (3.239813)	kp_hm_hp_loss: 4.780726 (5.292627)	kp_hp_offset_loss: 0.446426 (0.517172)	kp_loss: 11.306573 (11.695924)	siammask_loss: 12.554480 (13.356546)	kp_avg_acc: 0.000000 (0.000000)
-[2019-08-09 16:58:23,869-rk0-log_helper.py# 97] Progress: 80 / 9180000 [0%], Speed: 2.729 s/iter, ETA 289:23:17 (D:H:M)
-
-[2019-08-09 16:58:50,177-rk0-trainval_siamrcnn.py#376] Epoch: [1][90/45900] lr: 0.001000	batch_time: 2.483574 (2.717672)	data_time: 0.000816 (0.007200)	rpn_cls_loss: 0.462804 (0.635922)	rpn_loc_loss: 0.956323 (0.832970)	kp_hp_loss: 2.904270 (3.223249)	kp_hm_hp_loss: 4.470376 (5.185158)	kp_hp_offset_loss: 0.496972 (0.506785)	kp_loss: 10.106805 (11.507770)	siammask_loss: 11.717197 (13.143256)	kp_avg_acc: 0.000000 (0.000000)
-[2019-08-09 16:58:50,181-rk0-log_helper.py# 97] Progress: 90 / 9180000 [0%], Speed: 2.718 s/iter, ETA 288:17:59 (D:H:M)
-
-[2019-08-09 16:59:16,948-rk0-trainval_siamrcnn.py#376] Epoch: [1][100/45900] lr: 0.001000	batch_time: 2.751990 (2.713079)	data_time: 0.000766 (0.006642)	rpn_cls_loss: 0.518508 (0.630635)	rpn_loc_loss: 0.662371 (0.817266)	kp_hp_loss: 3.222117 (3.217927)	kp_hm_hp_loss: 3.648605 (5.060976)	kp_hp_offset_loss: 0.457573 (0.498595)	kp_loss: 9.152596 (11.307986)	siammask_loss: 10.465950 (12.919340)	kp_avg_acc: 0.000000 (0.000000)
-[2019-08-09 16:59:16,952-rk0-log_helper.py# 97] Progress: 100 / 9180000 [0%], Speed: 2.713 s/iter, ETA 288:06:16 (D:H:M)
-
-[2019-08-09 16:59:43,351-rk0-trainval_siamrcnn.py#376] Epoch: [1][110/45900] lr: 0.001000	batch_time: 2.713219 (2.705965)	data_time: 0.000789 (0.006194)	rpn_cls_loss: 0.467655 (0.616432)	rpn_loc_loss: 1.000116 (0.810621)	kp_hp_loss: 2.436424 (3.205791)	kp_hm_hp_loss: 3.648725 (4.942065)	kp_hp_offset_loss: 0.385319 (0.489104)	kp_loss: 8.294829 (11.107993)	siammask_loss: 9.962625 (12.697170)	kp_avg_acc: 0.000000 (0.000000)
-[2019-08-09 16:59:43,356-rk0-log_helper.py# 97] Progress: 110 / 9180000 [0%], Speed: 2.706 s/iter, ETA 287:12:07 (D:H:M)
-
-[2019-08-09 17:00:10,015-rk0-trainval_siamrcnn.py#376] Epoch: [1][120/45900] lr: 0.001000	batch_time: 2.596597 (2.702216)	data_time: 0.000757 (0.005826)	rpn_cls_loss: 0.490906 (0.610169)	rpn_loc_loss: 0.721135 (0.800530)	kp_hp_loss: 2.936517 (3.205677)	kp_hm_hp_loss: 4.203389 (4.846197)	kp_hp_offset_loss: 0.368744 (0.479345)	kp_loss: 9.610344 (10.954319)	siammask_loss: 10.966612 (12.525125)	kp_avg_acc: 0.000000 (0.000000)
-[2019-08-09 17:00:10,018-rk0-log_helper.py# 97] Progress: 120 / 9180000 [0%], Speed: 2.702 s/iter, ETA 287:02:33 (D:H:M)
-
-[2019-08-09 17:00:37,026-rk0-trainval_siamrcnn.py#376] Epoch: [1][130/45900] lr: 0.001000	batch_time: 2.731306 (2.701694)	data_time: 0.000810 (0.005508)	rpn_cls_loss: 0.450654 (0.600333)	rpn_loc_loss: 0.691276 (0.785359)	kp_hp_loss: 2.919023 (3.210573)	kp_hm_hp_loss: 3.614343 (4.754303)	kp_hp_offset_loss: 0.395779 (0.469584)	kp_loss: 8.736316 (10.811613)	siammask_loss: 10.016501 (12.354377)	kp_avg_acc: 0.000000 (0.000000)
-[2019-08-09 17:00:37,031-rk0-log_helper.py# 97] Progress: 130 / 9180000 [0%], Speed: 2.702 s/iter, ETA 287:01:13 (D:H:M)
-
-[2019-08-09 17:01:03,642-rk0-trainval_siamrcnn.py#376] Epoch: [1][140/45900] lr: 0.001000	batch_time: 2.681135 (2.698436)	data_time: 0.000763 (0.005247)	rpn_cls_loss: 0.407915 (0.594125)	rpn_loc_loss: 0.637931 (0.779778)	kp_hp_loss: 2.736432 (3.211724)	kp_hm_hp_loss: 3.531915 (4.673358)	kp_hp_offset_loss: 0.294772 (0.461939)	kp_loss: 8.329076 (10.683701)	siammask_loss: 9.502508 (12.213560)	kp_avg_acc: 0.000000 (0.000000)
-[2019-08-09 17:01:03,646-rk0-log_helper.py# 97] Progress: 140 / 9180000 [0%], Speed: 2.698 s/iter, ETA 286:16:54 (D:H:M)
-
-[2019-08-09 17:01:30,354-rk0-trainval_siamrcnn.py#376] Epoch: [1][150/45900] lr: 0.001000	batch_time: 2.768839 (2.696246)	data_time: 0.000816 (0.005014)	rpn_cls_loss: 0.456258 (0.586155)	rpn_loc_loss: 0.705743 (0.772234)	kp_hp_loss: 3.518904 (3.205930)	kp_hm_hp_loss: 3.575069 (4.584085)	kp_hp_offset_loss: 0.379439 (0.455727)	kp_loss: 9.260947 (10.537785)	siammask_loss: 10.564096 (12.050622)	kp_avg_acc: 0.000000 (0.000000)
-[2019-08-09 17:01:30,359-rk0-log_helper.py# 97] Progress: 150 / 9180000 [0%], Speed: 2.696 s/iter, ETA 286:11:18 (D:H:M)
-
-[2019-08-09 17:01:56,536-rk0-trainval_siamrcnn.py#376] Epoch: [1][160/45900] lr: 0.001000	batch_time: 2.528323 (2.691037)	data_time: 0.000658 (0.004811)	rpn_cls_loss: 0.475744 (0.580983)	rpn_loc_loss: 0.656726 (0.767700)	kp_hp_loss: 3.084996 (3.200057)	kp_hm_hp_loss: 3.153614 (4.511695)	kp_hp_offset_loss: 0.315359 (0.447453)	kp_loss: 8.130777 (10.415053)	siammask_loss: 9.394592 (11.917277)	kp_avg_acc: 0.000000 (0.000000)
-[2019-08-09 17:01:56,540-rk0-log_helper.py# 97] Progress: 160 / 9180000 [0%], Speed: 2.691 s/iter, ETA 285:22:01 (D:H:M)
-
-[2019-08-09 17:02:23,267-rk0-trainval_siamrcnn.py#376] Epoch: [1][170/45900] lr: 0.001000	batch_time: 2.716351 (2.689656)	data_time: 0.000798 (0.004623)	rpn_cls_loss: 0.403383 (0.577090)	rpn_loc_loss: 0.576227 (0.765280)	kp_hp_loss: 3.455666 (3.188673)	kp_hm_hp_loss: 3.161688 (4.443037)	kp_hp_offset_loss: 0.270348 (0.440989)	kp_loss: 8.468546 (10.294217)	siammask_loss: 9.563401 (11.789645)	kp_avg_acc: 0.000000 (0.000000)
-[2019-08-09 17:02:23,272-rk0-log_helper.py# 97] Progress: 170 / 9180000 [0%], Speed: 2.690 s/iter, ETA 285:18:29 (D:H:M)
-
-[2019-08-09 17:02:49,382-rk0-trainval_siamrcnn.py#376] Epoch: [1][180/45900] lr: 0.001000	batch_time: 2.520971 (2.685009)	data_time: 0.000758 (0.004468)	rpn_cls_loss: 0.759995 (0.574025)	rpn_loc_loss: 0.758118 (0.759503)	kp_hp_loss: 3.272495 (3.178153)	kp_hm_hp_loss: 3.403440 (4.384823)	kp_hp_offset_loss: 0.379490 (0.434032)	kp_loss: 8.757145 (10.189419)	siammask_loss: 10.426882 (11.674849)	kp_avg_acc: 0.000000 (0.000000)
-[2019-08-09 17:02:49,387-rk0-log_helper.py# 97] Progress: 180 / 9180000 [0%], Speed: 2.685 s/iter, ETA 285:06:38 (D:H:M)
-
-[2019-08-09 17:03:16,426-rk0-trainval_siamrcnn.py#376] Epoch: [1][190/45900] lr: 0.001000	batch_time: 2.709255 (2.685735)	data_time: 0.000755 (0.004324)	rpn_cls_loss: 0.600877 (0.569076)	rpn_loc_loss: 0.595480 (0.752840)	kp_hp_loss: 3.460177 (3.184735)	kp_hm_hp_loss: 3.496389 (4.330003)	kp_hp_offset_loss: 0.279724 (0.427722)	kp_loss: 8.984486 (10.107461)	siammask_loss: 10.299938 (11.579947)	kp_avg_acc: 0.000000 (0.000000)
-[2019-08-09 17:03:16,431-rk0-log_helper.py# 97] Progress: 190 / 9180000 [0%], Speed: 2.686 s/iter, ETA 285:08:29 (D:H:M)
-
-[2019-08-09 17:03:43,392-rk0-trainval_siamrcnn.py#376] Epoch: [1][200/45900] lr: 0.001000	batch_time: 2.694042 (2.685998)	data_time: 0.000761 (0.004199)	rpn_cls_loss: 0.578184 (0.564517)	rpn_loc_loss: 0.553633 (0.746132)	kp_hp_loss: 3.188243 (3.191119)	kp_hm_hp_loss: 3.196214 (4.277709)	kp_hp_offset_loss: 0.316291 (0.422390)	kp_loss: 8.298856 (10.030071)	siammask_loss: 9.541400 (11.489949)	kp_avg_acc: 0.000000 (0.000000)
-[2019-08-09 17:03:43,397-rk0-log_helper.py# 97] Progress: 200 / 9180000 [0%], Speed: 2.686 s/iter, ETA 285:09:08 (D:H:M)
-
-[2019-08-09 17:04:10,025-rk0-trainval_siamrcnn.py#376] Epoch: [1][210/45900] lr: 0.001000	batch_time: 2.667429 (2.684652)	data_time: 0.000796 (0.004089)	rpn_cls_loss: 0.591706 (0.560458)	rpn_loc_loss: 0.619432 (0.738906)	kp_hp_loss: 4.109803 (3.197245)	kp_hm_hp_loss: 3.059220 (4.224932)	kp_hp_offset_loss: 0.384322 (0.416793)	kp_loss: 9.082954 (9.951435)	siammask_loss: 10.417979 (11.398583)	kp_avg_acc: 0.000000 (0.000000)
-[2019-08-09 17:04:10,029-rk0-log_helper.py# 97] Progress: 210 / 9180000 [0%], Speed: 2.685 s/iter, ETA 285:05:42 (D:H:M)
-
-[2019-08-09 17:04:36,843-rk0-trainval_siamrcnn.py#376] Epoch: [1][220/45900] lr: 0.001000	batch_time: 2.660574 (2.684273)	data_time: 0.000754 (0.003981)	rpn_cls_loss: 0.379436 (0.556509)	rpn_loc_loss: 1.185834 (0.737079)	kp_hp_loss: 3.072984 (3.205150)	kp_hm_hp_loss: 3.292098 (4.175964)	kp_hp_offset_loss: 0.329971 (0.411802)	kp_loss: 8.341101 (9.880897)	siammask_loss: 10.143538 (11.321905)	kp_avg_acc: 0.000000 (0.000000)
-[2019-08-09 17:04:36,847-rk0-log_helper.py# 97] Progress: 220 / 9180000 [0%], Speed: 2.684 s/iter, ETA 285:04:43 (D:H:M)
-
-[2019-08-09 17:05:03,408-rk0-trainval_siamrcnn.py#376] Epoch: [1][230/45900] lr: 0.001000	batch_time: 2.521520 (2.682828)	data_time: 0.000759 (0.003883)	rpn_cls_loss: 0.474608 (0.553420)	rpn_loc_loss: 0.576505 (0.730067)	kp_hp_loss: 3.174108 (3.204151)	kp_hm_hp_loss: 3.098239 (4.127743)	kp_hp_offset_loss: 0.285957 (0.407371)	kp_loss: 8.107424 (9.803135)	siammask_loss: 9.273838 (11.232639)	kp_avg_acc: 0.000000 (0.000000)
-[2019-08-09 17:05:03,412-rk0-log_helper.py# 97] Progress: 230 / 9180000 [0%], Speed: 2.683 s/iter, ETA 285:01:02 (D:H:M)
-
-[2019-08-09 17:05:30,194-rk0-trainval_siamrcnn.py#376] Epoch: [1][240/45900] lr: 0.001000	batch_time: 2.614703 (2.682425)	data_time: 0.000787 (0.003793)	rpn_cls_loss: 0.491266 (0.550546)	rpn_loc_loss: 0.525927 (0.723403)	kp_hp_loss: 3.311636 (3.202795)	kp_hm_hp_loss: 3.023548 (4.083847)	kp_hp_offset_loss: 0.236609 (0.402727)	kp_loss: 8.083568 (9.731291)	siammask_loss: 9.205946 (11.149925)	kp_avg_acc: 0.000000 (0.000000)
-[2019-08-09 17:05:30,198-rk0-log_helper.py# 97] Progress: 240 / 9180000 [0%], Speed: 2.682 s/iter, ETA 285:00:00 (D:H:M)
-
-[2019-08-09 17:05:57,283-rk0-trainval_siamrcnn.py#376] Epoch: [1][250/45900] lr: 0.001000	batch_time: 2.518139 (2.683266)	data_time: 0.000756 (0.003709)	rpn_cls_loss: 0.564937 (0.547283)	rpn_loc_loss: 0.768264 (0.717963)	kp_hp_loss: 3.701582 (3.193093)	kp_hm_hp_loss: 3.043183 (4.043232)	kp_hp_offset_loss: 0.278330 (0.399338)	kp_loss: 8.544686 (9.657276)	siammask_loss: 10.031540 (11.066120)	kp_avg_acc: 0.000000 (0.000000)
-[2019-08-09 17:05:57,287-rk0-log_helper.py# 97] Progress: 250 / 9180000 [0%], Speed: 2.683 s/iter, ETA 285:02:08 (D:H:M)
-
-[2019-08-09 17:06:23,440-rk0-trainval_siamrcnn.py#376] Epoch: [1][260/45900] lr: 0.001000	batch_time: 2.535811 (2.680458)	data_time: 0.000750 (0.003631)	rpn_cls_loss: 0.596996 (0.544769)	rpn_loc_loss: 0.922923 (0.712470)	kp_hp_loss: 2.565726 (3.190294)	kp_hm_hp_loss: 3.179113 (4.004499)	kp_hp_offset_loss: 0.229078 (0.395412)	kp_loss: 7.563474 (9.592451)	siammask_loss: 9.267977 (10.992190)	kp_avg_acc: 0.000000 (0.000000)
-[2019-08-09 17:06:23,444-rk0-log_helper.py# 97] Progress: 260 / 9180000 [0%], Speed: 2.680 s/iter, ETA 284:18:58 (D:H:M)
-
-slurmstepd: error: *** JOB 24697 ON node1 CANCELLED AT 2019-08-09T17:06:30 ***
+slurmstepd: error: *** JOB 24727 ON node1 CANCELLED AT 2019-08-09T19:55:41 ***
