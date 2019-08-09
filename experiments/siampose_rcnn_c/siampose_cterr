@@ -605,3 +605,9 @@ Versions of relevant libraries:
 [2019-08-09 17:04:36,843-rk0-trainval_siamrcnn.py#376] Epoch: [1][220/45900] lr: 0.001000	batch_time: 2.660574 (2.684273)	data_time: 0.000754 (0.003981)	rpn_cls_loss: 0.379436 (0.556509)	rpn_loc_loss: 1.185834 (0.737079)	kp_hp_loss: 3.072984 (3.205150)	kp_hm_hp_loss: 3.292098 (4.175964)	kp_hp_offset_loss: 0.329971 (0.411802)	kp_loss: 8.341101 (9.880897)	siammask_loss: 10.143538 (11.321905)	kp_avg_acc: 0.000000 (0.000000)
 [2019-08-09 17:04:36,847-rk0-log_helper.py# 97] Progress: 220 / 9180000 [0%], Speed: 2.684 s/iter, ETA 285:04:43 (D:H:M)
 
+[2019-08-09 17:05:03,408-rk0-trainval_siamrcnn.py#376] Epoch: [1][230/45900] lr: 0.001000	batch_time: 2.521520 (2.682828)	data_time: 0.000759 (0.003883)	rpn_cls_loss: 0.474608 (0.553420)	rpn_loc_loss: 0.576505 (0.730067)	kp_hp_loss: 3.174108 (3.204151)	kp_hm_hp_loss: 3.098239 (4.127743)	kp_hp_offset_loss: 0.285957 (0.407371)	kp_loss: 8.107424 (9.803135)	siammask_loss: 9.273838 (11.232639)	kp_avg_acc: 0.000000 (0.000000)
+[2019-08-09 17:05:03,412-rk0-log_helper.py# 97] Progress: 230 / 9180000 [0%], Speed: 2.683 s/iter, ETA 285:01:02 (D:H:M)
+
+[2019-08-09 17:05:30,194-rk0-trainval_siamrcnn.py#376] Epoch: [1][240/45900] lr: 0.001000	batch_time: 2.614703 (2.682425)	data_time: 0.000787 (0.003793)	rpn_cls_loss: 0.491266 (0.550546)	rpn_loc_loss: 0.525927 (0.723403)	kp_hp_loss: 3.311636 (3.202795)	kp_hm_hp_loss: 3.023548 (4.083847)	kp_hp_offset_loss: 0.236609 (0.402727)	kp_loss: 8.083568 (9.731291)	siammask_loss: 9.205946 (11.149925)	kp_avg_acc: 0.000000 (0.000000)
+[2019-08-09 17:05:30,198-rk0-log_helper.py# 97] Progress: 240 / 9180000 [0%], Speed: 2.682 s/iter, ETA 285:00:00 (D:H:M)
+
