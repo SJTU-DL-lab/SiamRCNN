@@ -1,8 +1,7 @@
 import argparse
 import logging
 import os
-os.environ['CUDA_VISIBLE_DEVICES']='2'
-os.environ['GPU_DEBUG']='2'
+os.environ['CUDA_VISIBLE_DEVICES']='0, 1, 3, 4'
 import cv2
 import shutil
 import time
@@ -30,9 +29,6 @@ from tensorboardX import SummaryWriter
 from utils.config_helper import load_config
 from torch.utils.collect_env import get_pretty_env_info
 from torchvision.transforms import ToTensor
-
-import sys
-from gpu_profile import gpu_profile
 
 torch.backends.cudnn.benchmark = True
 
@@ -156,9 +152,9 @@ def build_data_loader(cfg):
     val_set.shuffle()
 
     train_loader = DataLoader(train_set, shuffle=True, batch_size=args.batch, num_workers=args.workers,
-                              pin_memory=True, drop_last=True)
+                              pin_memory=False, drop_last=True)
     val_loader = DataLoader(val_set, shuffle=True, batch_size=args.batch, num_workers=args.workers,
-                            pin_memory=True, drop_last=True)
+                            pin_memory=False, drop_last=True)
 
     logger.info('build dataset done')
     return train_loader, val_loader
@@ -171,7 +167,8 @@ def build_opt_lr(model, cfg, args, epoch):
     else:
         trainable_params = backbone_feature + \
                            model.rpn_model.param_groups(cfg['lr']['start_lr'], cfg['lr']['rpn_lr_mult']) + \
-                           model.kp_model.param_groups(cfg['lr']['start_lr'], cfg['lr']['mask_lr_mult'])
+                           model.kp_model.param_groups(cfg['lr']['start_lr'], cfg['lr']['mask_lr_mult']) + \
+                           model.pose_corr.param_groups(cfg['lr']['start_lr'], cfg['lr']['mask_lr_mult'])
 
     optimizer = torch.optim.SGD(trainable_params, args.lr,
                                 momentum=args.momentum,
@@ -320,8 +317,6 @@ def train(train_loader, model, optimizer, lr_scheduler, epoch, cfg, avg, num_per
         x_kp = {x: torch.autograd.Variable(y).cuda() for x, y in x_kp.items()}
         x_rpn['anchors'] = train_loader.dataset.anchors.all_anchors[0]
         #gpu_profile(frame=sys._getframe(), event='line', arg=None)
-        
-        #gpu_profile(frame=sys._getframe(), event='line', arg=None)
           
         outputs = model(x_rpn, x_kp)
 
@@ -337,14 +332,11 @@ def train(train_loader, model, optimizer, lr_scheduler, epoch, cfg, avg, num_per
         kp_avg_acc = torch.mean(outputs['accuracy'][1])
 
         cls_weight, reg_weight, kp_weight = cfg['loss']['weight']
-        
+
         loss = rpn_cls_loss * cls_weight + rpn_loc_loss * reg_weight + kp_loss * kp_weight
-        print('loss: ', loss)
         
-        gpu_profile(frame=sys._getframe(), event='line', arg=None)
         optimizer.zero_grad()
         loss.backward()
-        gpu_profile(frame=sys._getframe(), event='line', arg=None)
 
         if cfg['clip']['split']:
             torch.nn.utils.clip_grad_norm_(model.module.features.parameters(), cfg['clip']['feature'])
@@ -477,5 +469,4 @@ def args_process(opt):
     return opt
 
 if __name__ == '__main__':
-    sys.settrace(gpu_profile)
     main()
