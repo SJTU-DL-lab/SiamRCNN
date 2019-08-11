@@ -253,7 +253,7 @@ def main():
         logger = logging.getLogger('global')
         train_avg = AverageMeter()
         val_avg = AverageMeter()
-        
+
         if dist_model.module.features.unfix(epoch/args.epochs):
             logger.info('unfix part model.')
             optimizer, lr_scheduler = build_opt_lr(dist_model.module, cfg, args, epoch)
@@ -292,7 +292,7 @@ def train(train_loader, model, optimizer, lr_scheduler, epoch, cfg, avg, num_per
     cur_lr = lr_scheduler.get_cur_lr()
     model.train()
     model = model.cuda()
-    
+
     # model.module.rpn_model.eval()
     # model.module.kp_model.eval()
 
@@ -314,15 +314,16 @@ def train(train_loader, model, optimizer, lr_scheduler, epoch, cfg, avg, num_per
             'label_cls': torch.autograd.Variable(input[2]).cuda(),
             'label_loc': torch.autograd.Variable(input[3]).cuda(),
             'label_loc_weight': torch.autograd.Variable(input[4]).cuda(),
-            'label_mask': torch.autograd.Variable(input[6]).cuda()
+            'label_mask': torch.autograd.Variable(input[6]).cuda(),
+            'kp_reg': input[8]
         }
         x_kp = input[7]
         x_kp = {x: torch.autograd.Variable(y).cuda() for x, y in x_kp.items()}
         x_rpn['anchors'] = train_loader.dataset.anchors.all_anchors[0]
         #gpu_profile(frame=sys._getframe(), event='line', arg=None)
-        
+
         #gpu_profile(frame=sys._getframe(), event='line', arg=None)
-          
+
         outputs = model(x_rpn, x_kp)
 
         rpn_cls_loss, rpn_loc_loss, kp_losses = torch.mean(outputs['losses'][0]),\
@@ -337,10 +338,10 @@ def train(train_loader, model, optimizer, lr_scheduler, epoch, cfg, avg, num_per
         kp_avg_acc = torch.mean(outputs['accuracy'][1])
 
         cls_weight, reg_weight, kp_weight = cfg['loss']['weight']
-        
+
         loss = rpn_cls_loss * cls_weight + rpn_loc_loss * reg_weight + kp_loss * kp_weight
         print('loss: ', loss)
-        
+
         gpu_profile(frame=sys._getframe(), event='line', arg=None)
         optimizer.zero_grad()
         loss.backward()

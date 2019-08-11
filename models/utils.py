@@ -186,7 +186,8 @@ def proposal_layer(inputs, anchors, thresh=0.5, args=None):
         anchors: [batch, anchors*height*width, 4, (x1, y1, x2, y2)]
 
     Returns:
-        Proposals in normalized coordinates [bs, num_rois, 4, (y1, x1, y2, x2)]
+        Proposals in normalized coordinates [num_rois, 4 (x1, y1, x2, y2)]
+        box_inds [num_rois]
     """
 
     # Currently only supports batchsize 1
@@ -211,7 +212,6 @@ def proposal_layer(inputs, anchors, thresh=0.5, args=None):
         pos_ix = torch.nonzero(scores[i] > thresh)
         if pos_ix.dim() > 1:
             pos_ix = pos_ix.squeeze(1)
-        
         try:
             # if pox_ix.dim() == 0:
             #     pos_ix = pos_ix.unsqueeze(0)

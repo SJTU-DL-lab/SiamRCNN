@@ -10,6 +10,7 @@ from torch.autograd import Variable
 from utils.anchors import Anchors
 from utils.image import draw_boxes
 from utils.pose_evaluate import accuracy
+from utils.keypoint_rcnn import add_keypoint_rcnn_gts
 from models.losses import FocalLoss, RegL1Loss, RegLoss, RegWeightedL1Loss
 from models.utils import _sigmoid, proposal_layer, roi_align, generate_target_gt
 
@@ -224,6 +225,7 @@ class SiamMask(nn.Module):
         label_loc = rpn_input['label_loc']
         label_mask = rpn_input['label_mask']
         lable_loc_weight = rpn_input['label_loc_weight']
+        kp_gts = rpn_input['kp_reg']
         # anchors = rpn_input['anchors']
 
         rpn_pred_cls, rpn_pred_loc, template_feature, search_feature, rpn_pred_score, p4_feat = \
@@ -232,6 +234,9 @@ class SiamMask(nn.Module):
         proposals = self.proposal_preprocess(rpn_pred_score, rpn_pred_loc)
 
         normalized_boxes, boxes_ind, box_flag = proposal_layer(proposals, self.anchors, args=self.opt)
+        sampled_fg_rois, heats, weights = add_keypoint_rcnn_gts(kp_gts, normalized_boxes)
+        print('sampled_fg_rois shape: ', sampled_fg_rois.shape)
+        print('heats shape: ', heats.shape)
         # print('per batch nms boxes shape: ', normalized_boxes.shape)
         # normalized_boxes = normalized_boxes.view(-1, normalized_boxes.size(-1))
         # print('normalized bbox: ', normalized_boxes)
@@ -240,7 +245,7 @@ class SiamMask(nn.Module):
             # print('poolded features shape: ', pooled_features.shape)
             pred_kp = self.kp_model(pooled_features)
             gt_sample = kp_input['hm_hp']
-            gt_hm_hp = generate_target_gt(gt_sample, normalized_boxes, boxes_ind, self.output_size)
+            # gt_hm_hp = generate_target_gt(gt_sample, normalized_boxes, boxes_ind, self.output_size)
             # kp_input['hm_hp'] = gt_hm_hp
         else:
             print('no box flag')

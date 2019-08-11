@@ -999,8 +999,9 @@ class DataSets(Dataset):
             ret.update({'hp_offset': hp_offset, 'hp_ind': hp_ind, 'hps_mask': kps_mask, 'ind': ind})
 
         # print('hp_offset: ', hp_offset)
+        joints_3d_out = joints_3d.transpose(1, 0)
 
         template, search = map(lambda x: np.transpose(x, (2, 0, 1)).astype(np.float32), [template, search])
         return template, search, cls, delta, \
           delta_weight, bbox_reg, \
-          np.array(kp_weight, np.float32), ret
+          np.array(kp_weight, np.float32), ret, joints_3d_out

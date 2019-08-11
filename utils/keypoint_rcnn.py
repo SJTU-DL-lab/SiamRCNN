@@ -25,117 +25,118 @@ from __future__ import unicode_literals
 
 import numpy as np
 
-from core.config import cfg
-import utils.blob as blob_utils
-import utils.keypoints as keypoint_utils
+
+def keypoints_to_heatmap_labels(keypoints, rois, num_kps=17, heatmap_size=56):
+    """Encode keypoint location in the target heatmap for use in
+    SoftmaxWithLoss.
+    """
+    # Maps keypoints from the half-open interval [x1, x2) on continuous image
+    # coordinates to the closed interval [0, HEATMAP_SIZE - 1] on discrete image
+    # coordinates. We use the continuous <-> discrete conversion from Heckbert
+    # 1990 ("What is the coordinate of a pixel?"): d = floor(c) and c = d + 0.5,
+    # where d is a discrete coordinate and c is a continuous coordinate.
+    assert keypoints.shape[2] == num_kps
+
+    shape = (len(rois), num_kps)
+    heatmaps = np.zeros(shape, dtype=np.float32)
+    weights = np.zeros(shape, dtype=np.int32)
+
+    offset_x = rois[:, 0]
+    offset_y = rois[:, 1]
+    scale_x = heatmap_size / (rois[:, 2] - rois[:, 0])
+    scale_y = heatmap_size / (rois[:, 3] - rois[:, 1])
+
+    for kp in range(keypoints.shape[2]):
+        vis = keypoints[:, 2, kp] > 0
+        x = keypoints[:, 0, kp].astype(np.float32)
+        y = keypoints[:, 1, kp].astype(np.float32)
+        # Since we use floor below, if a keypoint is exactly on the roi's right
+        # or bottom boundary, we shift it in by eps (conceptually) to keep it in
+        # the ground truth heatmap.
+        x_boundary_inds = np.where(x == rois[:, 2])[0]
+        y_boundary_inds = np.where(y == rois[:, 3])[0]
+        x = (x - offset_x) * scale_x
+        x = np.floor(x)
+        if len(x_boundary_inds) > 0:
+            x[x_boundary_inds] = heatmap_size - 1
+
+        y = (y - offset_y) * scale_y
+        y = np.floor(y)
+        if len(y_boundary_inds) > 0:
+            y[y_boundary_inds] = heatmap_size - 1
+
+        valid_loc = np.logical_and(
+            np.logical_and(x >= 0, y >= 0),
+            np.logical_and(
+                x < heatmap_size, y < heatmap_size))
+
+        valid = np.logical_and(valid_loc, vis)
+        valid = valid.astype(np.int32)
+
+        lin_ind = y * heatmap_size + x
+        heatmaps[:, kp] = lin_ind * valid
+        weights[:, kp] = valid
+
+    return heatmaps, weights
 
 
-def add_keypoint_rcnn_gts(gt_keypoints, boxes, batch_idx):
-    within_box = _within_box(gt_keypoints[ind_kp, :, :], boxes)
-    vis_kp = gt_keypoints[ind_kp, 2, :] > 0
-    is_visible = np.sum(np.logical_and(vis_kp, within_box), axis=1) > 0
-    kp_fg_inds = np.where(
-        np.logical_and(max_overlaps >= cfg.TRAIN.FG_THRESH, is_visible))[0]
+def add_keypoint_rcnn_gts(gt_keypoints, boxes, batch_idx, num_kps=17, img_size=255):
+    # gt_keypoints: [bs, 3, num_keypoints] bcause only one person per image
+    # boxes: [num_rois, 4]
+    # batch_idx: [num_rois]
+    boxes = boxes*img_size
+    boxes = boxes.detach().cpu().numpy()
+    batch_idx = batch_idx.int().detach().cpu().numpy()
+    gt_keypoints = gt_keypoints[batch_idx]
+    assert gt_keypoints.shape[0] == boxes.shape[0]
 
-    kp_fg_rois_per_this_image = np.minimum(fg_rois_per_image, kp_fg_inds.size)
-    if kp_fg_inds.size > kp_fg_rois_per_this_image:
-        kp_fg_inds = np.random.choice(
-            kp_fg_inds, size=kp_fg_rois_per_this_image, replace=False)
+    within_box = _within_box(gt_keypoints, boxes)
+    print('within_box shape: ', within_box.shape)
+    vis_kp = gt_keypoints[:, 2, :] > 0
+    is_visible = np.sum(np.logical_and(vis_kp, within_box), axis=1)
+    kp_fg_inds = np.where(is_visible > 0)[0]
 
-    num_keypoints = kps.size(2)
-    sampled_keypoints = -np.ones(
-        (len(sampled_fg_rois), gt_keypoints.shape[1], num_keypoints),
-        dtype=gt_keypoints.dtype)
+    sampled_fg_rois = boxes[kp_fg_inds]
 
-    for ii in range(len(sampled_fg_rois)):
-        ind = box_to_gt_ind_map[ii]
-        if ind >= 0:
-            sampled_keypoints[ii, :, :] = gt_keypoints[gt_inds[ind], :, :]
-            assert np.sum(sampled_keypoints[ii, 2, :]) > 0
-
-    heats, weights = keypoint_utils.keypoints_to_heatmap_labels(
-        sampled_keypoints, sampled_fg_rois)
-
-    shape = (sampled_fg_rois.shape[0] * cfg.KRCNN.NUM_KEYPOINTS,)
-    heats = heats.reshape(shape)
-    weights = weights.reshape(shape)
-
-    sampled_fg_rois *= im_scale
-    repeated_batch_idx = batch_idx * blob_utils.ones((sampled_fg_rois.shape[0],
-                                                      1))
-    sampled_fg_rois = np.hstack((repeated_batch_idx, sampled_fg_rois))
-
-    blobs['keypoint_rois'] = sampled_fg_rois
-    blobs['keypoint_locations_int32'] = heats.astype(np.int32, copy=False)
-    blobs['keypoint_weights'] = weights
-
-
-def add_keypoint_rcnn_blobs(blobs, roidb, fg_rois_per_image, fg_inds, im_scale,
-                            batch_idx):
-    """Add Mask R-CNN keypoint specific blobs to the given blobs dictionary."""
-    # Note: gt_inds must match how they're computed in
-    # datasets.json_dataset._merge_proposal_boxes_into_roidb
-    gt_inds = np.where(roidb['gt_classes'] > 0)[0]
-    max_overlaps = roidb['max_overlaps']
-    gt_keypoints = roidb['gt_keypoints']
-
-    ind_kp = gt_inds[roidb['box_to_gt_ind_map']]
-    within_box = _within_box(gt_keypoints[ind_kp, :, :], roidb['boxes'])
-    vis_kp = gt_keypoints[ind_kp, 2, :] > 0
-    is_visible = np.sum(np.logical_and(vis_kp, within_box), axis=1) > 0
-    kp_fg_inds = np.where(
-        np.logical_and(max_overlaps >= cfg.TRAIN.FG_THRESH, is_visible))[0]
-
-    kp_fg_rois_per_this_image = np.minimum(fg_rois_per_image, kp_fg_inds.size)
-    if kp_fg_inds.size > kp_fg_rois_per_this_image:
-        kp_fg_inds = np.random.choice(
-            kp_fg_inds, size=kp_fg_rois_per_this_image, replace=False)
-
-    sampled_fg_rois = roidb['boxes'][kp_fg_inds]
-    box_to_gt_ind_map = roidb['box_to_gt_ind_map'][kp_fg_inds]
+    # kp_fg_rois_per_this_image = np.minimum(fg_rois_per_image, kp_fg_inds.size)
+    # if kp_fg_inds.size > kp_fg_rois_per_this_image:
+    #     kp_fg_inds = np.random.choice(
+    #         kp_fg_inds, size=kp_fg_rois_per_this_image, replace=False)
 
     num_keypoints = gt_keypoints.shape[2]
     sampled_keypoints = -np.ones(
         (len(sampled_fg_rois), gt_keypoints.shape[1], num_keypoints),
         dtype=gt_keypoints.dtype)
-    for ii in range(len(sampled_fg_rois)):
-        ind = box_to_gt_ind_map[ii]
-        if ind >= 0:
-            sampled_keypoints[ii, :, :] = gt_keypoints[gt_inds[ind], :, :]
-            assert np.sum(sampled_keypoints[ii, 2, :]) > 0
 
-    heats, weights = keypoint_utils.keypoints_to_heatmap_labels(
+    for ii in range(len(sampled_fg_rois)):
+        sampled_keypoints[ii, :, :] = gt_keypoints[ii, :, :]
+        assert np.sum(sampled_keypoints[ii, 2, :]) > 0
+
+    heats, weights = keypoints_to_heatmap_labels(
         sampled_keypoints, sampled_fg_rois)
 
-    shape = (sampled_fg_rois.shape[0] * cfg.KRCNN.NUM_KEYPOINTS,)
+    shape = (sampled_fg_rois.shape[0] * num_kps, )
     heats = heats.reshape(shape)
     weights = weights.reshape(shape)
 
-    sampled_fg_rois *= im_scale
-    repeated_batch_idx = batch_idx * blob_utils.ones((sampled_fg_rois.shape[0],
-                                                      1))
-    sampled_fg_rois = np.hstack((repeated_batch_idx, sampled_fg_rois))
-
-    blobs['keypoint_rois'] = sampled_fg_rois
-    blobs['keypoint_locations_int32'] = heats.astype(np.int32, copy=False)
-    blobs['keypoint_weights'] = weights
+    return sampled_fg_rois, heats.astype(np.int32, copy=False), weights
 
 
-def finalize_keypoint_minibatch(blobs, valid):
-    """Finalize the minibatch after blobs for all minibatch images have been
-    collated.
-    """
-    min_count = cfg.KRCNN.MIN_KEYPOINT_COUNT_FOR_VALID_MINIBATCH
-    num_visible_keypoints = np.sum(blobs['keypoint_weights'])
-    valid = (valid and len(blobs['keypoint_weights']) > 0
-             and num_visible_keypoints > min_count)
-    # Normalizer to use if cfg.KRCNN.NORMALIZE_BY_VISIBLE_KEYPOINTS is False.
-    # See modeling.model_builder.add_keypoint_losses
-    norm = num_visible_keypoints / (
-        cfg.TRAIN.IMS_PER_BATCH * cfg.TRAIN.BATCH_SIZE_PER_IM * cfg.TRAIN.
-        FG_FRACTION * cfg.KRCNN.NUM_KEYPOINTS)
-    blobs['keypoint_loss_normalizer'] = np.array(norm, dtype=np.float32)
-    return valid
+# def finalize_keypoint_minibatch(blobs, valid):
+#     """Finalize the minibatch after blobs for all minibatch images have been
+#     collated.
+#     """
+#     min_count = cfg.KRCNN.MIN_KEYPOINT_COUNT_FOR_VALID_MINIBATCH
+#     num_visible_keypoints = np.sum(blobs['keypoint_weights'])
+#     valid = (valid and len(blobs['keypoint_weights']) > 0
+#              and num_visible_keypoints > min_count)
+#     # Normalizer to use if cfg.KRCNN.NORMALIZE_BY_VISIBLE_KEYPOINTS is False.
+#     # See modeling.model_builder.add_keypoint_losses
+#     norm = num_visible_keypoints / (
+#         cfg.TRAIN.IMS_PER_BATCH * cfg.TRAIN.BATCH_SIZE_PER_IM * cfg.TRAIN.
+#         FG_FRACTION * cfg.KRCNN.NUM_KEYPOINTS)
+#     blobs['keypoint_loss_normalizer'] = np.array(norm, dtype=np.float32)
+#     return valid
 
 
 def _within_box(points, boxes):
