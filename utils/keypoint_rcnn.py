@@ -30,7 +30,18 @@ import utils.blob as blob_utils
 import utils.keypoints as keypoint_utils
 
 
-def add_keypoint_rcnn_gts(kps, boxes, batch_idx):
+def add_keypoint_rcnn_gts(gt_keypoints, boxes, batch_idx):
+    within_box = _within_box(gt_keypoints[ind_kp, :, :], boxes)
+    vis_kp = gt_keypoints[ind_kp, 2, :] > 0
+    is_visible = np.sum(np.logical_and(vis_kp, within_box), axis=1) > 0
+    kp_fg_inds = np.where(
+        np.logical_and(max_overlaps >= cfg.TRAIN.FG_THRESH, is_visible))[0]
+
+    kp_fg_rois_per_this_image = np.minimum(fg_rois_per_image, kp_fg_inds.size)
+    if kp_fg_inds.size > kp_fg_rois_per_this_image:
+        kp_fg_inds = np.random.choice(
+            kp_fg_inds, size=kp_fg_rois_per_this_image, replace=False)
+
     num_keypoints = kps.size(2)
     sampled_keypoints = -np.ones(
         (len(sampled_fg_rois), gt_keypoints.shape[1], num_keypoints),
@@ -41,6 +52,22 @@ def add_keypoint_rcnn_gts(kps, boxes, batch_idx):
         if ind >= 0:
             sampled_keypoints[ii, :, :] = gt_keypoints[gt_inds[ind], :, :]
             assert np.sum(sampled_keypoints[ii, 2, :]) > 0
+
+    heats, weights = keypoint_utils.keypoints_to_heatmap_labels(
+        sampled_keypoints, sampled_fg_rois)
+
+    shape = (sampled_fg_rois.shape[0] * cfg.KRCNN.NUM_KEYPOINTS,)
+    heats = heats.reshape(shape)
+    weights = weights.reshape(shape)
+
+    sampled_fg_rois *= im_scale
+    repeated_batch_idx = batch_idx * blob_utils.ones((sampled_fg_rois.shape[0],
+                                                      1))
+    sampled_fg_rois = np.hstack((repeated_batch_idx, sampled_fg_rois))
+
+    blobs['keypoint_rois'] = sampled_fg_rois
+    blobs['keypoint_locations_int32'] = heats.astype(np.int32, copy=False)
+    blobs['keypoint_weights'] = weights
 
 
 def add_keypoint_rcnn_blobs(blobs, roidb, fg_rois_per_image, fg_inds, im_scale,
