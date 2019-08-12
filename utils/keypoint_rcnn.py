@@ -116,8 +116,8 @@ def add_keypoint_rcnn_gts(gt_keypoints, boxes, batch_idx, num_kps=17, img_size=2
         sampled_keypoints, sampled_fg_rois)
 
     shape = (sampled_fg_rois.shape[0] * num_kps, )
-    heats = heats.reshape(shape)
-    weights = weights.reshape(shape)
+    # heats = heats.reshape(shape)
+    # weights = weights.reshape(shape)
 
     return sampled_fg_rois, heats.astype(np.int32, copy=False), weights
 

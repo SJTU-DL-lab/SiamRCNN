@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 from utils.anchors import Anchors
-from utils.image import draw_boxes
+from utils.image import draw_boxes, generate_gaussian_target
 from utils.pose_evaluate import accuracy
 from utils.keypoint_rcnn import add_keypoint_rcnn_gts
 from models.losses import FocalLoss, RegL1Loss, RegLoss, RegWeightedL1Loss
@@ -235,6 +235,7 @@ class SiamMask(nn.Module):
 
         normalized_boxes, boxes_ind, box_flag = proposal_layer(proposals, self.anchors, args=self.opt)
         sampled_fg_rois, heats, weights = add_keypoint_rcnn_gts(kp_gts, normalized_boxes)
+        target, target_weight = generate_gaussian_target(heats, weights)
         print('sampled_fg_rois shape: ', sampled_fg_rois.shape)
         print('heats shape: ', heats.shape)
         # print('per batch nms boxes shape: ', normalized_boxes.shape)
