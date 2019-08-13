@@ -84,14 +84,15 @@ def add_keypoint_rcnn_gts(gt_keypoints, boxes, batch_idx, num_kps=17, img_size=2
     # gt_keypoints: [bs, 3, num_keypoints] bcause only one person per image
     # boxes: [num_rois, 4]
     # batch_idx: [num_rois]
+    gt_keypoints = gt_keypoints.detach().cpu().numpy()
     boxes = boxes*img_size
     boxes = boxes.detach().cpu().numpy()
     batch_idx = batch_idx.int().detach().cpu().numpy()
     gt_keypoints = gt_keypoints[batch_idx]
     assert gt_keypoints.shape[0] == boxes.shape[0]
-
+    # print('gt_keypoints shape: ', gt_keypoints.shape)
     within_box = _within_box(gt_keypoints, boxes)
-    print('within_box shape: ', within_box.shape)
+    # print('within_box shape: ', within_box.shape)
     vis_kp = gt_keypoints[:, 2, :] > 0
     is_visible = np.sum(np.logical_and(vis_kp, within_box), axis=1)
     kp_fg_inds = np.where(is_visible > 0)[0]
@@ -115,9 +116,9 @@ def add_keypoint_rcnn_gts(gt_keypoints, boxes, batch_idx, num_kps=17, img_size=2
     heats, weights = keypoints_to_heatmap_labels(
         sampled_keypoints, sampled_fg_rois)
 
-    shape = (sampled_fg_rois.shape[0] * num_kps, )
-    heats = heats.reshape(shape)
-    weights = weights.reshape(shape)
+    # shape = (sampled_fg_rois.shape[0] * num_kps, )
+    # heats = heats.reshape(shape)
+    # weights = weights.reshape(shape)
 
     return sampled_fg_rois, heats.astype(np.int32, copy=False), weights
 

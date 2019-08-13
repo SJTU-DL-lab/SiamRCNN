@@ -8,11 +8,11 @@
     },
     "lr": {
         "type": "log",
-        "start_lr": 0.0001,
+        "start_lr": 0.01,
         "end_lr": 0.0000001,
         "warmup": {
-            "start_lr": 0.0001,
-            "end_lr": 0.0001,
+            "start_lr": 0.001,
+            "end_lr": 0.01,
             "type": "step",
             "step": 1,
             "epoch": 5
@@ -33,7 +33,7 @@
         "search_size": 255,
         "base_size": 8,
         "size": 25,
-        "RPN_NMS": 0.01,
+        "RPN_NMS": 0.25,
 
         "augmentation": {
             "template": {
@@ -59,7 +59,7 @@
         "search_size": 255,
         "base_size": 8,
         "size": 25,
-        "RPN_NMS": 0.01,
+        "RPN_NMS": 0.25,
 
         "augmentation": {
             "template": {

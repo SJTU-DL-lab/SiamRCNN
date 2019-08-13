@@ -12,7 +12,7 @@ source activate deepimit
 # ROOT=/cluster/home/it_stu2/SiamPose
 # ROOT=`git rev-parse --show-toplevel`
 # export PYTHONPATH=$ROOT:$PYTHONPATH
-ROOT=/cluster/home/it_stu1/bdclub/SiamRCNN/
+ROOT=/cluster/home/u1/sjtu_bdclub/ysy_github/SiamRCNN/
 export PYTHONPATH=$ROOT:$PYTHONPATH
 # export PYTHONPATH=$PWD:$PYTHONPATH
 
@@ -21,8 +21,8 @@ mkdir -p logs
 python -u $ROOT/tools/val_siamrcnn.py \
     --config=config.json -b 1 \
     -j 4 --debug \
-    --epochs 200 --pretrained ./snapshot/checkpoint_e99.pth \
-    --log logs/log.txt \
+    --epochs 200 --pretrained ./snapshot_0811/checkpoint_e99.pth \
+    --log logs/test_log.txt \
     --log-dir test_logs \
-    2>&1 | tee logs/train.log
+    2>&1 | tee logs/test.log
 

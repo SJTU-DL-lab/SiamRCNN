@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 from utils.anchors import Anchors
-from utils.image import draw_boxes
+from utils.image import draw_boxes, generate_gaussian_target, get_max_preds, generate_gaussian_AlignRoI
 from utils.pose_evaluate import accuracy
 from utils.keypoint_rcnn import add_keypoint_rcnn_gts
 from models.losses import FocalLoss, RegL1Loss, RegLoss, RegWeightedL1Loss
@@ -37,7 +37,7 @@ class PoseLoss(torch.nn.Module):
         batch['hp_mask'] = batch['hp_mask'].index_select(0, ind)
         batch['hp_ind'] = batch['hp_ind'].index_select(0, ind)
         batch['hp_offset'] = batch['hp_offset'].index_select(0, ind)
-        batch['hm_hp'] = batch['hm_hp'].index_select(0, ind)
+        # batch['hm_hp'] = batch['hm_hp'].index_select(0, ind)
         if opt.hm_hp and not opt.mse_loss:
             output['hm_hp'] = _sigmoid(output['hm_hp'])
 
@@ -187,7 +187,8 @@ class SiamMask(nn.Module):
         run network
         """
         template_feature = self.feature_extractor(template)
-        search_feature, p4_feat = self.features.forward_all(search)
+        # search_feature, p4_feat = self.features.forward_all(search)
+        search_feature = self.features(search)
 
         rpn_pred_cls, rpn_pred_loc = self.rpn(template_feature, search_feature)
         pose_feat = self.pose_corr(template_feature, search_feature)
@@ -232,11 +233,12 @@ class SiamMask(nn.Module):
             self.run(template, search, softmax=True)
 
         proposals = self.proposal_preprocess(rpn_pred_score, rpn_pred_loc)
+        # proposals = [proposals[0], proposals[1], kp_gts]
 
         normalized_boxes, boxes_ind, box_flag = proposal_layer(proposals, self.anchors, args=self.opt)
-        sampled_fg_rois, heats, weights = add_keypoint_rcnn_gts(kp_gts, normalized_boxes)
-        print('sampled_fg_rois shape: ', sampled_fg_rois.shape)
-        print('heats shape: ', heats.shape)
+        
+        # print('sampled_fg_rois shape: ', sampled_fg_rois.shape)
+        # print('heats shape: ', heats.shape)
         # print('per batch nms boxes shape: ', normalized_boxes.shape)
         # normalized_boxes = normalized_boxes.view(-1, normalized_boxes.size(-1))
         # print('normalized bbox: ', normalized_boxes)
@@ -244,9 +246,16 @@ class SiamMask(nn.Module):
             pooled_features = roi_align([normalized_boxes, p4_feat, boxes_ind], 7)
             # print('poolded features shape: ', pooled_features.shape)
             pred_kp = self.kp_model(pooled_features)
+            # sampled_fg_rois, heats, weights = add_keypoint_rcnn_gts(kp_gts, normalized_boxes, boxes_ind)
+            # target, target_weight = generate_gaussian_target(heats, weights)
+            # gt_hm_hp = torch.from_numpy(target).cuda()
             gt_sample = kp_input['hm_hp']
-            # gt_hm_hp = generate_target_gt(gt_sample, normalized_boxes, boxes_ind, self.output_size)
-            # kp_input['hm_hp'] = gt_hm_hp
+            gt_hm_hp = generate_target_gt(gt_sample, normalized_boxes, boxes_ind, self.output_size)
+            max_preds, max_vals = get_max_preds(gt_hm_hp.detach().cpu().numpy())
+            gt_hm_hp = generate_gaussian_AlignRoI(max_preds, max_vals)
+            gt_hm_hp_np = gt_hm_hp
+            gt_hm_hp = torch.from_numpy(gt_hm_hp).cuda()
+            kp_input['hm_hp'] = gt_hm_hp
         else:
             print('no box flag')
             # 'hps': 34, 'hm_hp': 17, 'hp_offset': 2
@@ -263,8 +272,8 @@ class SiamMask(nn.Module):
             self._add_rpn_loss(label_cls, label_loc, lable_loc_weight, label_mask,
                                rpn_pred_cls, rpn_pred_loc)
         pred_hm = pred_kp[0]['hm_hp'].detach().cpu().numpy()
-        gt_hm = kp_input['hm_hp'].detach().cpu().numpy()
-        pck = accuracy(pred_hm, gt_hm)
+        # gt_hm = kp_input['hm_hp'].detach().cpu().numpy()
+        pck = accuracy(pred_hm, gt_hm_hp_np)
         acc = torch.Tensor(pck[0]).float().cuda()
         avg_acc = torch.Tensor([pck[1]]).float().cuda()
         outputs['accuracy'] = [acc, avg_acc]

@@ -505,3 +505,110 @@ def unfold_mask(mask, idx):
     mask_uf = mask_uf[idx]
     mask_uf = mask_uf.numpy()
     return mask_uf # , mask_uf_temp
+
+
+def generate_gaussian_target(joints, joints_vis, target_type='gaussian',
+                             num_joints=17, heatmap_size=(56, 56), sigma=3):
+    '''
+    :param joints:  [num_rois, num_kps]
+    :param joints_vis: [num_rois, num_kps]
+    :return: target, target_weight(1: visible, 0: invisible)
+    '''
+    # target_weight = np.ones((self.num_joints, 1), dtype=np.float32)
+    # target_weight[:, 0] = joints_vis
+    target_weight = joints_vis
+    num_rois = joints.shape[0]
+
+    assert target_type == 'gaussian', \
+        'Only support gaussian map now!'
+
+    if target_type == 'gaussian':
+        target = np.zeros((num_rois,
+                           num_joints,
+                           heatmap_size[1],
+                           heatmap_size[0]),
+                          dtype=np.float32)
+
+        tmp_size = sigma
+
+        for joint_id in range(num_joints):
+            # feat_stride = [self.image_size / self.heatmap_size[0], self.image_size / self.heatmap_size[1]]
+            mu_x = joints[:, joint_id] % heatmap_size[0]
+            # int(joints[joint_id][0])
+            mu_y = joints[:, joint_id] // heatmap_size[0]
+            # int(joints[joint_id][1])
+            # Check that any part of the gaussian is in-bounds
+            ul = [(mu_x - tmp_size).astype(np.int32), (mu_y - tmp_size).astype(np.int32)]
+            br = [(mu_x + tmp_size + 1).astype(np.int32), (mu_y + tmp_size + 1).astype(np.int32)]
+            vis_target = np.logical_and(
+                            np.logical_and(ul[0] < heatmap_size[0], ul[1] < heatmap_size[1]),
+                            np.logical_and(br[0] >= 0, br[1] >= 0)
+                            )
+            target_weight[:, joint_id] = vis_target
+            # if ul[0] >= heatmap_size[0] or ul[1] >= heatmap_size[1] \
+            #         or br[0] < 0 or br[1] < 0:
+            #     # If not, just return the image as is
+            #     target_weight[joint_id] = 0
+            #     continue
+
+            # # Generate gaussian
+            size = 2 * tmp_size + 1
+            x_v = np.arange(0, size, 1, np.float32).reshape(1, -1, 1)
+            # x = np.repeat(x_v, size, -1)
+            x = np.repeat(x_v, num_rois, 0)
+            # print('x shape: ', x.shape)
+            
+
+            # y = x[:, :, np.newaxis]
+            y = x.reshape(num_rois, 1, -1)
+            x0 = y0 = size // 2
+            # The gaussian is not normalized, we want the center value to equal 1
+            g = np.exp(- ((x - x0) ** 2 + (y - y0) ** 2) / (2 * sigma ** 2))
+
+            # Usable gaussian range
+            g_x = np.maximum(0, -ul[0]), np.minimum(br[0], heatmap_size[0]) - ul[0]
+            g_y = np.maximum(0, -ul[1]), np.minimum(br[1], heatmap_size[1]) - ul[1]
+            # Image range
+            img_x = np.maximum(0, ul[0]), np.minimum(br[0], heatmap_size[0])
+            img_y = np.maximum(0, ul[1]), np.minimum(br[1], heatmap_size[1])
+
+            v = target_weight[:, joint_id] > 0.5
+            # print('num_rois: ', num_rois)
+            # print('target weight bool: ', v)
+            # print('target shape: ', target.shape)
+            # print('g shape: ', g.shape)
+            # print('target v shape: ', target[v].shape)
+            for i, vis in enumerate(v):
+                if not vis:
+                    print('kp {} not vis!'.format(i))
+                    continue
+                # print('img_y index: ', img_y[0][i])
+                # print('g_y[0] index: ', g_y[0])
+                # print('g_y[1] index: ', g_y[1])
+                # print('target shape: ', target[i, joint_id].shape)
+                # print('g[i] shape: ', g[i].shape)
+                target[i, joint_id][img_y[0][i]:img_y[1][i],  img_x[0][i]:img_x[1][i]] = \
+                    g[i][g_y[0][i]:g_y[1][i], g_x[0][i]:g_x[1][i]]
+            # target[v][img_y[0]:img_y[1], img_x[0]:img_x[1]] = \
+            #         g[g_y[0]:g_y[1], g_x[0]:g_x[1]]
+            # target[:, joint_id][img_y[0]:img_y[1], img_x[0]:img_x[1]] = \
+            #         g[g_y[0]:g_y[1], g_x[0]:g_x[1]]
+            # if v > 0.5:
+            #     target[joint_id][img_y[0]:img_y[1], img_x[0]:img_x[1]] = \
+            #         g[g_y[0]:g_y[1], g_x[0]:g_x[1]]
+
+    return target, target_weight
+
+def generate_gaussian_AlignRoI(max_preds, max_vals, num_joints=17, output_size=56, hg_radius=7):
+    # max_preds [bs, num_kps, 2]
+    # max_vals [bs, num_kps, 1]
+    num_kps = max_preds.shape[1]
+    bs = max_preds.shape[0]
+    hm_hp = np.zeros((bs, num_joints, output_size, output_size), dtype=np.float32)
+    for img_i in range(bs):
+        for kp_i in range(num_kps):
+            if max_vals[img_i, kp_i] > 0.5:
+                draw_umich_gaussian(hm_hp[img_i, kp_i], max_preds[img_i, kp_i].astype(np.int32), hg_radius)
+    return hm_hp
+             
+    

@@ -202,7 +202,8 @@ def validation(val_loader, model, cfg, avg):
                 'label_cls': torch.autograd.Variable(input[2]).cuda(),
                 'label_loc': torch.autograd.Variable(input[3]).cuda(),
                 'label_loc_weight': torch.autograd.Variable(input[4]).cuda(),
-                'label_mask': torch.autograd.Variable(input[6]).cuda()
+                'label_mask': torch.autograd.Variable(input[6]).cuda(),
+                'kp_reg': torch.autograd.Variable(input[8]).cuda()
             }
             x_kp = input[7]
             x_kp = {x: torch.autograd.Variable(y).cuda() for x, y in x_kp.items()}
@@ -214,8 +215,8 @@ def validation(val_loader, model, cfg, avg):
             kp_avg_acc = torch.mean(outputs['accuracy'][1])
 
             # print('pred kp shape: ', pred_kp.shape)
-            batch_img = x_rpn['search'].expand(x_kp['hm_hp'].size(0), -1, -1, -1)
-            gt_img, pred_img = save_gt_pred_heatmaps(batch_img, x_kp['hm_hp'], pred_kp, 'test_imgs/test_{}.jpg'.format(iter))
+            # batch_img = x_rpn['search'].expand(x_kp['hm_hp'].size(0), -1, -1, -1)
+            # gt_img, pred_img = save_gt_pred_heatmaps(batch_img, x_kp['hm_hp'], pred_kp, 'test_imgs/test_{}.jpg'.format(iter))
             rpn_cls_loss, rpn_loc_loss, kp_losses = torch.mean(outputs['losses'][0]),\
                                                                torch.mean(outputs['losses'][1]),\
                                                                outputs['losses'][3]
@@ -233,13 +234,13 @@ def validation(val_loader, model, cfg, avg):
 
             if args.debug:
                 box_imgs, roi_imgs, hp_imgs = outputs['debug']
-                # grid_img, resized_img = save_batch_resized_heatmaps(roi_imgs.transpose(1, 3),
-                #                                                     hp_imgs, 'debug/feat_{}.jpg'.format(iter))
-                # cv2.imwrite('debug/heatmap_{}.jpg'.format(iter), grid_img)
-
                 grid_img, resized_img = save_batch_resized_heatmaps(roi_imgs.transpose(1, 3),
-                                                                    pred_kp, 'output/pred_hm_{}.jpg'.format(iter))
-                cv2.imwrite('output/heatmap_{}.jpg'.format(iter), grid_img)
+                                                                    hp_imgs, 'debug/feat_{}.jpg'.format(iter))
+                cv2.imwrite('debug/heatmap_{}.jpg'.format(iter), grid_img)
+
+                # grid_img, resized_img = save_batch_resized_heatmaps(roi_imgs.transpose(1, 3),
+                #                                                     pred_kp, 'output/pred_hm_{}.jpg'.format(iter))
+                # cv2.imwrite('output/heatmap_{}.jpg'.format(iter), grid_img)
                 # grid_img, resized_img = save_batch_resized_heatmaps(x_rpn['search'],
                 #                                                     x_kp['hm_hp'], 'debug/feat_{}.jpg'.format(iter))
                 # cv2.imwrite('debug/heatmap_{}.jpg'.format(iter), grid_img)

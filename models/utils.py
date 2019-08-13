@@ -173,7 +173,7 @@ def proposal_layer_bak(inputs, anchors, thresh=0.5, args=None):
 
     return normalized_boxes, True
 
-def proposal_layer(inputs, anchors, thresh=0.5, args=None):
+def proposal_layer(inputs, anchors, thresh=0.5, box_expand_ratio=0, args=None):
     """Receives anchor scores and selects a subset to pass as proposals
     to the second stage. Filtering is done based on anchor scores and
     non-max suppression to remove overlaps. It also applies bounding
@@ -182,8 +182,8 @@ def proposal_layer(inputs, anchors, thresh=0.5, args=None):
     Inputs:
         rpn_probs: [batch, anchors*height*width(fg prob)]
         rpn_bbox_deltas: [batch, anchors*height*width, 4]
-        # gt_kps: [batch, num_keypoints, height, width]
         anchors: [batch, anchors*height*width, 4, (x1, y1, x2, y2)]
+        # gt_kps: [batch, 2, num_kps]
 
     Returns:
         Proposals in normalized coordinates [num_rois, 4 (x1, y1, x2, y2)]
@@ -199,9 +199,9 @@ def proposal_layer(inputs, anchors, thresh=0.5, args=None):
     # scores = scores.transpose(1, 3).contiguous().view(-1)
     scores = inputs[0]
     deltas = inputs[1]
+    # gt_kps = inputs[2]
     boxes_out = []
     boxes_ind = []
-    # kps = inputs[2]
     # max_rois = args.max_rois
     gpu_count = torch.cuda.device_count()
     bs = args.batch // gpu_count
@@ -273,6 +273,14 @@ def proposal_layer(inputs, anchors, thresh=0.5, args=None):
         if keep.size(0) > 1:
             keep = keep[:1]
         boxes = boxes[keep, :]
+        # gt_kps_i = gt_kps[i]
+        # vis_ind = torch.nonzero(gt_kps_i[2, :] > 0).squeeze()
+        # gt_kps_i = torch.index_select(gt_kps_i, 1, vis_ind)
+        # gt_kps_i = gt_kps_i.expand(boxes.size(0), -1, -1)
+        # ind = _within_box(gt_kps_i.detach().cpu().numpy(),
+        #                     boxes.detach().cpu().numpy())
+        # ind = np.where(np.sum(ind, axis=0) > 0)[0]
+        # boxes = boxes[ind, :]
         boxes_out.append(boxes)
         boxes_ind.extend([i] * keep.size(0))
         # ind_start = i * max_rois
@@ -287,8 +295,34 @@ def proposal_layer(inputs, anchors, thresh=0.5, args=None):
     norm = Variable(torch.from_numpy(np.array([height, width, height, width])).float(), requires_grad=False)
     norm = norm.cuda()
     normalized_boxes = boxes / norm
+    if box_expand_ratio > 0:
+        box_width = normalized_boxes[:, 3] - normalized_boxes[:, 1]
+        box_height = normalized_boxes[:, 2] - normalized_boxes[:, 0]
+        width_modi = box_width * box_expand_ratio
+        height_modi = box_height * box_expand_ratio
+        normalized_boxes[:, 0] -= height_modi
+        normalized_boxes[:, 1] -= width_modi
+        normalized_boxes[:, 2] += height_modi
+        normalized_boxes[:, 3] += width_modi
+        normalized_boxes = torch.clamp(normalized_boxes, min=0, max=1)
 
     return normalized_boxes, boxes_ind, True
+
+
+def _within_box(points, boxes):
+    """Validate which keypoints are contained inside a given box.
+
+    points: Nx2xK
+    boxes: Nx4
+    output: NxK
+    """
+    x_within = np.logical_and(
+        points[:, 0, :] >= np.expand_dims(boxes[:, 0], axis=1),
+        points[:, 0, :] <= np.expand_dims(boxes[:, 2], axis=1))
+    y_within = np.logical_and(
+        points[:, 1, :] >= np.expand_dims(boxes[:, 1], axis=1),
+        points[:, 1, :] <= np.expand_dims(boxes[:, 3], axis=1))
+    return np.logical_and(x_within, y_within)
 
 
 def generate_target_gt(gt_sample, boxes, boxes_ind, pool_size):

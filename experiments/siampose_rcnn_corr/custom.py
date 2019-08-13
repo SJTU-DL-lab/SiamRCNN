@@ -31,14 +31,15 @@ class ResDownS(nn.Module):
 class ResDown(MultiStageFeature):
     def __init__(self, pretrain=False):
         super(ResDown, self).__init__()
-        self.features = resnet50(layer3=True, layer4=True)
+        self.features = resnet50(layer3=True, layer4=False)
         if pretrain:
             load_pretrain(self.features, '../resnet.model')
 
         self.downsample = ResDownS(1024, 256)
-        self.downsample_p4 = ResDownS(2048, 1024)
+        # self.downsample_p4 = ResDownS(2048, 1024)
 
-        self.layers = [self.downsample, self.features.layer2, self.features.layer3, self.downsample_p4, self.features.layer4]
+        # self.layers = [self.downsample, self.features.layer2, self.features.layer3, self.downsample_p4, self.features.layer4]
+        self.layers = [self.downsample, self.features.layer2, self.features.layer3]
         self.train_nums = [3, 3]
         self.change_point = [0, 0.5]
 
@@ -67,8 +68,8 @@ class ResDown(MultiStageFeature):
     def forward_all(self, x):
         output = self.features(x)
         p3 = self.downsample(output[-2])
-        p4 = self.downsample_p4(output[-1])
-        return p3, p4
+        # p4 = self.downsample_p4(output[-1])
+        return p3 # , p4
 
 
 class UP(RPN):

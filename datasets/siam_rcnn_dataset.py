@@ -949,8 +949,8 @@ class DataSets(Dataset):
             trans_output = get_affine_transform(c, s, 0, [output_res, output_res])
 
             ind = np.zeros(1, dtype=np.int64)
+            hm_hp = np.zeros((num_joints, 255, 255), dtype=np.float32)
             # hm_hp = np.zeros((num_joints, output_res, output_res), dtype=np.float32)
-            hm_hp = np.zeros((num_joints, output_res, output_res), dtype=np.float32)
             kps = np.zeros(num_joints * 2, dtype=np.float32)
             kps_mask = np.zeros((self.num_joints * 2), dtype=np.uint8)
             hp_offset = np.zeros((num_joints, 2), dtype=np.float32)
@@ -990,9 +990,9 @@ class DataSets(Dataset):
                         hp_ind[j] = pt_int[1] * output_res + pt_int[0]
                         hp_mask[j] = 1
 
-                        draw_gaussian(hm_hp[j], pt_int, hp_radius)
-                        # pt_ori = joints_3d[j, :2].astype(np.int32)
-                        # draw_gaussian(hm_hp[j], pt_ori, hp_radius)
+                        # draw_gaussian(hm_hp[j], pt_int, hp_radius)
+                        pt_ori = joints_3d[j, :2].astype(np.int32)
+                        draw_gaussian(hm_hp[j], pt_ori, hp_radius)
 
             ret = {'hps': kps, 'hm_hp': hm_hp, 'hp_mask': hp_mask}
             # print('kps: ', ret['hps'])
