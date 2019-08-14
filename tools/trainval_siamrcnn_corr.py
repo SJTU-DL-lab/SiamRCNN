@@ -1,7 +1,7 @@
 import argparse
 import logging
 import os
-os.environ['CUDA_VISIBLE_DEVICES']='0, 1, 3, 4'
+# os.environ['CUDA_VISIBLE_DEVICES']='0, 1, 3, 4'
 import cv2
 import shutil
 import time

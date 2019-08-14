@@ -13,6 +13,7 @@ import numpy as np
 from utils.nms.nms_wrapper import nms
 from utils.roialign.roi_align.crop_and_resize import CropAndResizeFunction
 
+
 def clip_boxes(boxes, window):
     """
     boxes: [N, 4] each col is y1, x1, y2, x2
@@ -186,7 +187,7 @@ def proposal_layer(inputs, anchors, thresh=0.5, box_expand_ratio=0, args=None):
         # gt_kps: [batch, 2, num_kps]
 
     Returns:
-        Proposals in normalized coordinates [num_rois, 4 (x1, y1, x2, y2)]
+        Proposals in normalized coordinates [num_rois, 4 (y1, x1, y2, x2)]
         box_inds [num_rois]
     """
 
@@ -290,7 +291,7 @@ def proposal_layer(inputs, anchors, thresh=0.5, box_expand_ratio=0, args=None):
         # kps_i = torch.index_select(kps, 0, select_bs)
 
     boxes = torch.cat(boxes_out, 0)
-    boxes_ind = torch.Tensor(boxes_ind).cuda()
+    boxes_ind = torch.Tensor(boxes_ind).detach().cuda()
     # Normalize dimensions to range of 0 to 1.
     norm = Variable(torch.from_numpy(np.array([height, width, height, width])).float(), requires_grad=False)
     norm = norm.cuda()

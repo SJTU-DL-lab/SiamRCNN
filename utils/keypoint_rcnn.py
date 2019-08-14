@@ -41,10 +41,10 @@ def keypoints_to_heatmap_labels(keypoints, rois, num_kps=17, heatmap_size=56):
     heatmaps = np.zeros(shape, dtype=np.float32)
     weights = np.zeros(shape, dtype=np.int32)
 
-    offset_x = rois[:, 0]
-    offset_y = rois[:, 1]
-    scale_x = heatmap_size / (rois[:, 2] - rois[:, 0])
-    scale_y = heatmap_size / (rois[:, 3] - rois[:, 1])
+    offset_x = rois[:, 1]
+    offset_y = rois[:, 0]
+    scale_x = heatmap_size / (rois[:, 3] - rois[:, 1])
+    scale_y = heatmap_size / (rois[:, 2] - rois[:, 0])
 
     for kp in range(keypoints.shape[2]):
         vis = keypoints[:, 2, kp] > 0
@@ -53,8 +53,8 @@ def keypoints_to_heatmap_labels(keypoints, rois, num_kps=17, heatmap_size=56):
         # Since we use floor below, if a keypoint is exactly on the roi's right
         # or bottom boundary, we shift it in by eps (conceptually) to keep it in
         # the ground truth heatmap.
-        x_boundary_inds = np.where(x == rois[:, 2])[0]
-        y_boundary_inds = np.where(y == rois[:, 3])[0]
+        x_boundary_inds = np.where(x == rois[:, 3])[0]
+        y_boundary_inds = np.where(y == rois[:, 2])[0]
         x = (x - offset_x) * scale_x
         x = np.floor(x)
         if len(x_boundary_inds) > 0:
@@ -93,11 +93,12 @@ def add_keypoint_rcnn_gts(gt_keypoints, boxes, batch_idx, num_kps=17, img_size=2
     # print('gt_keypoints shape: ', gt_keypoints.shape)
     within_box = _within_box(gt_keypoints, boxes)
     # print('within_box shape: ', within_box.shape)
-    vis_kp = gt_keypoints[:, 2, :] > 0
-    is_visible = np.sum(np.logical_and(vis_kp, within_box), axis=1)
-    kp_fg_inds = np.where(is_visible > 0)[0]
+    # vis_kp = gt_keypoints[:, 2, :] > 0
+    # is_visible = np.sum(np.logical_and(vis_kp, within_box), axis=1)
+    # kp_fg_inds = np.where(is_visible > 0)[0]
+    # print('kp_fg_inds shape: ', kp_fg_inds.shape)
 
-    sampled_fg_rois = boxes[kp_fg_inds]
+    sampled_fg_rois = boxes # boxes[kp_fg_inds]
 
     # kp_fg_rois_per_this_image = np.minimum(fg_rois_per_image, kp_fg_inds.size)
     # if kp_fg_inds.size > kp_fg_rois_per_this_image:

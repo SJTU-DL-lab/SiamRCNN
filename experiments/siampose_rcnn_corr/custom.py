@@ -2,7 +2,7 @@ from models.siampose_RCNN_corr import SiamMask
 from models.features import MultiStageFeature
 from models.rpn import RPN, DepthCorr
 from models.mask import Mask
-# from models.DCNv2.dcn_v2 import DCN
+from models.DCN.modules.modulated_dcn import ModulatedDeformConvPack, ModulatedDeformRoIPoolingPack
 import torch
 import torch.nn as nn
 import math
@@ -159,13 +159,13 @@ class Center_pose_head(nn.Module):
                 self._get_deconv_cfg(num_kernels[i], i)
 
             planes = num_filters[i]
-            # fc = DCN(self.inplanes, planes,
-            #         kernel_size=(3,3), stride=1,
-            #         padding=1, dilation=1, deformable_groups=1)
-            fc = nn.Conv2d(self.inplanes, planes,
-                    kernel_size=3, stride=1,
-                    padding=1, dilation=1, bias=False)
-            fill_fc_weights(fc)
+            fc = ModulatedDeformConvPack(self.inplanes, planes,
+                    kernel_size=(3,3), stride=1,
+                    padding=1, deformable_groups=2, no_bias=True)
+            # fc = nn.Conv2d(self.inplanes, planes,
+            #         kernel_size=3, stride=1,
+            #         padding=1, dilation=1, bias=False)
+            # fill_fc_weights(fc)
             up = nn.ConvTranspose2d(
                     in_channels=planes,
                     out_channels=planes,
@@ -219,6 +219,12 @@ class Custom(SiamMask):
         self.rpn_model = UP(anchor_num=self.anchor_num, feature_in=256, feature_out=256)
         self.pose_corr = PoseCorr()
         self.kp_model = Center_pose_head()
+        self.dpooling = ModulatedDeformRoIPoolingPack(spatial_scale=1.0 / 4,
+                         pooled_size=7,
+                         output_dim=512,
+                         no_trans=False,
+                         group_size=1,
+                         trans_std=0.1)
 
     def template(self, template):
         self.zf = self.features(template)

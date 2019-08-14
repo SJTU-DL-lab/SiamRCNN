@@ -204,7 +204,7 @@ def save_gt_pred_heatmaps(batch_image, gt_heatmaps, pred_heatmaps, file_name):
                 (pred_img.shape[1]+10):,
                 :] = gt_img
     cv2.imwrite(file_name, gt_pred_img)
-    return gt_img, pred_img
+    return gt_img, pred_img, grid_gt_img, grid_pred_img
 
 
 def flip(img):
@@ -508,7 +508,7 @@ def unfold_mask(mask, idx):
 
 
 def generate_gaussian_target(joints, joints_vis, target_type='gaussian',
-                             num_joints=17, heatmap_size=(56, 56), sigma=3):
+                             num_joints=17, heatmap_size=(56, 56), sigma=4):
     '''
     :param joints:  [num_rois, num_kps]
     :param joints_vis: [num_rois, num_kps]
@@ -540,11 +540,11 @@ def generate_gaussian_target(joints, joints_vis, target_type='gaussian',
             # Check that any part of the gaussian is in-bounds
             ul = [(mu_x - tmp_size).astype(np.int32), (mu_y - tmp_size).astype(np.int32)]
             br = [(mu_x + tmp_size + 1).astype(np.int32), (mu_y + tmp_size + 1).astype(np.int32)]
-            vis_target = np.logical_and(
-                            np.logical_and(ul[0] < heatmap_size[0], ul[1] < heatmap_size[1]),
-                            np.logical_and(br[0] >= 0, br[1] >= 0)
-                            )
-            target_weight[:, joint_id] = vis_target
+            # vis_target = np.logical_and(
+            #                 np.logical_and(ul[0] < heatmap_size[0], ul[1] < heatmap_size[1]),
+            #                 np.logical_and(br[0] >= 0, br[1] >= 0)
+            #                 )
+            # target_weight[:, joint_id] = vis_target
             # if ul[0] >= heatmap_size[0] or ul[1] >= heatmap_size[1] \
             #         or br[0] < 0 or br[1] < 0:
             #     # If not, just return the image as is
@@ -580,7 +580,7 @@ def generate_gaussian_target(joints, joints_vis, target_type='gaussian',
             # print('target v shape: ', target[v].shape)
             for i, vis in enumerate(v):
                 if not vis:
-                    print('kp {} not vis!'.format(i))
+                    # print('kp {} not vis!'.format(i))
                     continue
                 # print('img_y index: ', img_y[0][i])
                 # print('g_y[0] index: ', g_y[0])

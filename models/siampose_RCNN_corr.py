@@ -13,7 +13,7 @@ from utils.pose_evaluate import accuracy
 from utils.keypoint_rcnn import add_keypoint_rcnn_gts
 from models.losses import FocalLoss, RegL1Loss, RegLoss, RegWeightedL1Loss
 from models.utils import _sigmoid, proposal_layer, roi_align, generate_target_gt
-
+from models.DCN.modules.modulated_dcn import ModulatedDeformRoIPoolingPack
 
 class PoseLoss(torch.nn.Module):
     def __init__(self, opt):
@@ -37,7 +37,7 @@ class PoseLoss(torch.nn.Module):
         batch['hp_mask'] = batch['hp_mask'].index_select(0, ind)
         batch['hp_ind'] = batch['hp_ind'].index_select(0, ind)
         batch['hp_offset'] = batch['hp_offset'].index_select(0, ind)
-        # batch['hm_hp'] = batch['hm_hp'].index_select(0, ind)
+        batch['hm_hp'] = batch['hm_hp'].index_select(0, ind)
         if opt.hm_hp and not opt.mse_loss:
             output['hm_hp'] = _sigmoid(output['hm_hp'])
 
@@ -105,6 +105,7 @@ class SiamMask(nn.Module):
         self.features = None
         self.rpn_model = None
         self.mask_model = None
+        self.dpooling = None
         self.o_sz = o_sz
         self.g_sz = g_sz
         self.output_size = opts.output_size
@@ -127,11 +128,18 @@ class SiamMask(nn.Module):
         # anchors: [4, anchors, height, width, (x1, y1, x2, y2)]
         assert self.bs // gpu_count > 0
         boxes = self.all_anchors.expand(self.bs//gpu_count, -1, -1, -1, -1)
-        boxes = boxes.permute(0, 3, 4, 2, 1).contiguous().view(self.bs//gpu_count, -1, 4)
+        out_boxes = boxes.permute(0, 3, 4, 2, 1).contiguous().view(self.bs//gpu_count, -1, 4)
         # self.all_anchors = torch.from_numpy(all_anchors).float().cuda()
         # self.all_anchors = [self.all_anchors[i] for i in range(4)]
-        self.anchors = boxes
+        self.anchors = out_boxes
         # return boxes
+    
+    def droi_preprocess(self, normalized_boxes, box_inds, ori_size=255):
+        inds = box_inds.view(-1, 1).float()
+        boxes = normalized_boxes * ori_size
+        y1, x1, y2, x2 = boxes.chunk(4, 1)
+        out_boxes = torch.cat([inds, x1, y1, x2, y2], dim=1).cuda()
+        return out_boxes
 
     def proposal_preprocess(self, rpn_pred_score, rpn_pred_loc):
         """
@@ -227,6 +235,7 @@ class SiamMask(nn.Module):
         label_mask = rpn_input['label_mask']
         lable_loc_weight = rpn_input['label_loc_weight']
         kp_gts = rpn_input['kp_reg']
+        kp_hm = kp_input['hm_hp']
         # anchors = rpn_input['anchors']
 
         rpn_pred_cls, rpn_pred_loc, template_feature, search_feature, rpn_pred_score, p4_feat = \
@@ -243,19 +252,29 @@ class SiamMask(nn.Module):
         # normalized_boxes = normalized_boxes.view(-1, normalized_boxes.size(-1))
         # print('normalized bbox: ', normalized_boxes)
         if box_flag:
-            pooled_features = roi_align([normalized_boxes, p4_feat, boxes_ind], 7)
+            
+            # normalized_boxes = torch.from_numpy(normalized_boxes).cuda()
+            # roi_boxes = self.droi_preprocess(normalized_boxes, boxes_ind)
+            roi_boxes = torch.randint(6, (16, 5)).float().cuda()
+            pooled_features = self.dpooling(p4_feat, roi_boxes)
+
+            # pooled_features = roi_align([normalized_boxes, p4_feat, boxes_ind], 7)
             # print('poolded features shape: ', pooled_features.shape)
             pred_kp = self.kp_model(pooled_features)
-            # sampled_fg_rois, heats, weights = add_keypoint_rcnn_gts(kp_gts, normalized_boxes, boxes_ind)
+            
+            # _, heats, weights = add_keypoint_rcnn_gts(kp_gts, normalized_boxes, boxes_ind)
             # target, target_weight = generate_gaussian_target(heats, weights)
+            # gt_hm_hp_np = target
             # gt_hm_hp = torch.from_numpy(target).cuda()
-            gt_sample = kp_input['hm_hp']
-            gt_hm_hp = generate_target_gt(gt_sample, normalized_boxes, boxes_ind, self.output_size)
-            max_preds, max_vals = get_max_preds(gt_hm_hp.detach().cpu().numpy())
-            gt_hm_hp = generate_gaussian_AlignRoI(max_preds, max_vals)
-            gt_hm_hp_np = gt_hm_hp
-            gt_hm_hp = torch.from_numpy(gt_hm_hp).cuda()
-            kp_input['hm_hp'] = gt_hm_hp
+
+            # gt_sample = kp_input['hm_hp']
+            # gt_hm_hp = generate_target_gt(gt_sample, normalized_boxes, boxes_ind, self.output_size)
+            # max_preds, max_vals = get_max_preds(gt_hm_hp.detach().cpu().numpy())
+            # gt_hm_hp = generate_gaussian_AlignRoI(max_preds, max_vals)
+            # gt_hm_hp_np = gt_hm_hp
+            # gt_hm_hp = torch.from_numpy(gt_hm_hp).cuda()
+
+            # kp_input['hm_hp'] = gt_hm_hp
         else:
             print('no box flag')
             # 'hps': 34, 'hm_hp': 17, 'hp_offset': 2
@@ -266,13 +285,17 @@ class SiamMask(nn.Module):
         outputs = dict()
 
         outputs['predict'] = [rpn_pred_cls, rpn_pred_loc, pred_kp,
-                              template_feature, search_feature, rpn_pred_score, normalized_boxes]
+                              template_feature, search_feature, rpn_pred_score, roi_boxes]
 
         rpn_loss_cls, rpn_loss_loc = \
             self._add_rpn_loss(label_cls, label_loc, lable_loc_weight, label_mask,
                                rpn_pred_cls, rpn_pred_loc)
         pred_hm = pred_kp[0]['hm_hp'].detach().cpu().numpy()
         # gt_hm = kp_input['hm_hp'].detach().cpu().numpy()
+        # print('pred hm shape: ', pred_hm.shape)
+        # print('gt hm hp shape: ', gt_hm_hp_np.shape)
+        kp_hm = kp_hm.index_select(0, boxes_ind.long())
+        gt_hm_hp_np = kp_hm.detach().cpu().numpy()
         pck = accuracy(pred_hm, gt_hm_hp_np)
         acc = torch.Tensor(pck[0]).float().cuda()
         avg_acc = torch.Tensor([pck[1]]).float().cuda()
@@ -288,9 +311,9 @@ class SiamMask(nn.Module):
 
         if self.debug:
             # draw roi boxes on the search images
-            box_imgs = draw_boxes(search, normalized_boxes, boxes_ind)
+            box_imgs = draw_boxes(search, roi_boxes, boxes_ind)
             if box_flag:
-                roi_imgs = roi_align([normalized_boxes, search, boxes_ind], 56)
+                roi_imgs = roi_align([roi_boxes, search, boxes_ind], 56)
                 roi_imgs = roi_imgs.transpose(1, 3)
                 hp_imgs = gt_hm_hp
             else:
