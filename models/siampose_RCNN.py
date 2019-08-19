@@ -188,7 +188,7 @@ class SiamMask(nn.Module):
         """
         run network
         """
-        template_feature = self.feature_extractor(template)
+        template_feature, template_deeper_feature = self.feature_extractor(template)
         search_feature, p4_feat = self.features.forward_all(search)
 
         rpn_pred_cls, rpn_pred_loc = self.rpn(template_feature, search_feature)
@@ -197,7 +197,7 @@ class SiamMask(nn.Module):
             rpn_pred_cls_sfmax = self.softmax(rpn_pred_cls, log=True)
         rpn_pred_cls = self.softmax(rpn_pred_cls, log=False)
 
-        return rpn_pred_cls_sfmax, rpn_pred_loc, template_feature, search_feature, rpn_pred_cls, p4_feat
+        return rpn_pred_cls_sfmax, rpn_pred_loc, template_deeper_feature, search_feature, rpn_pred_cls, p4_feat
 
     def softmax(self, cls, log=True):
         b, a2, h, w = cls.size()
