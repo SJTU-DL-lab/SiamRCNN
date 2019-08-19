@@ -3,9 +3,10 @@ from models.features import MultiStageFeature
 from models.rpn import RPN, DepthCorr
 from models.mask import Mask
 # from models.DCNv2.dcn_v2 import DCN
-from models.DCN.modules.modulated_dcn import ModulatedDeformConvPack
+# from models.DCN.modules.modulated_dcn import ModulatedDeformConvPack
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import math
 from utils.load_helper import load_pretrain
 from resnet import resnet50
@@ -14,7 +15,7 @@ from resnet import resnet50
 # from gpu_profile import gpu_profile
 
 BN_MOMENTUM = 0.1
-DCN = ModulatedDeformConvPack
+# DCN = ModulatedDeformConvPack
 
 # sys.settrace(gpu_profile)
 class ResDownS(nn.Module):
@@ -36,16 +37,22 @@ class ResDownS(nn.Module):
 class ResDown(MultiStageFeature):
     def __init__(self, pretrain=False):
         super(ResDown, self).__init__()
-        self.features = resnet50(layer3=True, layer4=True)
+        self.features = resnet50(layer3=True, layer4=False)
         if pretrain:
             load_pretrain(self.features, '../resnet.model')
 
         self.downsample = ResDownS(1024, 256)
-        self.downsample_p4 = ResDownS(2048, 1024)
+        # self.downsample_p4 = ResDownS(2048, 1024)
+        self.hidden_layer = nn.Sequential(
+                nn.Conv2d(256, 512, kernel_size=3, padding=1, bias=False),
+                nn.BatchNorm2d(512),
+                nn.ReLU(inplace=True),
+                )
+        self.big_kernel = nn.Conv2d(512, 512, kernel_size=7, bias=False, groups=512)
 
-        self.layers = [self.downsample, self.downsample_p4,
-                       self.features.layer2, self.features.layer3, self.features.layer4]
-        self.train_nums = [5, 5]
+        self.layers = [self.downsample, # self.downsample_p4,
+                       self.features.layer2, self.features.layer3] #, self.features.layer4]
+        self.train_nums = [3, 3]
         self.change_point = [0, 0.5]
 
         self.unfix(0.0)
@@ -73,8 +80,10 @@ class ResDown(MultiStageFeature):
     def forward_all(self, x):
         output = self.features(x)
         p3 = self.downsample(output[-2])
-        p4 = self.downsample_p4(output[-1])
-        return p3, p4
+        # p4 = self.downsample_p4(output[-1])
+        kp_feat = self.hidden_layer(p3)
+        kp_feat = self.big_kernel(kp_feat)
+        return p3, kp_feat
 
 
 class UP(RPN):
@@ -101,14 +110,14 @@ class Center_pose_head(nn.Module):
     def __init__(self, head_conv=256):
         super(Center_pose_head, self).__init__()
 
-        self.inplanes = 1024
+        self.inplanes = 512
         self.deconv_with_bias = False
         # self.deconv_layers = self._make_deconv_layer(
         #     3,
         #     [256, 128, 64],
         #     [4, 4, 4],
         # )
-        self.deconv_layers = self._make_deconv_layer(
+        self.new_deconv_layers = self._make_deconv_layer(
             3,
             [512, 256, 64],
             [4, 4, 4],
@@ -164,13 +173,13 @@ class Center_pose_head(nn.Module):
                 self._get_deconv_cfg(num_kernels[i], i)
 
             planes = num_filters[i]
-            fc = DCN(self.inplanes, planes,
-                    kernel_size=(3,3), stride=1,
-                    padding=1, dilation=1, deformable_groups=1)
-            # fc = nn.Conv2d(self.inplanes, planes,
-            #         kernel_size=3, stride=1,
-            #         padding=1, dilation=1, bias=False)
-            # fill_fc_weights(fc)
+            # fc = DCN(self.inplanes, planes,
+            #         kernel_size=(3,3), stride=1,
+            #         padding=1, dilation=1, deformable_groups=1)
+            fc = nn.Conv2d(self.inplanes, planes,
+                    kernel_size=3, stride=1,
+                    padding=1, dilation=1, bias=False)
+            fill_fc_weights(fc)
             up = nn.ConvTranspose2d(
                     in_channels=planes,
                     out_channels=planes,
@@ -192,7 +201,7 @@ class Center_pose_head(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        x = self.deconv_layers(x)
+        x = self.new_deconv_layers(x)
         ret = {}
         for head in self.heads:
             ret[head] = self.__getattr__(head)(x)

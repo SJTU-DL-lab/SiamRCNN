@@ -1,8 +1,8 @@
 import argparse
 import logging
 import os
-os.environ['CUDA_VISIBLE_DEVICES']='2'
-os.environ['GPU_DEBUG']='2'
+# os.environ['CUDA_VISIBLE_DEVICES']='2'
+# os.environ['GPU_DEBUG']='2'
 import cv2
 import shutil
 import time
@@ -31,8 +31,8 @@ from utils.config_helper import load_config
 from torch.utils.collect_env import get_pretty_env_info
 from torchvision.transforms import ToTensor
 
-import sys
-from gpu_profile import gpu_profile
+# import sys
+# from gpu_profile import gpu_profile
 
 torch.backends.cudnn.benchmark = True
 
@@ -340,12 +340,12 @@ def train(train_loader, model, optimizer, lr_scheduler, epoch, cfg, avg, num_per
         cls_weight, reg_weight, kp_weight = cfg['loss']['weight']
 
         loss = rpn_cls_loss * cls_weight + rpn_loc_loss * reg_weight + kp_loss * kp_weight
-        print('loss: ', loss)
+        # print('loss: ', loss)
 
-        gpu_profile(frame=sys._getframe(), event='line', arg=None)
+        # gpu_profile(frame=sys._getframe(), event='line', arg=None)
         optimizer.zero_grad()
         loss.backward()
-        gpu_profile(frame=sys._getframe(), event='line', arg=None)
+        # gpu_profile(frame=sys._getframe(), event='line', arg=None)
 
         if cfg['clip']['split']:
             torch.nn.utils.clip_grad_norm_(model.module.features.parameters(), cfg['clip']['feature'])
@@ -478,5 +478,5 @@ def args_process(opt):
     return opt
 
 if __name__ == '__main__':
-    sys.settrace(gpu_profile)
+    # sys.settrace(gpu_profile)
     main()
