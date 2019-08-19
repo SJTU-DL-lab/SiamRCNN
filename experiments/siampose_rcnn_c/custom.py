@@ -51,8 +51,9 @@ class ResDown(MultiStageFeature):
         self.big_kernel = nn.Conv2d(512, 512, kernel_size=7, bias=False, groups=512)
 
         self.layers = [self.downsample, # self.downsample_p4,
-                       self.features.layer2, self.features.layer3] #, self.features.layer4]
-        self.train_nums = [3, 3]
+                       self.features.layer2, self.features.layer3,
+                       self.hidden_layer, self.big_kernel] #, self.features.layer4]
+        self.train_nums = [5, 5]
         self.change_point = [0, 0.5]
 
         self.unfix(0.0)
@@ -107,7 +108,7 @@ class UP(RPN):
 
 
 class Center_pose_head(nn.Module):
-    def __init__(self, head_conv=256):
+    def __init__(self, head_conv=256, init_ones=False):
         super(Center_pose_head, self).__init__()
 
         self.inplanes = 512
@@ -122,8 +123,11 @@ class Center_pose_head(nn.Module):
             [512, 256, 64],
             [4, 4, 4],
         )
+        self.downfeat = nn.Conv2d(256, 512, kernel_size=1, bias=False)
         self.heads = {'hps': 34, 'hm_hp': 17, 'hp_offset': 2}
 
+        if init_ones:
+            fill_ones_weights(self.downfeat)
         for head in self.heads:
             classes = self.heads[head]
             if head_conv > 0:
@@ -200,7 +204,9 @@ class Center_pose_head(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def forward(self, x):
+    def forward(self, x, feat):
+        feat_down = self.downfeat(feat)
+        x = feat_down + x
         x = self.new_deconv_layers(x)
         ret = {}
         for head in self.heads:
@@ -254,6 +260,11 @@ def fill_fc_weights(layers):
         if isinstance(m, nn.Conv2d):
             if m.bias is not None:
                 nn.init.constant_(m.bias, 0)
+
+def fill_ones_weights(layers):
+    for m in layers.modules():
+        if isinstance(m, nn.Conv2d):
+            nn.init.ones(m.weight)
 
 def fill_up_weights(up):
     w = up.weight.data
