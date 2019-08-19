@@ -508,7 +508,11 @@ def unfold_mask(mask, idx):
 
 
 def generate_gaussian_target(joints, joints_vis, target_type='gaussian',
+<<<<<<< HEAD
                              num_joints=17, heatmap_size=(56, 56), sigma=4):
+=======
+                             num_joints=17, heatmap_size=(56, 56), sigma=5):
+>>>>>>> 8540287bd703977c631ec607f2f96f62d7872e10
     '''
     :param joints:  [num_rois, num_kps]
     :param joints_vis: [num_rois, num_kps]
@@ -538,6 +542,7 @@ def generate_gaussian_target(joints, joints_vis, target_type='gaussian',
             mu_y = joints[:, joint_id] // heatmap_size[0]
             # int(joints[joint_id][1])
             # Check that any part of the gaussian is in-bounds
+<<<<<<< HEAD
             ul = [(mu_x - tmp_size).astype(np.int32), (mu_y - tmp_size).astype(np.int32)]
             br = [(mu_x + tmp_size + 1).astype(np.int32), (mu_y + tmp_size + 1).astype(np.int32)]
             # vis_target = np.logical_and(
@@ -545,6 +550,15 @@ def generate_gaussian_target(joints, joints_vis, target_type='gaussian',
             #                 np.logical_and(br[0] >= 0, br[1] >= 0)
             #                 )
             # target_weight[:, joint_id] = vis_target
+=======
+            ul = [int(mu_x - tmp_size), int(mu_y - tmp_size)]
+            br = [int(mu_x + tmp_size + 1), int(mu_y + tmp_size + 1)]
+            vis_target = np.logical_and(
+                            np.logical_and(ul[0] < heatmap_size, ul[1] < heatmap_size[1]),
+                            np.logical_and(br[0] >= 0, br[1] >= 0)
+                            )
+            target_weight[:, joint_id] = vis_target
+>>>>>>> 8540287bd703977c631ec607f2f96f62d7872e10
             # if ul[0] >= heatmap_size[0] or ul[1] >= heatmap_size[1] \
             #         or br[0] < 0 or br[1] < 0:
             #     # If not, just return the image as is
@@ -553,6 +567,7 @@ def generate_gaussian_target(joints, joints_vis, target_type='gaussian',
 
             # # Generate gaussian
             size = 2 * tmp_size + 1
+<<<<<<< HEAD
             x_v = np.arange(0, size, 1, np.float32).reshape(1, -1, 1)
             # x = np.repeat(x_v, size, -1)
             x = np.repeat(x_v, num_rois, 0)
@@ -561,11 +576,18 @@ def generate_gaussian_target(joints, joints_vis, target_type='gaussian',
 
             # y = x[:, :, np.newaxis]
             y = x.reshape(num_rois, 1, -1)
+=======
+            x_v = np.arange(0, size, 1, np.float32).reshape(1, -1)
+            x = np.repeat(x_v, num_rois, 0)
+
+            y = x[:, :, np.newaxis]
+>>>>>>> 8540287bd703977c631ec607f2f96f62d7872e10
             x0 = y0 = size // 2
             # The gaussian is not normalized, we want the center value to equal 1
             g = np.exp(- ((x - x0) ** 2 + (y - y0) ** 2) / (2 * sigma ** 2))
 
             # Usable gaussian range
+<<<<<<< HEAD
             g_x = np.maximum(0, -ul[0]), np.minimum(br[0], heatmap_size[0]) - ul[0]
             g_y = np.maximum(0, -ul[1]), np.minimum(br[1], heatmap_size[1]) - ul[1]
             # Image range
@@ -593,11 +615,26 @@ def generate_gaussian_target(joints, joints_vis, target_type='gaussian',
             #         g[g_y[0]:g_y[1], g_x[0]:g_x[1]]
             # target[:, joint_id][img_y[0]:img_y[1], img_x[0]:img_x[1]] = \
             #         g[g_y[0]:g_y[1], g_x[0]:g_x[1]]
+=======
+            g_x = max(0, -ul[0]), min(br[0], heatmap_size[0]) - ul[0]
+            g_y = max(0, -ul[1]), min(br[1], heatmap_size[1]) - ul[1]
+            # Image range
+            img_x = max(0, ul[0]), min(br[0], heatmap_size[0])
+            img_y = max(0, ul[1]), min(br[1], heatmap_size[1])
+
+            v = target_weight[:, joint_id] > 0.5
+            print('target weight bool: ', v)
+            print('target shape: ', target.shape)
+            print('g shape: ', g.shape)
+            target[:, joint_id][img_y[0]:img_y[1], img_x[0]:img_x[1]] = \
+                    g[g_y[0]:g_y[1], g_x[0]:g_x[1]]
+>>>>>>> 8540287bd703977c631ec607f2f96f62d7872e10
             # if v > 0.5:
             #     target[joint_id][img_y[0]:img_y[1], img_x[0]:img_x[1]] = \
             #         g[g_y[0]:g_y[1], g_x[0]:g_x[1]]
 
     return target, target_weight
+<<<<<<< HEAD
 
 def generate_gaussian_AlignRoI(max_preds, max_vals, num_joints=17, output_size=56, hg_radius=7):
     # max_preds [bs, num_kps, 2]
@@ -612,3 +649,5 @@ def generate_gaussian_AlignRoI(max_preds, max_vals, num_joints=17, output_size=5
     return hm_hp
              
     
+=======
+>>>>>>> 8540287bd703977c631ec607f2f96f62d7872e10

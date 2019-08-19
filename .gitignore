@@ -25,7 +25,8 @@ debug/
 output/
 
 # log
-siampose_ct
+*.out
+*.err
 
 # test
 test_imgs/

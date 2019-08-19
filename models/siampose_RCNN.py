@@ -42,7 +42,7 @@ class PoseLoss(torch.nn.Module):
         batch['hm_hp'] = batch['hm_hp'].index_select(0, ind)
         if opt.hm_hp and not opt.mse_loss:
             output['hm_hp'] = _sigmoid(output['hm_hp'])
-        
+
         if opt.dense_hp:
             mask_weight = batch['dense_hps_mask'].sum() + 1e-4
             hp_loss += (self.crit_kp(output['hps'] * batch['dense_hps_mask'],
@@ -240,7 +240,7 @@ class SiamMask(nn.Module):
         if box_flag:
             pooled_features = roi_align([normalized_boxes, p4_feat, boxes_ind], 7)
             # print('poolded features shape: ', pooled_features.shape)
-            pred_kp = self.kp_model(pooled_features)
+            pred_kp = self.kp_model(pooled_features, template_feature)
             gt_sample = kp_input['hm_hp']
             gt_hm_hp = generate_target_gt(gt_sample, normalized_boxes, boxes_ind, self.output_size)
             # kp_input['hm_hp'] = gt_hm_hp
