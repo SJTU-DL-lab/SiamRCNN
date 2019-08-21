@@ -92,7 +92,7 @@ class SubDataSet(object):
 
         for video, tracks in anno.items():
             for trk, frames in tracks.items():
-                frame_name = '_'.join(video, trk)
+                frame_name = '_'.join([video, trk])
                 new_frames = {}
                 for frm, bbox in frames.items():
                     tot += 1
@@ -747,6 +747,7 @@ class DataSets(Dataset):
     def __getitem__(self, index, debug=False):
         index = self.pick[index]
         dataset, index = self.find_dataset(index)
+        neg = False
 
         # gray = self.gray and self.gray > random.random()
         # neg = self.neg and self.neg > random.random()
@@ -804,8 +805,8 @@ class DataSets(Dataset):
         template_box = toBBox(template_image, template[1])
         search_box = toBBox(search_image, search[1])
         # bbox = search_box
-        template, _, _ = self.template_aug(template_image, template_box, self.template_size, gray=gray)
-        search, bbox, mask = self.search_aug(search_image, search_box, self.search_size, gray=gray)
+        template, _, _ = self.template_aug(template_image, template_box, self.template_size, gray=False)
+        search, bbox, mask = self.search_aug(search_image, search_box, self.search_size, gray=False)
 
         def draw(image, box, name):
             image = image.copy()
@@ -888,7 +889,7 @@ class DataSets(Dataset):
             draw(template, _, "debug/{:06d}_t.jpg".format(index))
             draw(search, bbox, "debug/{:06d}_s.jpg".format(index))
 
-        cls, delta, delta_weight = self.anchor_target(self.anchors, bbox, self.size, neg)
+        cls, delta, delta_weight = self.anchor_target(self.anchors, bbox, self.size, False)
         if not dataset.has_mask:
             pos, s = crop_like_SiamFCx(search_box, exemplar_size=127, context_amount=0.5, search_size=255)
             mapping_bbox = pos_s_2_bbox(pos, s)
