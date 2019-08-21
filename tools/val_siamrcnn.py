@@ -22,7 +22,7 @@ from utils.average_meter_helper import AverageMeter
 from utils.image import save_gt_pred_heatmaps, save_batch_resized_heatmaps
 from utils.pose_evaluate import accuracy
 
-from datasets.siam_rcnn_dataset import DataSets
+from datasets.siam_rcnn_val_dataset import DataSets
 from utils.lr_helper import build_lr_scheduler
 
 from utils.config_helper import load_config
