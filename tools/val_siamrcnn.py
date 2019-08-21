@@ -112,13 +112,13 @@ def build_data_loader(cfg):
 
     logger.info("build train dataset")  # train_dataset
     train_set = DataSets(cfg['train_datasets'], cfg['anchors'])
-    train_set.shuffle()
+    # train_set.shuffle()
 
     logger.info("build val dataset")  # val_dataset
     if not 'val_datasets' in cfg.keys():
         cfg['val_datasets'] = cfg['train_datasets']
     val_set = DataSets(cfg['val_datasets'], cfg['anchors'])
-    val_set.shuffle()
+    # val_set.shuffle()
 
     train_loader = DataLoader(train_set, shuffle=True, batch_size=args.batch, num_workers=args.workers,
                               pin_memory=True, drop_last=True)
@@ -230,6 +230,23 @@ def validation(val_loader, model, cfg, avg):
             siammask_loss = loss.item()
 
             batch_time = time.time() - end
+
+            img_ids = input[8].cpu().detach().numpy()
+            preds, maxvals = get_max_preds_loc(pred_kp, offset_loc)
+            preds = preds.astype(np.uint8)
+
+            for i in range(preds.shape[0]):
+                temp_dict = dict()
+                temp_dict["image_id"] = int(img_ids[i])
+                print("============temp_dict[image_id] ========", temp_dict["image_id"])
+                temp_dict["category_id"] = 1
+                temp_dict["score"] = 0.7
+                temp_dict["keypoints"] = preds[i].tolist()
+                print("============temp_dict[keypoints] ========", temp_dict["keypoints"])
+
+                valdata.append(temp_dict)
+                # img_list.append(int(img_ids[i]))
+            json.dump(valdata, open('person_keypoints_val2017_result_new.json', 'w'), indent=4, sort_keys=True)
 
             if args.debug:
                 box_imgs, roi_imgs, hp_imgs = outputs['debug']

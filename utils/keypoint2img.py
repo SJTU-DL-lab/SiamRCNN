@@ -82,38 +82,21 @@ def read_keypoints(json_input, size, random_drop_prob=0, remove_face_labels=Fals
         pose_img += connect_keypoints(pts, edge_lists, size, random_drop_prob, remove_face_labels, basic_point_only)
     return pose_img
 
-def extract_valid_keypoints(pts, edge_lists):
-    pose_edge_list, _, hand_edge_list, _, face_list = edge_lists
+def extract_valid_keypoints(pts, edge_lists, thre=0.01):
+    pose_edge_list, _ = edge_lists
     p = pts.shape[0]
-    thre = 0.1 if p == 70 else 0.01
     output = np.zeros((p, 2))
 
-    if p == 70:   # face
-        for edge_list in face_list:
-            for edge in edge_list:
-                if (pts[edge, 2] > thre).all():
-                    output[edge, :] = pts[edge, :2]
-    elif p == 21: # hand
-        for edge in hand_edge_list:
-            if (pts[edge, 2] > thre).all():
-                output[edge, :] = pts[edge, :2]
-    else:         # pose
-        valid = (pts[:, 2] > thre)
-        output[valid, :] = pts[valid, :2]
+    valid = (pts[:, 2] > thre)
+    output[valid, :] = pts[valid, :2]
 
     return output
 
-def connect_keypoints(pts, edge_lists, size, random_drop_prob, remove_face_labels, basic_point_only):
-    pose_pts, face_pts, hand_pts_l, hand_pts_r = pts
+def connect_keypoints(pts, edge_lists, size, random_drop_prob):
+    pose_pts = pts
     w, h = size
     output_edges = np.zeros((h, w, 3), np.uint8)
-    pose_edge_list, pose_color_list, hand_edge_list, hand_color_list, face_list = edge_lists
-
-    if random_drop_prob > 0 and remove_face_labels:
-        # add random noise to keypoints
-        pose_pts[[0,15,16,17,18], :] += 5 * np.random.randn(5,2)
-        face_pts[:,0] += 2 * np.random.randn()
-        face_pts[:,1] += 2 * np.random.randn()
+    pose_edge_list, pose_color_list = edge_lists
 
     ### pose
     for i, edge in enumerate(pose_edge_list):
@@ -122,75 +105,28 @@ def connect_keypoints(pts, edge_lists, size, random_drop_prob, remove_face_label
             curve_x, curve_y = interpPoints(x, y)
             drawEdge(output_edges, curve_x, curve_y, bw=3, color=pose_color_list[i], draw_end_points=True)
 
-    if not basic_point_only:
-        ### hand
-        for hand_pts in [hand_pts_l, hand_pts_r]:     # for left and right hand
-            if np.random.rand() > random_drop_prob:
-                for i, edge in enumerate(hand_edge_list): # for each finger
-                    for j in range(0, len(edge)-1):       # for each part of the finger
-                        sub_edge = edge[j:j+2]
-                        x, y = hand_pts[sub_edge, 0], hand_pts[sub_edge, 1]
-                        if 0 not in x:
-                            line_x, line_y = interpPoints(x, y)
-                            drawEdge(output_edges, line_x, line_y, bw=1, color=hand_color_list[i], draw_end_points=True)
-
-        ### face
-        edge_len = 2
-        if (np.random.rand() > random_drop_prob):
-            for edge_list in face_list:
-                for edge in edge_list:
-                    for i in range(0, max(1, len(edge)-1), edge_len-1):
-                        sub_edge = edge[i:i+edge_len]
-                        x, y = face_pts[sub_edge, 0], face_pts[sub_edge, 1]
-                        if 0 not in x:
-                            curve_x, curve_y = interpPoints(x, y)
-                            drawEdge(output_edges, curve_x, curve_y, draw_end_points=True)
-
     return output_edges
 
 def define_edge_lists(basic_point_only):
     ### pose
     pose_edge_list = []
     pose_color_list = []
-    if not basic_point_only:
-        pose_edge_list += [[17, 15], [15,  0], [ 0, 16], [16, 18]]       # head
-        pose_color_list += [[153,  0,153], [153,  0,102], [102,  0,153], [ 51,  0,153]]
 
     pose_edge_list += [
-        [ 0,  1], [ 1,  8],                                         # body
+        [ 0,  1], [14, 16], [ 0, 14], [ 0, 15], [15, 17],           # head
+        [ 1,  8], [ 1, 11],                                         # body
         [ 1,  2], [ 2,  3], [ 3,  4],                               # right arm
         [ 1,  5], [ 5,  6], [ 6,  7],                               # left arm
-        [ 8,  9], [ 9, 10], [10, 11], [11, 24], [11, 22], [22, 23], # right leg
-        [ 8, 12], [12, 13], [13, 14], [14, 21], [14, 19], [19, 20]  # left leg
+        [ 8,  9], [ 9, 10],                                         # right leg
+        [ 11, 12], [12, 13]                                         # left leg
     ]
     pose_color_list += [
-        [153,  0, 51], [153,  0,  0],
+        [153,  0, 51], [153,  0,153], [153,  0,102], [102,  0,153], [ 51,  0,153],
+        [  0,153, 51], [  0,102,153],
         [153, 51,  0], [153,102,  0], [153,153,  0],
         [102,153,  0], [ 51,153,  0], [  0,153,  0],
-        [  0,153, 51], [  0,153,102], [  0,153,153], [  0,153,153], [  0,153,153], [  0,153,153],
-        [  0,102,153], [  0, 51,153], [  0,  0,153], [  0,  0,153], [  0,  0,153], [  0,  0,153]
+        [  0,153,102], [  0,153,153],
+        [  0, 51,153], [  0,  0,153]
     ]
 
-    ### hand
-    hand_edge_list = [
-        [0,  1,  2,  3,  4],
-        [0,  5,  6,  7,  8],
-        [0,  9, 10, 11, 12],
-        [0, 13, 14, 15, 16],
-        [0, 17, 18, 19, 20]
-    ]
-    hand_color_list = [
-        [204,0,0], [163,204,0], [0,204,82], [0,82,204], [163,0,204]
-    ]
-
-    ### face
-    face_list = [
-                 #[range(0, 17)], # face
-                 [range(17, 22)], # left eyebrow
-                 [range(22, 27)], # right eyebrow
-                 [range(27, 31), range(31, 36)], # nose
-                 [[36,37,38,39], [39,40,41,36]], # left eye
-                 [[42,43,44,45], [45,46,47,42]], # right eye
-                 [range(48, 55), [54,55,56,57,58,59,48]], # mouth
-                ]
-    return pose_edge_list, pose_color_list, hand_edge_list, hand_color_list, face_list
+    return pose_edge_list, pose_color_list

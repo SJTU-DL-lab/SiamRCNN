@@ -80,7 +80,7 @@ class SubDataSet(object):
         self.num_use = int(self.num_use)
 
         # shuffle
-        self.shuffle()
+        # self.shuffle()
 
     def filter_zero(self, anno, cfg):
         name = cfg.get('mark', '')
@@ -775,6 +775,7 @@ class DataSets(Dataset):
             template_image = center_crop(template_image, self.template_size)
 
         search_image, scale_x = self.imread(search[0])
+        image_id = int(search[0].split('/')[-2])
 
         if dataset.has_mask:
             search_mask = np.zeros(search_image.shape[:2], dtype=np.float32)
@@ -986,4 +987,4 @@ class DataSets(Dataset):
         template, search = map(lambda x: np.transpose(x, (2, 0, 1)).astype(np.float32), [template, search])
         return template, search, cls, delta, \
           delta_weight, bbox_reg, \
-          np.array(kp_weight, np.float32), ret, joints_3d_out
+          np.array(kp_weight, np.float32), ret, joints_3d_out, image_id
