@@ -50,15 +50,9 @@ class ResDown(MultiStageFeature):
                 )
         self.big_kernel = nn.Conv2d(512, 512, kernel_size=7, bias=False, groups=512)
         self.deeper_layer = nn.Sequential(
-                              nn.Conv2d(256, 512, kernel_size=3, padding=1, bias=False),
-                              nn.BatchNorm2d(512),
-                              nn.ReLU(inplace=True),
-                              nn.Conv2d(512, 512, kernel_size=3, padding=1, bias=False),
-                              nn.BatchNorm2d(512),
-                              nn.ReLU(inplace=True),
-                              nn.Conv2d(512, 512, kernel_size=3, padding=1, bias=False),
-                              nn.BatchNorm2d(512),
-                              nn.ReLU(inplace=True)
+                                   nn.Conv2d(256, 512, kernel_size=3, padding=1, bias=False),
+                                   nn.BatchNorm2d(512),
+                                   nn.ReLU(inplace=True)
                             )
 
         self.layers = [self.downsample, # self.downsample_p4,

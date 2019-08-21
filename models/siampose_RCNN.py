@@ -234,6 +234,7 @@ class SiamMask(nn.Module):
         proposals = self.proposal_preprocess(rpn_pred_score, rpn_pred_loc)
 
         normalized_boxes, boxes_ind, box_flag = proposal_layer(proposals, self.anchors, args=self.opt)
+        template_feature = torch.index_select(template_feature, 0, boxes_ind.long())
         # print('per batch nms boxes shape: ', normalized_boxes.shape)
         # normalized_boxes = normalized_boxes.view(-1, normalized_boxes.size(-1))
         # print('normalized bbox: ', normalized_boxes)
@@ -241,8 +242,9 @@ class SiamMask(nn.Module):
             pooled_features = roi_align([normalized_boxes, p4_feat, boxes_ind], 7)
             # print('poolded features shape: ', pooled_features.shape)
             pred_kp = self.kp_model(pooled_features, template_feature)
-            gt_sample = kp_input['hm_hp']
-            gt_hm_hp = generate_target_gt(gt_sample, normalized_boxes, boxes_ind, self.output_size)
+            # gt_sample = kp_input['hm_hp']
+            gt_hm_hp = search # kp_input['hm_hp']
+            # gt_hm_hp = generate_target_gt(gt_sample, normalized_boxes, boxes_ind, self.output_size)
             # kp_input['hm_hp'] = gt_hm_hp
         else:
             print('no box flag')
