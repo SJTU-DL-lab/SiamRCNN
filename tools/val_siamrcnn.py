@@ -188,6 +188,7 @@ def validation(val_loader, model, cfg, avg):
     model.eval()
     valdata = []
     used_img_id = {}
+    id_pos = 0
     with torch.no_grad():
         for iter, input in enumerate(val_loader):
             # if iter > 100:
@@ -241,7 +242,7 @@ def validation(val_loader, model, cfg, avg):
                 img_id = img_ids[i]
                 temp_dict = dict()
                 if img_id not in used_img_id:
-                    used_img_id[img_id] = i
+                    used_img_id[img_id] = id_pos
                     temp_dict["image_id"] = int(img_id)
                     temp_dict["keypoints"] = preds[i].tolist()
                 else:
@@ -253,6 +254,7 @@ def validation(val_loader, model, cfg, avg):
                 temp_dict["score"] = 0.7
                 # print("============temp_dict[keypoints] ========", temp_dict["keypoints"])
                 valdata.append(temp_dict)
+                id_pos += 1
                 # img_list.append(int(img_ids[i]))
             # print(valdata)
 
