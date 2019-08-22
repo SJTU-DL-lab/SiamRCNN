@@ -19,7 +19,7 @@ from torch.autograd import Variable
 from utils.log_helper import init_log, add_file_handler
 from utils.load_helper import load_pretrain, restore_from
 from utils.average_meter_helper import AverageMeter
-from utils.image import save_gt_pred_heatmaps, save_batch_resized_heatmaps
+from utils.image import save_gt_pred_heatmaps, save_batch_resized_heatmaps, get_max_preds_loc
 from utils.pose_evaluate import accuracy
 
 from datasets.siam_rcnn_val_dataset import DataSets
@@ -231,6 +231,7 @@ def validation(val_loader, model, cfg, avg):
 
             batch_time = time.time() - end
 
+            offset_loc = x_kp['hp_offset'].cpu().detach().numpy()
             img_ids = input[8].cpu().detach().numpy()
             preds, maxvals = get_max_preds_loc(pred_kp, offset_loc)
             preds = preds.astype(np.uint8)

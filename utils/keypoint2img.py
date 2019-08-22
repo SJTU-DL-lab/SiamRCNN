@@ -5,6 +5,16 @@ import json
 import glob
 from scipy.optimize import curve_fit
 import warnings
+# codes for debug
+
+import matplotlib
+matplotlib.use('Qt5Agg')
+import matplotlib.pyplot as plt
+import skimage.io as io
+import pylab
+pylab.rcParams['figure.figsize'] = (15, 12.0)
+from pycocotools.coco import COCO
+%matplotlib inline
 
 def func(x, a, b, c):
     return a * x**2 + b * x + c
@@ -92,22 +102,22 @@ def extract_valid_keypoints(pts, edge_lists, thre=0.01):
 
     return output
 
-def connect_keypoints(pts, edge_lists, size, random_drop_prob):
+def connect_keypoints(pts, edge_lists, size, output_edges):
     pose_pts = pts
     w, h = size
-    output_edges = np.zeros((h, w, 3), np.uint8)
+    # output_edges = np.zeros((h, w, 3), np.uint8)
     pose_edge_list, pose_color_list = edge_lists
 
     ### pose
     for i, edge in enumerate(pose_edge_list):
         x, y = pose_pts[edge, 0], pose_pts[edge, 1]
-        if (np.random.rand() > random_drop_prob) and (0 not in x):
+        if (0 not in x):
             curve_x, curve_y = interpPoints(x, y)
             drawEdge(output_edges, curve_x, curve_y, bw=3, color=pose_color_list[i], draw_end_points=True)
 
     return output_edges
 
-def define_edge_lists(basic_point_only):
+def define_edge_lists():
     ### pose
     pose_edge_list = []
     pose_color_list = []
@@ -130,3 +140,83 @@ def define_edge_lists(basic_point_only):
     ]
 
     return pose_edge_list, pose_color_list
+
+def mean_pos(pos1, pos2):
+    m_pos = pos1 + (pos2 - pos1) / 2
+    return m_pos
+# coco: 0-nose    1-Leye    2-Reye    3-Lear    4-Rear
+# 5-Lsho    6-Rsho    7-Lelb    8-Relb    9-Lwri    10-Rwri
+# 11-Lhip    12-Rhip    13-Lkne    14-Rkne    15-Lank    16-Rank
+
+# openpose: 0-'nose', 1-'neck', 2-'Rsho', 3-'Relb', 4-'Rwri'
+# 5-'Lsho', 6-'Lelb', 7-'Lwri', 8-'Rhip', 9-'Rkne', 10-'Rank'
+# 11-'Lhip', 12-'Lkne', 13-'Lank', 14-'Leye', 15-'Reye',
+# 16-'Lear', 17-'Rear', 18-'pt19'
+def coco_to_openpose(coco_kp):
+    # coco_kp shape: [17, 3]
+    # output shape: [18, 3]
+    opose_kp = np.zeros((18, 3), dtype=coco_kp.dtype)
+    neck = mean_pos(coco_kp[5], coco_kp[6])
+    opose_kp[0] = coco_kp[0]
+    opose_kp[1] = neck
+    opose_kp[2] = coco_kp[6]
+    opose_kp[3] = coco_kp[8]
+    opose_kp[4] = coco_kp[10]
+    opose_kp[5] = coco_kp[5]
+    opose_kp[6] = coco_kp[7]
+    opose_kp[7] = coco_kp[9]
+    opose_kp[8] = coco_kp[12]
+    opose_kp[9] = coco_kp[14]
+    opose_kp[10] = coco_kp[16]
+    opose_kp[11] = coco_kp[11]
+    opose_kp[12] = coco_kp[13]
+    opose_kp[13] = coco_kp[15]
+    opose_kp[14:] = coco_kp[1:5]
+
+    return opose_kp
+
+edge_lists = define_edge_lists()
+def coco_pose_to_img(coco_pose, img, size, thresh=0.2):
+    # coco_pose shape: [17, 3]
+    # size: [h, w]
+    # bs = coco_pose.shape[0]
+    h, w = size
+
+    opose_pts = coco_to_openpose(coco_pose)
+    pts = extract_valid_keypoints(opose_pts, edge_lists, thresh)
+    img = connect_keypoints(pts, edge_lists, [w, h], img)
+    return img
+
+if __name__ == '__main__':
+
+    annFile = '/home/yaosy/Diskb/projects/OSIS/CenterNet-AUT/OSISnet/data/coco/annotations/person_keypoints_train2017.json'
+    coco=COCO(annFile)
+    # display COCO categories and supercategories
+    cats = coco.loadCats(coco.getCatIds())
+    nms=[cat['name'] for cat in cats]
+    print('COCO categories: \n{}\n'.format(' '.join(nms)))
+
+    nms = set([cat['supercategory'] for cat in cats])
+    print('COCO supercategories: \n{}'.format(' '.join(nms)))
+    catIds = coco.getCatIds(catNms=['person'])
+    imgIds = coco.getImgIds(catIds=catIds)
+    img = coco.loadImgs(imgIds[0])[0]
+    I = io.imread(img['coco_url'])
+    plt.axis('off')
+    plt.imshow(I)
+    ax = plt.gca()
+    annIds = coco.getAnnIds(imgIds=img['id'], catIds=catIds, iscrowd=None)
+    anns = coco.loadAnns(annIds)
+    coco.showAnns(anns)
+    kp = anns[0]['keypoints']
+
+    pose_pts = np.array(kp).reshape(17, 3)
+    opose_pts = coco_to_openpose(pose_pts)
+    edge_lists = define_edge_lists()
+    pts = extract_valid_keypoints(opose_pts, edge_lists)
+    h, w = img['height'], img['width']
+    output = connect_keypoints(pts, edge_lists, [w, h], I)
+
+    # plt.axis('off')
+    plt.imshow(output)
+    plt.show()
