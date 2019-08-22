@@ -186,11 +186,12 @@ def validation(val_loader, model, cfg, avg):
     num_per_epoch = len(val_loader.dataset)
     end = time.time()
     model.eval()
-
+    valdata = []
+    used_img_id = {}
     with torch.no_grad():
         for iter, input in enumerate(val_loader):
-            if iter > 100:
-                break
+            # if iter > 100:
+            #     break
             tb_val_index += iter
 
             data_time = time.time() - end
@@ -232,22 +233,28 @@ def validation(val_loader, model, cfg, avg):
             batch_time = time.time() - end
 
             offset_loc = x_kp['hp_offset'].cpu().detach().numpy()
-            img_ids = input[8].cpu().detach().numpy()
-            preds, maxvals = get_max_preds_loc(pred_kp, offset_loc)
-            preds = preds.astype(np.uint8)
+            img_ids = input[9].cpu().detach().numpy()
+            preds, maxvals = get_max_preds_loc(pred_kp.cpu().detach().numpy(), offset_loc)
+            # preds = preds.astype(np.uint8)
 
             for i in range(preds.shape[0]):
+                img_id = img_ids[i]
                 temp_dict = dict()
-                temp_dict["image_id"] = int(img_ids[i])
-                print("============temp_dict[image_id] ========", temp_dict["image_id"])
+                if img_id not in used_img_id:
+                    used_img_id[img_id] = i
+                    temp_dict["image_id"] = int(img_id)
+                    temp_dict["keypoints"] = preds[i].tolist()
+                else:
+                    idx = used_img_id[img_id]
+                    valdata[idx]['keypoints'].extend(preds[i].tolist())
+                    continue
+                # print("============temp_dict[image_id] ========", temp_dict["image_id"])
                 temp_dict["category_id"] = 1
                 temp_dict["score"] = 0.7
-                temp_dict["keypoints"] = preds[i].tolist()
-                print("============temp_dict[keypoints] ========", temp_dict["keypoints"])
-
+                # print("============temp_dict[keypoints] ========", temp_dict["keypoints"])
                 valdata.append(temp_dict)
                 # img_list.append(int(img_ids[i]))
-            json.dump(valdata, open('person_keypoints_val2017_result_new.json', 'w'), indent=4, sort_keys=True)
+            # print(valdata)
 
             if args.debug:
                 box_imgs, roi_imgs, hp_imgs = outputs['debug']
@@ -256,7 +263,7 @@ def validation(val_loader, model, cfg, avg):
                 # cv2.imwrite('debug/heatmap_{}.jpg'.format(iter), grid_img)
                 # print('hp_imgs shape: ', hp_imgs.shape)
                 grid_img, resized_img = save_batch_resized_heatmaps(hp_imgs,
-                                                                    pred_kp, 'output/pred_hm_{}.jpg'.format(iter))
+                                                                    pred_kp, 'output/pred_hm_{}.jpg'.format(iter), out_skelet=True)
                 cv2.imwrite('output/heatmap_{}.jpg'.format(iter), grid_img)
                 # grid_img, resized_img = save_batch_resized_heatmaps(x_rpn['search'],
                 #                                                     x_kp['hm_hp'], 'debug/feat_{}.jpg'.format(iter))
@@ -284,7 +291,7 @@ def validation(val_loader, model, cfg, avg):
                                 rpn_cls_loss=avg.rpn_cls_loss, rpn_loc_loss=avg.rpn_loc_loss,
                                 kp_hp_loss=avg.kp_hp_loss, kp_hm_hp_loss=avg.kp_hm_hp_loss, kp_hp_offset_loss=avg.kp_hp_offset_loss,
                                 kp_loss=avg.kp_loss, siammask_loss=avg.siammask_loss, kp_avg_acc=avg.kp_avg_acc))
-
+    json.dump(valdata, open('person_keypoints_val2017_result_new.json', 'w'), indent=4, sort_keys=True)
 
 def save_checkpoint(state, is_best, filename='checkpoint.pth', best_file='model_best.pth'):
     torch.save(state, filename)

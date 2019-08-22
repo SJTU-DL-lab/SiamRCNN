@@ -7,14 +7,14 @@ from scipy.optimize import curve_fit
 import warnings
 # codes for debug
 
-import matplotlib
-matplotlib.use('Qt5Agg')
-import matplotlib.pyplot as plt
-import skimage.io as io
-import pylab
-pylab.rcParams['figure.figsize'] = (15, 12.0)
-from pycocotools.coco import COCO
-%matplotlib inline
+# import matplotlib
+# matplotlib.use('Qt5Agg')
+# import matplotlib.pyplot as plt
+# import skimage.io as io
+# import pylab
+# pylab.rcParams['figure.figsize'] = (15, 12.0)
+# from pycocotools.coco import COCO
+# %matplotlib inline
 
 def func(x, a, b, c):
     return a * x**2 + b * x + c
@@ -113,7 +113,7 @@ def connect_keypoints(pts, edge_lists, size, output_edges):
         x, y = pose_pts[edge, 0], pose_pts[edge, 1]
         if (0 not in x):
             curve_x, curve_y = interpPoints(x, y)
-            drawEdge(output_edges, curve_x, curve_y, bw=3, color=pose_color_list[i], draw_end_points=True)
+            drawEdge(output_edges, curve_x, curve_y, bw=1, color=pose_color_list[i], draw_end_points=True)
 
     return output_edges
 
