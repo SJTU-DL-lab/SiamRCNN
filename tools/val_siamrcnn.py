@@ -241,7 +241,7 @@ def validation(val_loader, model, cfg, avg):
             for i in range(preds.shape[0]):
                 img_id = img_ids[i]
                 temp_dict = dict()
-                if img_id not in used_img_id:
+                if img_id not in used_img_id.keys():
                     used_img_id[img_id] = id_pos
                     temp_dict["image_id"] = int(img_id)
                     temp_dict["keypoints"] = preds[i].tolist()
@@ -249,6 +249,9 @@ def validation(val_loader, model, cfg, avg):
                     idx = used_img_id[img_id]
                     valdata[idx]['keypoints'].extend(preds[i].tolist())
                     continue
+                if img_id == 41990:
+                    print(preds[i], preds[i].shape)
+                    exit()
                 # print("============temp_dict[image_id] ========", temp_dict["image_id"])
                 temp_dict["category_id"] = 1
                 temp_dict["score"] = 0.7
