@@ -11,7 +11,8 @@ from __future__ import print_function
 import numpy as np
 
 from utils.image import get_max_preds
-
+from pycocotools.coco import COCO
+from pycocotools.cocoeval import COCOeval
 
 def calc_dists(preds, target, normalize):
     preds = preds.astype(np.float32)
@@ -69,3 +70,12 @@ def accuracy(output, target, hm_type='gaussian', thr=0.5):
     if cnt != 0:
         acc[0] = avg_acc
     return acc, avg_acc, cnt, pred
+
+def coco_eval(annFile, resFile, annType='keypoints'):
+    cocoGt=COCO(annFile)
+    cocoDt=cocoGt.loadRes(resFile)
+    cocoEval = COCOeval(cocoGt,cocoDt,annType)
+    cocoEval.evaluate()
+    cocoEval.accumulate()
+    cocoEval.summarize()
+    return None

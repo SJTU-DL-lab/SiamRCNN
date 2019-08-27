@@ -20,7 +20,7 @@ from utils.log_helper import init_log, add_file_handler
 from utils.load_helper import load_pretrain, restore_from
 from utils.average_meter_helper import AverageMeter
 from utils.image import save_gt_pred_heatmaps, save_batch_resized_heatmaps, get_max_preds_loc
-from utils.pose_evaluate import accuracy
+from utils.pose_evaluate import accuracy, coco_eval
 
 from datasets.siam_rcnn_val_dataset import DataSets
 from utils.lr_helper import build_lr_scheduler
@@ -28,6 +28,7 @@ from utils.lr_helper import build_lr_scheduler
 from utils.config_helper import load_config
 from torch.utils.collect_env import get_pretty_env_info
 from torchvision.transforms import ToTensor
+
 
 torch.backends.cudnn.benchmark = True
 
@@ -188,7 +189,6 @@ def validation(val_loader, model, cfg, avg):
     model.eval()
     valdata = []
     used_img_id = {}
-    id_pos = 0
     with torch.no_grad():
         for iter, input in enumerate(val_loader):
             # if iter > 100:
@@ -241,23 +241,13 @@ def validation(val_loader, model, cfg, avg):
             for i in range(preds.shape[0]):
                 img_id = img_ids[i]
                 temp_dict = dict()
-                if img_id not in used_img_id.keys():
-                    used_img_id[img_id] = id_pos
-                    temp_dict["image_id"] = int(img_id)
-                    temp_dict["keypoints"] = preds[i].tolist()
-                else:
-                    idx = used_img_id[img_id]
-                    valdata[idx]['keypoints'].extend(preds[i].tolist())
-                    continue
-                if img_id == 41990:
-                    print(preds[i], preds[i].shape)
-                    exit()
+                temp_dict["image_id"] = int(img_id)
+                temp_dict["keypoints"] = preds[i].tolist()
                 # print("============temp_dict[image_id] ========", temp_dict["image_id"])
                 temp_dict["category_id"] = 1
                 temp_dict["score"] = 0.7
                 # print("============temp_dict[keypoints] ========", temp_dict["keypoints"])
                 valdata.append(temp_dict)
-                id_pos += 1
                 # img_list.append(int(img_ids[i]))
             # print(valdata)
 
@@ -296,7 +286,11 @@ def validation(val_loader, model, cfg, avg):
                                 rpn_cls_loss=avg.rpn_cls_loss, rpn_loc_loss=avg.rpn_loc_loss,
                                 kp_hp_loss=avg.kp_hp_loss, kp_hm_hp_loss=avg.kp_hm_hp_loss, kp_hp_offset_loss=avg.kp_hp_offset_loss,
                                 kp_loss=avg.kp_loss, siammask_loss=avg.siammask_loss, kp_avg_acc=avg.kp_avg_acc))
-    json.dump(valdata, open('person_keypoints_val2017_result_new.json', 'w'), indent=4, sort_keys=True)
+
+    dt_file = './coco_eval/person_keypoints_val2017_result_new.json'
+    gt_file = './coco_eval/person_keypoints_val2017_siampose_multi_new.json'
+    json.dump(valdata, open(dt_file, 'w'), indent=4, sort_keys=True)
+    coco_eval(gt_file, dt_file)
 
 def save_checkpoint(state, is_best, filename='checkpoint.pth', best_file='model_best.pth'):
     torch.save(state, filename)
