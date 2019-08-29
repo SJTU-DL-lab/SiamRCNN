@@ -264,7 +264,7 @@ class Augmentation:
             image = cv2.filter2D(image, -1, kernel)
         return image
 
-    def __call__(self, image, bbox, size, gray=False, mask=None, kp=None):
+    def __call__(self, image, bbox, size, gray=False, mask=None):
         if gray:
             grayed = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             image = np.zeros((grayed.shape[0], grayed.shape[1], 3), np.uint8)
@@ -288,16 +288,10 @@ class Augmentation:
 
         bbox = BBox(bbox.x1 - x1, bbox.y1 - y1,
                     bbox.x2 - x1, bbox.y2 - y1)
-        if kp:
-            kp[:, 0] = kp[:, 0] - x1
-            kp[:, 1] = kp[:, 1] - y1
 
         if self.scale:
             scale_x, scale_y = param['scale']
             bbox = Corner(bbox.x1 / scale_x, bbox.y1 / scale_y, bbox.x2 / scale_x, bbox.y2 / scale_y)
-            if kp:
-                kp[:, 0] = kp[:, 0] / scale_x
-                kp[:, 1] = kp[:, 1] / scale_y
 
         image = crop_hwc(image, crop_bbox, size)
         if not mask is None:
@@ -323,10 +317,8 @@ class Augmentation:
             width = image.shape[1]
             mask = cv2.flip(mask, 1)
             bbox = Corner(width - 1 - bbox.x2, bbox.y1, width - 1 - bbox.x1, bbox.y2)
-            if kp:
-                kp[:, 0] = width - 1 - kp[:, 0]
 
-        return image, bbox, mask, kp
+        return image, bbox, mask
 
 
 class AnchorTargetLayer:
@@ -610,6 +602,121 @@ class DataSets(Dataset):
                 }
         logger.info('dataset informations: \n{}'.format(json.dumps(self.infos, indent=4)))
 
+    def generate_target(self, joints, joints_vis):
+        '''
+        :param joints:  [num_joints, 3]
+        :param joints_vis: [num_joints, 3]
+        :return: target, target_weight(1: visible, 0: invisible)
+        '''
+        target_weight = np.ones((self.num_joints, 1), dtype=np.float32)
+        target_weight[:, 0] = joints_vis[:, 0]
+
+        assert self.target_type == 'gaussian', \
+            'Only support gaussian map now!'
+
+        if self.target_type == 'gaussian':
+            target = np.zeros((self.num_joints,
+                               self.heatmap_size[1],
+                               self.heatmap_size[0]),
+                              dtype=np.float32)
+
+            tmp_size = self.sigma * 3
+
+            for joint_id in range(self.num_joints):
+                feat_stride = [self.image_size / self.heatmap_size[0], self.image_size / self.heatmap_size[1]]
+                mu_x = int(joints[joint_id][0] / feat_stride[0] + 0.5)
+                mu_y = int(joints[joint_id][1] / feat_stride[1] + 0.5)
+                # Check that any part of the gaussian is in-bounds
+                ul = [int(mu_x - tmp_size), int(mu_y - tmp_size)]
+                br = [int(mu_x + tmp_size + 1), int(mu_y + tmp_size + 1)]
+                if ul[0] >= self.heatmap_size[0] or ul[1] >= self.heatmap_size[1] \
+                        or br[0] < 0 or br[1] < 0:
+                    # If not, just return the image as is
+                    target_weight[joint_id] = 0
+                    continue
+
+                # # Generate gaussian
+                size = 2 * tmp_size + 1
+                x = np.arange(0, size, 1, np.float32)
+                y = x[:, np.newaxis]
+                x0 = y0 = size // 2
+                # The gaussian is not normalized, we want the center value to equal 1
+                g = np.exp(- ((x - x0) ** 2 + (y - y0) ** 2) / (2 * self.sigma ** 2))
+
+                # Usable gaussian range
+                g_x = max(0, -ul[0]), min(br[0], self.heatmap_size[0]) - ul[0]
+                g_y = max(0, -ul[1]), min(br[1], self.heatmap_size[1]) - ul[1]
+                # Image range
+                img_x = max(0, ul[0]), min(br[0], self.heatmap_size[0])
+                img_y = max(0, ul[1]), min(br[1], self.heatmap_size[1])
+
+                v = target_weight[joint_id]
+                if v > 0.5:
+                    target[joint_id][img_y[0]:img_y[1], img_x[0]:img_x[1]] = \
+                        g[g_y[0]:g_y[1], g_x[0]:g_x[1]]
+
+        return target, target_weight
+
+    def generate_target_in_single_map(self, joints, joints_vis):
+        '''
+        :param joints:  [num_joints, 3]
+        :return: target, target_weight(1: visible, 0: invisible)
+        '''
+        target_weight = np.ones((self.num_joints, 1), dtype=np.float32)
+        target_weight[:, 0] = joints_vis[:, 0]
+
+        assert self.target_type == 'gaussian', \
+            'Only support gaussian map now!'
+
+        if self.target_type == 'gaussian':
+            target = np.zeros((1,
+                              self.heatmap_size[1],
+                              self.heatmap_size[0]),
+                              dtype=np.float32)
+
+            masked_gaussian = np.zeros((1,
+                                       self.heatmap_size[1],
+                                       self.heatmap_size[0]),
+                                       dtype=np.float32)
+
+            tmp_size = self.sigma * 3
+
+            for joint_id in range(self.num_joints):
+                feat_stride = [self.image_size / self.heatmap_size[0], self.image_size / self.heatmap_size[1]]
+                mu_x = int(joints[joint_id][0] / feat_stride[0] + 0.5)
+                mu_y = int(joints[joint_id][1] / feat_stride[1] + 0.5)
+                # Check that any part of the gaussian is in-bounds
+                ul = [int(mu_x - tmp_size), int(mu_y - tmp_size)]
+                br = [int(mu_x + tmp_size + 1), int(mu_y + tmp_size + 1)]
+                if ul[0] >= self.heatmap_size[0] or ul[1] >= self.heatmap_size[1] \
+                        or br[0] < 0 or br[1] < 0:
+                    # If not, just return the image as is
+                    target_weight[joint_id] = 0
+                    continue
+
+                # # Generate gaussian
+                size = 2 * tmp_size + 1
+                x = np.arange(0, size, 1, np.float32)
+                y = x[:, np.newaxis]
+                x0 = y0 = size // 2
+                # The gaussian is not normalized, we want the center value to equal 1
+                g = np.exp(- ((x - x0) ** 2 + (y - y0) ** 2) / (2 * self.sigma ** 2))
+
+                # Usable gaussian range
+                g_x = max(0, -ul[0]), min(br[0], self.heatmap_size[0]) - ul[0]
+                g_y = max(0, -ul[1]), min(br[1], self.heatmap_size[1]) - ul[1]
+                # Image range
+                img_x = max(0, ul[0]), min(br[0], self.heatmap_size[0])
+                img_y = max(0, ul[1]), min(br[1], self.heatmap_size[1])
+
+                v = target_weight[joint_id]
+                if v > 0.5:
+                    masked_gaussian[:, img_y[0]:img_y[1], img_x[0]:img_x[1]] = \
+                        g[g_y[0]:g_y[1], g_x[0]:g_x[1]]
+                    np.maximum(target, masked_gaussian, out=target)
+
+        return target, target_weight
+
     def imread(self, path):
         img = cv2.imread(path)
 
@@ -701,22 +808,6 @@ class DataSets(Dataset):
                 w, h = shape[2]-shape[0], shape[3]-shape[1]
             else:
                 w, h = shape
-            context_amount = 0
-            exemplar_size = self.template_size  # 127
-            wc_z = w + context_amount * (w+h)
-            hc_z = h + context_amount * (w+h)
-            s_z = np.sqrt(wc_z * hc_z)
-            scale_z = exemplar_size / s_z
-            w = w*scale_z
-            h = h*scale_z
-            cx, cy = imw//2, imh//2
-            bbox = center2corner(Center(cx, cy, w, h))
-            return bbox
-
-        def toKP(image, shape):
-            imh, imw = image.shape[:2]
-            w = shape[:, 0]
-            h = shape[:, 1]
             context_amount = 0
             exemplar_size = self.template_size  # 127
             wc_z = w + context_amount * (w+h)
