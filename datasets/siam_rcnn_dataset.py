@@ -714,6 +714,7 @@ class DataSets(Dataset):
             return bbox
 
         def toKP(image, shape, kp, context_amount=0):
+            print('kp: ', kp)
             imh, imw = image.shape[:2]
             output_kp = np.zeros_like(kp)
 
