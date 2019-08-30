@@ -243,7 +243,7 @@ class SiamMask(nn.Module):
             # print('poolded features shape: ', pooled_features.shape)
             pred_kp = self.kp_model(pooled_features, template_feature)
             # gt_sample = kp_input['hm_hp']
-            gt_hm_hp = search # kp_input['hm_hp']
+            gt_hm_hp = search   # kp_input['hm_hp']
             # gt_hm_hp = generate_target_gt(gt_sample, normalized_boxes, boxes_ind, self.output_size)
             # kp_input['hm_hp'] = gt_hm_hp
         else:

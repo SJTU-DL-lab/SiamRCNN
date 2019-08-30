@@ -695,13 +695,13 @@ class DataSets(Dataset):
         if self.crop_size > 0:
             search_image = center_crop(search_image, self.crop_size)
 
-        def toBBox(image, shape):
+        def toBBox(image, shape, context_amount=0):
             imh, imw = image.shape[:2]
             if len(shape) == 4:
                 w, h = shape[2]-shape[0], shape[3]-shape[1]
             else:
                 w, h = shape
-            context_amount = 0
+
             exemplar_size = self.template_size  # 127
             wc_z = w + context_amount * (w+h)
             hc_z = h + context_amount * (w+h)
@@ -713,27 +713,42 @@ class DataSets(Dataset):
             bbox = center2corner(Center(cx, cy, w, h))
             return bbox
 
-        def toKP(image, shape):
+        def toKP(image, shape, kp, context_amount=0):
             imh, imw = image.shape[:2]
-            w = shape[:, 0]
-            h = shape[:, 1]
-            context_amount = 0
+            output_kp = np.zeros_like(kp)
+
+            if len(shape) == 4:
+                w, h = shape[2]-shape[0], shape[3]-shape[1]
+            else:
+                w, h = shape
+
+            bbox_center_x = (shape[2]+shape[0])/2
+            bbox_center_y = (shape[3]+shape[1])/2
+            kp_x = kp[:, 0]
+            kp_y = kp[:, 1]
+            rel_kp_x = kp_x - bbox_center_x
+            rel_kp_y = kp_y - bbox_center_y
+
             exemplar_size = self.template_size  # 127
             wc_z = w + context_amount * (w+h)
             hc_z = h + context_amount * (w+h)
             s_z = np.sqrt(wc_z * hc_z)
             scale_z = exemplar_size / s_z
-            w = w*scale_z
-            h = h*scale_z
+            rel_kp_x = rel_kp_x*scale_z
+            rel_kp_y = rel_kp_y*scale_z
             cx, cy = imw//2, imh//2
-            bbox = center2corner(Center(cx, cy, w, h))
-            return bbox
+
+            output_kp[:, 0] = rel_kp_x + cx
+            output_kp[:, 1] = rel_kp_y + cy
+            output_kp[:, 2] = kp[:, 2]
+            return output_kp
 
         template_box = toBBox(template_image, template[1])
         search_box = toBBox(search_image, search[1])
+        search_kp = toKP(search_image, search[1], search_kp)
         # bbox = search_box
-        template, _, _ = self.template_aug(template_image, template_box, self.template_size, gray=gray)
-        search, bbox, mask = self.search_aug(search_image, search_box, self.search_size, gray=gray)
+        template, _, _, _ = self.template_aug(template_image, template_box, self.template_size, gray=gray)
+        search, bbox, mask, kp = self.search_aug(search_image, search_box, self.search_size, gray=gray, kp=search_kp)
 
         def draw(image, box, name):
             image = image.copy()
