@@ -25,7 +25,7 @@
         "datasets": {
             "coco": {
                 "root": "../../data/coco/crop_pose",
-                "anno": "../../data/coco/train2017_pose_siamfc.json",
+                "anno": "../../data/coco/train2017_pose_siamrcnn.json",
                 "frame_range": 1
             }
         },
@@ -37,10 +37,10 @@
 
         "augmentation": {
             "template": {
-                "shift": 4, "scale": 0.05
+                "shift": 4, "scale": 0
             },
             "search": {
-                "shift": 0.00, "scale": 0.00, "blur": 0.18
+                "shift": 64, "scale": 0.18, "blur": 0
             },
             "neg": 0,
             "gray": 0.15
@@ -51,7 +51,7 @@
         "datasets": {
             "coco": {
                 "root": "../../data/coco/crop_pose",
-                "anno": "../../data/coco/val2017_pose_siamfc.json",
+                "anno": "../../data/coco/val2017_pose_siamrcnn.json",
                 "frame_range": 1
             }
         },

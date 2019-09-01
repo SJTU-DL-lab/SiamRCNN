@@ -17,7 +17,7 @@ import warnings
 # %matplotlib inline
 
 def convert_3d_kp(keypoints, num_kp=17):
-    joinst_3d = np.zeros((num_kp, 3), dtype=np.float32)
+    joints_3d = np.zeros((num_kp, 3), dtype=np.float32)
     for ipt in range(num_kp):
         joints_3d[ipt, 0] = keypoints[ipt * 3 + 0]
         joints_3d[ipt, 1] = keypoints[ipt * 3 + 1]

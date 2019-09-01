@@ -92,8 +92,6 @@ class SubDataSet(object):
         self.__dict__.update(cfg)
 
         self.has_mask = self.mark in ['coco', 'ytb_vos'] and 'mask' in cfg
-        # print('has mask: ', self.has_mask)
-
         self.num_use = int(self.num_use)
 
         # shuffle
@@ -182,6 +180,7 @@ class SubDataSet(object):
             search_range = frames[left:right]
             template_frame = frames[template_frame]
             search_frame = random.choice(search_range)
+
         else:
             search_frame = random.choice(track_info['hard'])
             left = max(search_frame - self.frame_range, 0)
@@ -289,14 +288,15 @@ class Augmentation:
 
         bbox = BBox(bbox.x1 - x1, bbox.y1 - y1,
                     bbox.x2 - x1, bbox.y2 - y1)
-        if kp:
+
+        if kp is not None:
             kp[:, 0] = kp[:, 0] - x1
             kp[:, 1] = kp[:, 1] - y1
 
         if self.scale:
             scale_x, scale_y = param['scale']
             bbox = Corner(bbox.x1 / scale_x, bbox.y1 / scale_y, bbox.x2 / scale_x, bbox.y2 / scale_y)
-            if kp:
+            if kp is not None:
                 kp[:, 0] = kp[:, 0] / scale_x
                 kp[:, 1] = kp[:, 1] / scale_y
 
@@ -324,7 +324,7 @@ class Augmentation:
             width = image.shape[1]
             mask = cv2.flip(mask, 1)
             bbox = Corner(width - 1 - bbox.x2, bbox.y1, width - 1 - bbox.x1, bbox.y2)
-            if kp:
+            if kp is not None:
                 kp[:, 0] = width - 1 - kp[:, 0]
 
         return image, bbox, mask, kp
@@ -775,6 +775,7 @@ class DataSets(Dataset):
                 kp_weight = np.zeros([1, cls.shape[1], cls.shape[2]], dtype=np.float32)
 
             # now process the ct part
+            img = search.copy()
             c = np.array([img.shape[1] / 2., img.shape[0] / 2.], dtype=np.float32)
             s = max(img.shape[0], img.shape[1]) * 1.0
             rot = 0
@@ -838,4 +839,4 @@ class DataSets(Dataset):
         template, search = map(lambda x: np.transpose(x, (2, 0, 1)).astype(np.float32), [template, search])
         return template, search, cls, delta, \
           delta_weight, bbox_reg, \
-          np.array(kp_weight, np.float32), ret, joints_3d_out, joints_3d
+          np.array(kp_weight, np.float32), ret, joints_3d_out, joints_3d, template_image, search_image
