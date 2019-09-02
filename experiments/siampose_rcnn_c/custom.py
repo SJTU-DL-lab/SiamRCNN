@@ -81,7 +81,7 @@ class ResDown(MultiStageFeature):
     def forward(self, x):
         output = self.features(x)
         p3 = self.downsample(output[-2])
-        
+
         p3_deeper = self.deeper_layer(p3)
         return p3, p3_deeper
 
@@ -131,7 +131,7 @@ class Center_pose_head(nn.Module):
             [4, 4, 4],
         )
         # self.downfeat = nn.Conv2d(256, 512, kernel_size=1, bias=False)
-        self.heads = {'hps': 34, 'hm_hp': 17, 'hp_offset': 2}
+        self.heads = {'hm_hp': 17, 'hp_offset': 2}
 
         # if init_ones:
         #     fill_ones_weights(self.downfeat)

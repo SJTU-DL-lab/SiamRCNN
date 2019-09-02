@@ -148,7 +148,7 @@ def add_keypoint_rcnn_gts(gt_keypoints, boxes, batch_idx, num_kps=17, img_size=2
     assert gt_keypoints.shape[0] == boxes.shape[0]
 
     within_box = _within_box(gt_keypoints, boxes)
-    print('within_box shape: ', within_box.shape)
+    # print('within_box shape: ', within_box.shape)
     vis_kp = gt_keypoints[:, 2, :] > 0
     is_visible = np.sum(np.logical_and(vis_kp, within_box), axis=1)
     kp_fg_inds = np.where(is_visible > 0)[0]

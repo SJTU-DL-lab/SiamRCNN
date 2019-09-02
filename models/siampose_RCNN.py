@@ -30,9 +30,9 @@ class PoseLoss(torch.nn.Module):
         hp_loss, hm_hp_loss, hp_offset_loss = 0, 0, 0
         output = outputs[0]
         ind = ind.long()
-        batch['hps_mask'] = batch['hps_mask'].index_select(0, ind)
+        # batch['hps_mask'] = batch['hps_mask'].index_select(0, ind)
         batch['ind'] = batch['ind'].index_select(0, ind)
-        batch['hps'] = batch['hps'].index_select(0, ind)
+        # batch['hps'] = batch['hps'].index_select(0, ind)
         batch['hp_mask'] = batch['hp_mask'].index_select(0, ind)
         batch['hp_ind'] = batch['hp_ind'].index_select(0, ind)
         batch['hp_offset'] = batch['hp_offset'].index_select(0, ind)
@@ -43,14 +43,14 @@ class PoseLoss(torch.nn.Module):
         if opt.hm_hp and not opt.mse_loss:
             output['hm_hp'] = _sigmoid(output['hm_hp'])
 
-        if opt.dense_hp:
-            mask_weight = batch['dense_hps_mask'].sum() + 1e-4
-            hp_loss += (self.crit_kp(output['hps'] * batch['dense_hps_mask'],
-                        batch['dense_hps'] * batch['dense_hps_mask']) /
-                        mask_weight)
-        else:
-            hp_loss += self.crit_kp(output['hps'], batch['hps_mask'],
-                                    batch['ind'], batch['hps'])
+        # if opt.dense_hp:
+        #     mask_weight = batch['dense_hps_mask'].sum() + 1e-4
+        #     hp_loss += (self.crit_kp(output['hps'] * batch['dense_hps_mask'],
+        #                 batch['dense_hps'] * batch['dense_hps_mask']) /
+        #                 mask_weight)
+        # else:
+        #     hp_loss += self.crit_kp(output['hps'], batch['hps_mask'],
+        #                             batch['ind'], batch['hps'])
 
         if opt.reg_hp_offset and opt.off_weight > 0:
             hp_offset_loss += self.crit_reg(
@@ -61,10 +61,10 @@ class PoseLoss(torch.nn.Module):
             hm_hp_loss += self.crit_hm_hp(
               output['hm_hp'], batch['hm_hp'])
 
-        loss = opt.hp_weight * hp_loss + \
-               opt.hm_hp_weight * hm_hp_loss + opt.off_weight * hp_offset_loss
+        loss = opt.hm_hp_weight * hm_hp_loss + opt.off_weight * hp_offset_loss
+        # opt.hp_weight * hp_loss + \
 
-        loss_stats = {'loss': loss, 'hp_loss': hp_loss,
+        loss_stats = {'loss': loss,  # 'hp_loss': hp_loss,
                       'hm_hp_loss': hm_hp_loss, 'hp_offset_loss': hp_offset_loss}
 
         return loss, loss_stats
@@ -175,7 +175,7 @@ class SiamMask(nn.Module):
         pred_mask = self.mask_model(template, search)
         return pred_mask
 
-    def _add_rpn_loss(self, label_cls, label_loc, lable_loc_weight, label_mask,
+    def _add_rpn_loss(self, label_cls, label_loc, lable_loc_weight,
                       rpn_pred_cls, rpn_pred_loc):
         rpn_loss_cls = select_cross_entropy_loss(rpn_pred_cls, label_cls)
         # print('label_cls shape: ', label_cls.shape)
@@ -224,7 +224,7 @@ class SiamMask(nn.Module):
 
         label_cls = rpn_input['label_cls']
         label_loc = rpn_input['label_loc']
-        label_mask = rpn_input['label_mask']
+        # label_mask = rpn_input['label_mask']
         lable_loc_weight = rpn_input['label_loc_weight']
         # anchors = rpn_input['anchors']
 
@@ -250,16 +250,15 @@ class SiamMask(nn.Module):
             print('no box flag')
             # 'hps': 34, 'hm_hp': 17, 'hp_offset': 2
             pred_hm_hp = torch.zeros(p4_feat.size(0), 17, 56, 56).cuda()
-            pred_hps = torch.zeros(p4_feat.size(0), 34, 56, 56).cuda()
             pred_hp_offset = torch.zeros(p4_feat.size(0), 2, 56, 56).cuda()
-            pred_kp = [{'hps': pred_hps, 'hm_hp': pred_hm_hp, 'hp_offset': pred_hp_offset}]
+            pred_kp = [{'hm_hp': pred_hm_hp, 'hp_offset': pred_hp_offset}]
         outputs = dict()
 
         outputs['predict'] = [rpn_pred_cls, rpn_pred_loc, pred_kp,
                               template_feature, search_feature, rpn_pred_score, normalized_boxes]
 
         rpn_loss_cls, rpn_loss_loc = \
-            self._add_rpn_loss(label_cls, label_loc, lable_loc_weight, label_mask,
+            self._add_rpn_loss(label_cls, label_loc, lable_loc_weight,
                                rpn_pred_cls, rpn_pred_loc)
         pred_hm = pred_kp[0]['hm_hp'].detach().cpu().numpy()
         gt_hm = kp_input['hm_hp'].detach().cpu().numpy()

@@ -42,7 +42,7 @@
             "search": {
                 "shift": 64, "scale": 0.18, "blur": 0
             },
-            "neg": 0,
+            "neg": 0.2,
             "gray": 0.15
         }
     },

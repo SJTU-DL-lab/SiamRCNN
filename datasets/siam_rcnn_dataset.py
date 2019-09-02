@@ -769,10 +769,10 @@ class DataSets(Dataset):
         cls, delta, delta_weight = self.anchor_target(self.anchors, bbox, self.size, neg)
         if not dataset.has_mask:
 
-            if not neg:
-                kp_weight = cls.max(axis=0, keepdims=True)
-            else:
-                kp_weight = np.zeros([1, cls.shape[1], cls.shape[2]], dtype=np.float32)
+            # if not neg:
+            #     kp_weight = cls.max(axis=0, keepdims=True)
+            # else:
+            #     kp_weight = np.zeros([1, cls.shape[1], cls.shape[2]], dtype=np.float32)
 
             # now process the ct part
             img = search.copy()
@@ -788,8 +788,8 @@ class DataSets(Dataset):
             ind = np.zeros(1, dtype=np.int64)
             # hm_hp = np.zeros((num_joints, output_res, output_res), dtype=np.float32)
             hm_hp = np.zeros((num_joints, output_res, output_res), dtype=np.float32)
-            kps = np.zeros(num_joints * 2, dtype=np.float32)
-            kps_mask = np.zeros((self.num_joints * 2), dtype=np.uint8)
+            # kps = np.zeros(num_joints * 2, dtype=np.float32)
+            # kps_mask = np.zeros((num_joints * 2), dtype=np.uint8)
             hp_offset = np.zeros((num_joints, 2), dtype=np.float32)
             hp_ind = np.zeros(num_joints, dtype=np.int64)
             hp_mask = np.zeros(num_joints, dtype=np.int64)
@@ -818,25 +818,26 @@ class DataSets(Dataset):
                     pts[j, :2] = affine_transform(pts[j, :2], trans_output_rot)
                     if pts[j, 0] >= 0 and pts[j, 0] < output_res and \
                        pts[j, 1] >= 0 and pts[j, 1] < output_res:
-                        kps[j * 2: j * 2 + 2] = pts[j, :2] - ct_int
-                        kps_mask[j * 2: j * 2 + 2] = 1
+                        # kps[j * 2: j * 2 + 2] = pts[j, :2] - ct_int
+                        # if not neg:
+                        #     kps_mask[j * 2: j * 2 + 2] = 1
                         pt_int = pts[j, :2].astype(np.int32)
                         hp_offset[j] = pts[j, :2] - pt_int
                         hp_ind[j] = pt_int[1] * output_res + pt_int[0]
-                        hp_mask[j] = 1
+                        if not neg:
+                            hp_mask[j] = 1
 
                         draw_gaussian(hm_hp[j], pt_int, hp_radius)
                         # pt_ori = joints_3d[j, :2].astype(np.int32)
                         # draw_gaussian(hm_hp[j], pt_ori, hp_radius)
 
-            ret = {'hps': kps, 'hm_hp': hm_hp, 'hp_mask': hp_mask}
-            # print('kps: ', ret['hps'])
-            ret.update({'hp_offset': hp_offset, 'hp_ind': hp_ind, 'hps_mask': kps_mask, 'ind': ind})
+            # ret = {'hps': kps, 'hm_hp': hm_hp, 'hp_mask': hp_mask}
+            ret = {'hm_hp': hm_hp, 'hp_mask': hp_mask}
+            ret.update({'hp_offset': hp_offset, 'hp_ind': hp_ind, 'ind': ind})
 
         # print('hp_offset: ', hp_offset)
-        joints_3d_out = joints_3d.transpose(1, 0)
 
         template, search = map(lambda x: np.transpose(x, (2, 0, 1)).astype(np.float32), [template, search])
         return template, search, cls, delta, \
           delta_weight, bbox_reg, \
-          np.array(kp_weight, np.float32), ret, joints_3d_out, joints_3d, template_image, search_image
+          ret, joints_3d
