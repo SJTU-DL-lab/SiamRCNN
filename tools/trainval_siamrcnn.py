@@ -314,10 +314,10 @@ def train(train_loader, model, optimizer, lr_scheduler, epoch, cfg, avg, num_per
             'label_cls': torch.autograd.Variable(input[2]).cuda(),
             'label_loc': torch.autograd.Variable(input[3]).cuda(),
             'label_loc_weight': torch.autograd.Variable(input[4]).cuda(),
-            'label_mask': torch.autograd.Variable(input[6]).cuda(),
-            'kp_reg': input[8]
+            # 'label_mask': torch.autograd.Variable(input[6]).cuda(),
+            # 'kp_reg': input[8]
         }
-        x_kp = input[7]
+        x_kp = input[6]
         x_kp = {x: torch.autograd.Variable(y).cuda() for x, y in x_kp.items()}
         x_rpn['anchors'] = train_loader.dataset.anchors.all_anchors[0]
         #gpu_profile(frame=sys._getframe(), event='line', arg=None)
@@ -412,9 +412,9 @@ def validation(val_loader, model, epoch, cfg, avg, num_per_epoch_val):
                 'label_cls': torch.autograd.Variable(input[2]).cuda(),
                 'label_loc': torch.autograd.Variable(input[3]).cuda(),
                 'label_loc_weight': torch.autograd.Variable(input[4]).cuda(),
-                'label_mask': torch.autograd.Variable(input[6]).cuda()
+                # 'label_mask': torch.autograd.Variable(input[6]).cuda()
             }
-            x_kp = input[7]
+            x_kp = input[6]
             x_kp = {x: torch.autograd.Variable(y).cuda() for x, y in x_kp.items()}
             x_rpn['anchors'] = val_loader.dataset.anchors.all_anchors[0]
 
