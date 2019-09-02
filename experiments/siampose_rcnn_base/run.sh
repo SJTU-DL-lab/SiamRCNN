@@ -4,10 +4,10 @@ export PYTHONPATH=$PWD:$PYTHONPATH
 
 mkdir -p logs
 
-python -u $ROOT/tools/train_siamrcnn.py \
+python -u $ROOT/tools/trainval_siamrcnn_base.py \
     --config=config.json -b 4 \
-    -j 8 --pretrain pretrain/checkpoint_e199.pth \
-    --epochs 200 \
+    -j 8 \
+    --epochs 20 \
     --log logs/log.txt \
     2>&1 | tee logs/train.log
 
