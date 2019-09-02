@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 from utils.anchors import Anchors
-from utils.image import draw_boxes
+from utils.image import draw_boxes, generate_gaussian_target
 from utils.pose_evaluate import accuracy
 from models.losses import FocalLoss, RegL1Loss, RegLoss, RegWeightedL1Loss
 from models.utils import _sigmoid, proposal_layer, roi_align, generate_target_gt
@@ -226,7 +226,7 @@ class SiamMask(nn.Module):
         label_loc = rpn_input['label_loc']
         # label_mask = rpn_input['label_mask']
         lable_loc_weight = rpn_input['label_loc_weight']
-        # anchors = rpn_input['anchors']
+        kp_gts = rpn_input['kp_reg']
 
         rpn_pred_cls, rpn_pred_loc, template_feature, search_feature, rpn_pred_score, p4_feat = \
             self.run(template, search, softmax=True)
@@ -235,17 +235,20 @@ class SiamMask(nn.Module):
 
         normalized_boxes, boxes_ind, box_flag = proposal_layer(proposals, self.anchors, args=self.opt)
         template_feature = torch.index_select(template_feature, 0, boxes_ind.long())
+
         # print('per batch nms boxes shape: ', normalized_boxes.shape)
         # normalized_boxes = normalized_boxes.view(-1, normalized_boxes.size(-1))
         # print('normalized bbox: ', normalized_boxes)
         if box_flag:
+            sampled_fg_rois, heats, weights = add_keypoint_rcnn_gts(kp_gts, normalized_boxes, boxes_ind)
+            target, target_weight = generate_gaussian_target(heats, weights)
+
             pooled_features = roi_align([normalized_boxes, p4_feat, boxes_ind], 7)
             # print('poolded features shape: ', pooled_features.shape)
             pred_kp = self.kp_model(pooled_features, template_feature)
-            # gt_sample = kp_input['hm_hp']
-            gt_hm_hp = search   # kp_input['hm_hp']
+            gt_hm_hp = torch.from_numpy(target).cuda()
             # gt_hm_hp = generate_target_gt(gt_sample, normalized_boxes, boxes_ind, self.output_size)
-            # kp_input['hm_hp'] = gt_hm_hp
+            kp_input['hm_hp'] = gt_hm_hp
         else:
             print('no box flag')
             # 'hps': 34, 'hm_hp': 17, 'hp_offset': 2
@@ -261,7 +264,7 @@ class SiamMask(nn.Module):
             self._add_rpn_loss(label_cls, label_loc, lable_loc_weight,
                                rpn_pred_cls, rpn_pred_loc)
         pred_hm = pred_kp[0]['hm_hp'].detach().cpu().numpy()
-        gt_hm = kp_input['hm_hp'].detach().cpu().numpy()
+        gt_hm = target # kp_input['hm_hp'].detach().cpu().numpy()
         pck = accuracy(pred_hm, gt_hm)
         acc = torch.Tensor(pck[0]).float().cuda()
         avg_acc = torch.Tensor([pck[1]]).float().cuda()
