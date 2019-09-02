@@ -316,7 +316,7 @@ def train(train_loader, model, optimizer, lr_scheduler, epoch, cfg, avg, num_per
         batch_time = time.time() - end
 
         avg.update(batch_time=batch_time, rpn_cls_loss=rpn_cls_loss, rpn_loc_loss=rpn_loc_loss,
-                   siammask_loss=siammask_loss, kp_avg_acc=kp_avg_acc, siammask_loss=siammask_loss)
+                   siammask_loss=siammask_loss)
                    # mask_iou_mean=mask_iou_mean, mask_iou_at_5=mask_iou_at_5, mask_iou_at_7=mask_iou_at_7)
 
         tb_writer.add_scalar('loss/cls', rpn_cls_loss, tb_index)

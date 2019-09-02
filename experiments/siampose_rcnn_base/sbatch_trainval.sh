@@ -7,7 +7,7 @@
 #SBATCH --nodelist=node2
 date
 module load anaconda2/5.3.0 cuda/9.0 cudnn/7.3.0
-source activate torch0.4
+source activate pytorch0.4
 
 # ROOT=/cluster/home/it_stu2/SiamPose
 # ROOT=`git rev-parse --show-toplevel`
