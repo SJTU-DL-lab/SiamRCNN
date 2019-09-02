@@ -11,8 +11,8 @@ from utils.bbox_helper import center2corner, corner2center
 class Anchors:
     def __init__(self, cfg):
         self.stride = 8
-        self.ratios = [0.5, 1, 2]
-        self.scales = [8, 16]
+        self.ratios = [0.33, 0.5, 1, 2, 3]
+        self.scales = [8]
         self.round_dight = 0
         self.image_center = 0
         self.size = 0
