@@ -24,7 +24,7 @@
     "train_datasets": {
         "datasets": {
             "coco": {
-                "root": "../../data/coco/crop_pose",
+                "root": "../../data/coco/crop_pose0.15",
                 "anno": "../../data/coco/train2017_pose_siamrcnn.json",
                 "frame_range": 1
             }
@@ -50,7 +50,7 @@
     "val_datasets": {
         "datasets": {
             "coco": {
-                "root": "../../data/coco/crop_pose",
+                "root": "../../data/coco/crop_pose0.15",
                 "anno": "../../data/coco/val2017_pose_siamrcnn.json",
                 "frame_range": 1
             }

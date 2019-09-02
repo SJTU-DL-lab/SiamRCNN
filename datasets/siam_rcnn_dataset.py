@@ -714,7 +714,7 @@ class DataSets(Dataset):
             bbox = center2corner(Center(cx, cy, w, h))
             return bbox
 
-        def toKP(image, shape, kp, context_amount=0):
+        def toKP(image, shape, kp, context_amount=0.15):
 
             imh, imw = image.shape[:2]
             output_kp = np.zeros_like(kp)
