@@ -175,6 +175,7 @@ class SiamMask(nn.Module):
         rpn_pred_cls, rpn_pred_loc, template_feature, search_feature, rpn_pred_score, p4_feat = \
             self.run(template, search, softmax=True)
 
+        outputs = dict()
         outputs['predict'] = [rpn_pred_cls, rpn_pred_loc,
                               template_feature, search_feature, rpn_pred_score]
 
