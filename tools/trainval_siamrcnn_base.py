@@ -139,8 +139,8 @@ def build_opt_lr(model, cfg, args, epoch):
         trainable_params = model.rpn_model.param_groups(cfg['lr']['start_lr'], cfg['lr']['rpn_lr_mult'], 'mask')
     else:
         trainable_params = backbone_feature + \
-                           model.rpn_model.param_groups(cfg['lr']['start_lr'], cfg['lr']['rpn_lr_mult']) + \
-                           model.kp_model.param_groups(cfg['lr']['start_lr'], cfg['lr']['mask_lr_mult'])
+                           model.rpn_model.param_groups(cfg['lr']['start_lr'], cfg['lr']['rpn_lr_mult'])
+                           # model.kp_model.param_groups(cfg['lr']['start_lr'], cfg['lr']['mask_lr_mult'])
 
     optimizer = torch.optim.SGD(trainable_params, args.lr,
                                 momentum=args.momentum,
