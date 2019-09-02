@@ -10,6 +10,7 @@ from torch.autograd import Variable
 from utils.anchors import Anchors
 from utils.image import draw_boxes, generate_gaussian_target
 from utils.pose_evaluate import accuracy
+from utils.keypoint_rcnn import add_keypoint_rcnn_gts
 from models.losses import FocalLoss, RegL1Loss, RegLoss, RegWeightedL1Loss
 from models.utils import _sigmoid, proposal_layer, roi_align, generate_target_gt
 
