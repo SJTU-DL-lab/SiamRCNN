@@ -176,7 +176,7 @@ class SiamMask(nn.Module):
             self.run(template, search, softmax=True)
 
         outputs['predict'] = [rpn_pred_cls, rpn_pred_loc,
-                              template_feature, search_feature, rpn_pred_score, normalized_boxes]
+                              template_feature, search_feature, rpn_pred_score]
 
         rpn_loss_cls, rpn_loss_loc = \
             self._add_rpn_loss(label_cls, label_loc, lable_loc_weight,
