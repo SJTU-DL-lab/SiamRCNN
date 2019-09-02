@@ -330,7 +330,7 @@ def train(train_loader, model, optimizer, lr_scheduler, epoch, cfg, avg, num_per
                                                     torch.mean(outputs['losses'][1]),\
                                                     outputs['losses'][3]
         kp_loss = torch.mean(kp_losses['loss'])
-        kp_hp_loss = torch.mean(kp_losses['hp_loss'])
+        # kp_hp_loss = torch.mean(kp_losses['hp_loss'])
         kp_hm_hp_loss = torch.mean(kp_losses['hm_hp_loss'])
         kp_hp_offset_loss = torch.mean(kp_losses['hp_offset_loss'])
 
@@ -365,13 +365,13 @@ def train(train_loader, model, optimizer, lr_scheduler, epoch, cfg, avg, num_per
         batch_time = time.time() - end
 
         avg.update(batch_time=batch_time, rpn_cls_loss=rpn_cls_loss, rpn_loc_loss=rpn_loc_loss,
-                   kp_hp_loss=kp_hp_loss, kp_hm_hp_loss=kp_hm_hp_loss, kp_hp_offset_loss=kp_hp_offset_loss,
+                   kp_hm_hp_loss=kp_hm_hp_loss, kp_hp_offset_loss=kp_hp_offset_loss,
                    kp_loss=kp_loss, siammask_loss=siammask_loss, kp_avg_acc=kp_avg_acc)
                    # mask_iou_mean=mask_iou_mean, mask_iou_at_5=mask_iou_at_5, mask_iou_at_7=mask_iou_at_7)
 
         tb_writer.add_scalar('loss/cls', rpn_cls_loss, tb_index)
         tb_writer.add_scalar('loss/loc', rpn_loc_loss, tb_index)
-        tb_writer.add_scalar('loss/kp_hp_loss', kp_hp_loss, tb_index)
+        # tb_writer.add_scalar('loss/kp_hp_loss', kp_hp_loss, tb_index)
         tb_writer.add_scalar('loss/kp_hm_hp_loss', kp_hm_hp_loss, tb_index)
         tb_writer.add_scalar('loss/kp_hp_offset_loss', kp_hp_offset_loss, tb_index)
         # tb_writer.add_scalar('loss/kp', kp_loss, tb_index)
@@ -380,12 +380,12 @@ def train(train_loader, model, optimizer, lr_scheduler, epoch, cfg, avg, num_per
         if (iter + 1) % args.print_freq == 0:
             logger.info('Epoch: [{0}][{1}/{2}] lr: {lr:.6f}\t{batch_time:s}\t{data_time:s}'
                         '\t{rpn_cls_loss:s}\t{rpn_loc_loss:s}'
-                        '\t{kp_hp_loss:s}\t{kp_hm_hp_loss:s}\t{kp_hp_offset_loss:s}'
+                        '\t{kp_hm_hp_loss:s}\t{kp_hp_offset_loss:s}'
                         '\t{kp_loss:s}\t{siammask_loss:s}'
                         '\t{kp_avg_acc:s}'.format(
                         epoch+1, (iter + 1) % num_per_epoch, num_per_epoch, lr=cur_lr, batch_time=avg.batch_time,
                         data_time=avg.data_time, rpn_cls_loss=avg.rpn_cls_loss, rpn_loc_loss=avg.rpn_loc_loss,
-                        kp_hp_loss=avg.kp_hp_loss, kp_hm_hp_loss=avg.kp_hm_hp_loss, kp_hp_offset_loss=avg.kp_hp_offset_loss,
+                        kp_hm_hp_loss=avg.kp_hm_hp_loss, kp_hp_offset_loss=avg.kp_hp_offset_loss,
                         kp_loss=avg.kp_loss, siammask_loss=avg.siammask_loss, kp_avg_acc=avg.kp_avg_acc))
                         # mask_iou_mean=avg.mask_iou_mean,
                         # mask_iou_at_5=avg.mask_iou_at_5,mask_iou_at_7=avg.mask_iou_at_7))
@@ -424,7 +424,7 @@ def validation(val_loader, model, epoch, cfg, avg, num_per_epoch_val):
                                                         torch.mean(outputs['losses'][1]),\
                                                         outputs['losses'][3]
             kp_loss = torch.mean(kp_losses['loss'])
-            kp_hp_loss = torch.mean(kp_losses['hp_loss'])
+            # kp_hp_loss = torch.mean(kp_losses['hp_loss'])
             kp_hm_hp_loss = torch.mean(kp_losses['hm_hp_loss'])
             kp_hp_offset_loss = torch.mean(kp_losses['hp_offset_loss'])
 
@@ -439,13 +439,13 @@ def validation(val_loader, model, epoch, cfg, avg, num_per_epoch_val):
             batch_time = time.time() - end
 
             avg.update(batch_time=batch_time, rpn_cls_loss=rpn_cls_loss, rpn_loc_loss=rpn_loc_loss,
-                       kp_hp_loss=kp_hp_loss, kp_hm_hp_loss=kp_hm_hp_loss, kp_hp_offset_loss=kp_hp_offset_loss,
+                       kp_hm_hp_loss=kp_hm_hp_loss, kp_hp_offset_loss=kp_hp_offset_loss,
                        kp_loss=kp_loss, siammask_loss=siammask_loss, kp_avg_acc=kp_avg_acc)
                        # mask_iou_mean=mask_iou_mean, mask_iou_at_5=mask_iou_at_5, mask_iou_at_7=mask_iou_at_7)
 
             tb_writer.add_scalar('val_loss/cls', rpn_cls_loss, tb_val_index)
             tb_writer.add_scalar('val_loss/loc', rpn_loc_loss, tb_val_index)
-            tb_writer.add_scalar('val_loss/kp_hp_loss', kp_hp_loss, tb_val_index)
+             #tb_writer.add_scalar('val_loss/kp_hp_loss', kp_hp_loss, tb_val_index)
             tb_writer.add_scalar('val_loss/kp_hm_hp_loss', kp_hm_hp_loss, tb_val_index)
             tb_writer.add_scalar('val_loss/kp_hp_offset_loss', kp_hp_offset_loss, tb_val_index)
             # tb_writer.add_scalar('loss/kp', kp_loss, tb_index)
@@ -454,12 +454,12 @@ def validation(val_loader, model, epoch, cfg, avg, num_per_epoch_val):
             if (iter + 1) % args.print_freq == 0:
                 logger.info('Epoch: [{0}][{1}/{2}] Validation:\t{batch_time:s}\t{data_time:s}'
                             '\t{rpn_cls_loss:s}\t{rpn_loc_loss:s}'
-                            '\t{kp_hp_loss:s}\t{kp_hm_hp_loss:s}\t{kp_hp_offset_loss:s}'
+                            '\t{kp_hm_hp_loss:s}\t{kp_hp_offset_loss:s}'
                             '\t{kp_loss:s}\t{siammask_loss:s}'
                             '\t{kp_avg_acc:s}'.format(
                             epoch+1, (iter + 1) % num_per_epoch_val, num_per_epoch_val, batch_time=avg.batch_time,
                             data_time=avg.data_time, rpn_cls_loss=avg.rpn_cls_loss, rpn_loc_loss=avg.rpn_loc_loss,
-                            kp_hp_loss=avg.kp_hp_loss, kp_hm_hp_loss=avg.kp_hm_hp_loss, kp_hp_offset_loss=avg.kp_hp_offset_loss,
+                            kp_hm_hp_loss=avg.kp_hm_hp_loss, kp_hp_offset_loss=avg.kp_hp_offset_loss,
                             kp_loss=avg.kp_loss, siammask_loss=avg.siammask_loss, kp_avg_acc=avg.kp_avg_acc))
                             # mask_iou_mean=avg.mask_iou_mean,
                             # mask_iou_at_5=avg.mask_iou_at_5,mask_iou_at_7=avg.mask_iou_at_7))
