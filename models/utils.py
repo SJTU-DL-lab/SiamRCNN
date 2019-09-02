@@ -10,8 +10,8 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 import numpy as np
-# from utils.nms.nms_wrapper import nms
-# from utils.roialign.roi_align.crop_and_resize import CropAndResizeFunction
+from utils.nms.nms_wrapper import nms
+from utils.roialign.roi_align.crop_and_resize import CropAndResizeFunction
 
 def clip_boxes(boxes, window):
     """
