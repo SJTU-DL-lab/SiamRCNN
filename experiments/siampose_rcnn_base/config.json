@@ -1,0 +1,83 @@
+{
+    "network": {
+        "arch": "Custom"
+    },
+    "hp": {
+        "instance_size": 255,
+        "base_size": 8
+    },
+    "lr": {
+        "type": "log",
+        "start_lr": 0.001,
+        "end_lr": 0.00001,
+        "warmup": {
+            "start_lr": 0.001,
+            "end_lr": 0.001,
+            "type": "step",
+            "step": 1,
+            "epoch": 5
+        }
+    },
+    "loss": {
+        "weight": [1.0, 1.2, 1.0]
+    },
+    "train_datasets": {
+        "datasets": {
+            "coco": {
+                "root": "../../data/coco/crop_pose0.15",
+                "anno": "../../data/coco/train2017_pose_siamrcnn.json",
+                "frame_range": 1
+            }
+        },
+        "template_size": 127,
+        "search_size": 255,
+        "base_size": 8,
+        "size": 25,
+        "RPN_NMS": 0.01,
+
+        "augmentation": {
+            "template": {
+                "shift": 4, "scale": 0
+            },
+            "search": {
+                "shift": 64, "scale": 0.18, "blur": 0
+            },
+            "neg": 0.2,
+            "gray": 0.15
+        }
+    },
+
+    "val_datasets": {
+        "datasets": {
+            "coco": {
+                "root": "../../data/coco/crop_pose0.15",
+                "anno": "../../data/coco/val2017_pose_siamrcnn.json",
+                "frame_range": 1
+            }
+        },
+        "template_size": 127,
+        "search_size": 255,
+        "base_size": 8,
+        "size": 25,
+        "RPN_NMS": 0.01,
+
+        "augmentation": {
+            "template": {
+                "shift": 0, "scale": 0.00
+            },
+            "search": {
+                "shift": 0, "scale": 0.00, "blur": 0.18
+            },
+            "neg": 0,
+            "gray": 0
+        }
+    },
+    "anchors": {
+        "stride": 8,
+        "ratios": [0.33, 0.5, 1, 2, 3],
+        "scales": [8],
+        "round_dight": 0
+    },
+    "mask": {
+    }
+}
