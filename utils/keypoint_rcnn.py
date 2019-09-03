@@ -155,7 +155,7 @@ def add_keypoint_rcnn_gts(gt_keypoints, boxes, batch_idx, num_kps=17, img_size=2
     # kp_fg_inds = np.where(is_visible > 0)[0]
     # print('kp_fg_inds shape: ', kp_fg_inds.shape)
 
-    sampled_fg_rois = boxes # boxes[kp_fg_inds]
+    sampled_fg_rois = boxes  # boxes[kp_fg_inds]
 
     # kp_fg_rois_per_this_image = np.minimum(fg_rois_per_image, kp_fg_inds.size)
     # if kp_fg_inds.size > kp_fg_rois_per_this_image:

@@ -8,10 +8,10 @@
     },
     "lr": {
         "type": "log",
-        "start_lr": 0.001,
-        "end_lr": 0.00001,
+        "start_lr": 0.01,
+        "end_lr": 0.000001,
         "warmup": {
-            "start_lr": 0.001,
+            "start_lr": 0.01,
             "end_lr": 0.001,
             "type": "step",
             "step": 1,
@@ -24,8 +24,8 @@
     "train_datasets": {
         "datasets": {
             "coco": {
-                "root": "../../data/coco/crop_pose",
-                "anno": "../../data/coco/val2017_pose_siamfc.json",
+                "root": "../../data/coco/crop_pose0.15",
+                "anno": "../../data/coco/val2017_pose_siamrcnn.json",
                 "frame_range": 1
             }
         },
@@ -50,8 +50,8 @@
     "val_datasets": {
         "datasets": {
             "coco": {
-                "root": "../../data/coco/crop_pose",
-                "anno": "../../data/coco/val2017_pose_siamfc.json",
+                "root": "../../data/coco/crop_pose0.15",
+                "anno": "../../data/coco/val2017_pose_siamrcnn.json",
                 "frame_range": 1
             }
         },

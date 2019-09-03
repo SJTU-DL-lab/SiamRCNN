@@ -696,7 +696,7 @@ class DataSets(Dataset):
         if self.crop_size > 0:
             search_image = center_crop(search_image, self.crop_size)
 
-        def toBBox(image, shape, context_amount=0):
+        def toBBox(image, shape, context_amount=0.15):
             imh, imw = image.shape[:2]
             if len(shape) == 4:
                 w, h = shape[2]-shape[0], shape[3]-shape[1]
