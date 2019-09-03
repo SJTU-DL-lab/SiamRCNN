@@ -549,7 +549,7 @@ def generate_gaussian_target(joints, joints_vis, target_type='gaussian',
             ul = [int(mu_x - tmp_size), int(mu_y - tmp_size)]
             br = [int(mu_x + tmp_size + 1), int(mu_y + tmp_size + 1)]
             vis_target = np.logical_and(
-                            np.logical_and(ul[0] < heatmap_size, ul[1] < heatmap_size[1]),
+                            np.logical_and(ul[0] < heatmap_size[0], ul[1] < heatmap_size[1]),
                             np.logical_and(br[0] >= 0, br[1] >= 0)
                             )
             target_weight[:, joint_id] = vis_target
