@@ -165,14 +165,15 @@ def add_keypoint_rcnn_gts(gt_keypoints, boxes, batch_idx, num_kps=17, img_size=2
     #         kp_fg_inds, size=kp_fg_rois_per_this_image, replace=False)
 
     num_keypoints = gt_keypoints.shape[2]
-    sampled_keypoints = -np.ones(
+    sampled_keypoints = np.zeros(
         (len(sampled_fg_rois), gt_keypoints.shape[1], num_keypoints),
         dtype=gt_keypoints.dtype)
-    print('gt_keypoints: ', gt_keypoints)
+    # print('gt_keypoints: ', gt_keypoints)
 
     for ii in range(len(sampled_fg_rois)):
-        sampled_keypoints[ii, :, :] = gt_keypoints[ii, :, :]
-        assert np.sum(sampled_keypoints[ii, 2, :]) > 0
+        if np.sum(sampled_keypoints[ii, 2, :]) > 0:
+            sampled_keypoints[ii, :, :] = gt_keypoints[ii, :, :]
+
 
     heats, weights = keypoints_to_heatmap_labels(
         sampled_keypoints, sampled_fg_rois)

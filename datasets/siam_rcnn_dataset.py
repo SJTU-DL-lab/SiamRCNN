@@ -812,7 +812,9 @@ class DataSets(Dataset):
             hp_radius = gaussian_radius((math.ceil(h)*2.3, math.ceil(w)*2.3))
             hp_radius = self.hm_gauss \
                         if self.mse_loss else max(0, int(hp_radius))
-            ind[0] = ct_int[1] * output_res + ct_int[0]
+            # ind[0] = ct_int[1] * output_res + ct_int[0]
+            if not neg:
+                ind[0] = 1
             for j in range(num_joints):
                 if pts[j, 2] > 0:
                     pts[j, :2] = affine_transform(pts[j, :2], trans_output_rot)

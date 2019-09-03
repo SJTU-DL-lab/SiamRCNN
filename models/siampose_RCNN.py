@@ -60,7 +60,7 @@ class PoseLoss(torch.nn.Module):
         # print('out hm hp shape: {}, batch hm hp shape: {}'.format(output['hm_hp'].shape, batch['hm_hp']))
         if opt.hm_hp and opt.hm_hp_weight > 0:
             hm_hp_loss += self.crit_hm_hp(
-              output['hm_hp'], batch['hm_hp'])
+              output['hm_hp'], batch['hm_hp'], batch['ind'])
 
         loss = opt.hm_hp_weight * hm_hp_loss + opt.off_weight * hp_offset_loss
         # opt.hp_weight * hp_loss + \
