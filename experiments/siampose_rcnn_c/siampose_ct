@@ -1,1 +1,152 @@
-Fri Aug  9 15:27:57 CST 2019
+Mon Sep  2 17:30:02 CST 2019
+[2019-09-02 17:32:31,866-rk0-train_siamrcnn.py#165] 
+PyTorch version: 0.4.1.post2
+Is debug build: No
+CUDA used to build PyTorch: 9.0.176
+
+OS: CentOS Linux 7 (Core)
+GCC version: (GCC) 4.8.5 20150623 (Red Hat 4.8.5-11)
+CMake version: version 2.8.12.2
+
+Python version: 3.6
+Is CUDA available: Yes
+CUDA runtime version: 9.0.176
+GPU models and configuration: 
+GPU 0: GeForce GTX 1080 Ti
+GPU 1: GeForce GTX 1080 Ti
+GPU 2: GeForce GTX 1080 Ti
+GPU 3: GeForce GTX 1080 Ti
+GPU 4: GeForce GTX 1080 Ti
+GPU 5: GeForce GTX 1080 Ti
+
+Nvidia driver version: 410.48
+cuDNN version: Could not collect
+
+Versions of relevant libraries:
+[pip] Could not collect
+[conda] cuda90                    1.0                  h6433d27_0    pytorch
+[conda] pytorch                   0.4.1           py36_py35_py27__9.0.176_7.1.2_2    pytorch
+[conda] torchfile                 0.1.0                    pypi_0    pypi
+[conda] torchvision               0.2.2                    pypi_0    pypi
+        OpenCV (4.1.0)
+[2019-09-02 17:32:31,896-rk0-train_siamrcnn.py#166] Namespace(arch='', batch=1, clip=10.0, config='config.json', debug=False, dense_hp=False, epochs=200, hm_hp=True, hm_hp_weight=1, hp_weight=1, log='logs/log.txt', log_dir='board', lr=0.001, momentum=0.9, mse_loss=False, not_hm_hp=False, not_reg_bbox=False, not_reg_hp_offset=False, off_weight=1, output_size=56, pretrained='', print_freq=10, reg_bbox=True, reg_hp_offset=True, reg_loss='l1', resume='./snapshot/checkpoint_e90.pth', save_dir='snapshot', start_epoch=0, weight_decay=0.0001, workers=4)
+[2019-09-02 17:32:31,916-rk0-train_siamrcnn.py#169] config 
+{
+    "network": {
+        "arch": "Custom"
+    },
+    "hp": {
+        "instance_size": 255,
+        "base_size": 8
+    },
+    "lr": {
+        "feature_lr_mult": 1.0,
+        "rpn_lr_mult": 1.0,
+        "mask_lr_mult": 1.0,
+        "type": "log",
+        "start_lr": 0.001,
+        "end_lr": 1e-05,
+        "warmup": {
+            "start_lr": 0.001,
+            "end_lr": 0.001,
+            "type": "step",
+            "step": 1,
+            "epoch": 5
+        }
+    },
+    "loss": {
+        "weight": [
+            1.0,
+            1.2,
+            1.0
+        ],
+        "reg": {
+            "loss": "L1Loss"
+        },
+        "cls": {
+            "split": true
+        }
+    },
+    "train_datasets": {
+        "datasets": {
+            "coco": {
+                "root": "../../data/coco/crop_pose0.15",
+                "anno": "../../data/coco/train2017_pose_siamrcnn.json",
+                "frame_range": 1
+            }
+        },
+        "template_size": 127,
+        "search_size": 255,
+        "base_size": 8,
+        "size": 25,
+        "RPN_NMS": 0.01,
+        "augmentation": {
+            "template": {
+                "shift": 4,
+                "scale": 0.05
+            },
+            "search": {
+                "shift": 64,
+                "scale": 0.18,
+                "blur": 0.18
+            },
+            "neg": 0.2,
+            "gray": 0.15
+        }
+    },
+    "val_datasets": {
+        "datasets": {
+            "coco": {
+                "root": "../../data/coco/crop_pose0.15",
+                "anno": "../../data/coco/val2017_pose_siamrcnn.json",
+                "frame_range": 1
+            }
+        },
+        "template_size": 127,
+        "search_size": 255,
+        "base_size": 8,
+        "size": 25,
+        "RPN_NMS": 0.01,
+        "augmentation": {
+            "template": {
+                "shift": 0,
+                "scale": 0.0
+            },
+            "search": {
+                "shift": 12,
+                "scale": 0.18
+            },
+            "neg": 0,
+            "gray": 0
+        }
+    },
+    "anchors": {
+        "stride": 8,
+        "ratios": [
+            0.33,
+            0.5,
+            1,
+            2
+        ],
+        "scales": [
+            8,
+            16
+        ],
+        "round_dight": 0
+    },
+    "mask": {},
+    "clip": {
+        "feature": 10.0,
+        "rpn": 10.0,
+        "split": false
+    }
+}
+[2019-09-02 17:32:32,026-rk0-train_siamrcnn.py#115] build train dataset
+Traceback (most recent call last):
+  File "/cluster/home/it_stu1/bdclub/SiamRCNN//tools/train_siamrcnn.py", line 371, in <module>
+    main()
+  File "/cluster/home/it_stu1/bdclub/SiamRCNN//tools/train_siamrcnn.py", line 177, in main
+    train_loader, val_loader = build_data_loader(cfg)
+  File "/cluster/home/it_stu1/bdclub/SiamRCNN//tools/train_siamrcnn.py", line 116, in build_data_loader
+    train_set = DataSets(cfg['train_datasets'], cfg['anchors'], args.epochs)
+TypeError: __init__() takes 3 positional arguments but 4 were given
