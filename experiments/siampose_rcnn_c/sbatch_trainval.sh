@@ -24,7 +24,7 @@ python -u $ROOT/tools/trainval_siamrcnn.py \
     --epochs 200 --hm_hp_weight 1.5 \
     --log-dir board/show_test \
     --save_dir snapshot_test \
-    --log logs/log_test.txt
+    --log logs/log_test.txt \
     --pretrained ../siampose_rcnn_base/snapshot_0902/checkpoint_e19.pth
     # --pretrained snapshot_0815/checkpoint_e199.pth
     # --pretrained snapshot_full_img/checkpoint_e88.pth

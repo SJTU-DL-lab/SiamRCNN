@@ -413,6 +413,7 @@ def validation(val_loader, model, epoch, cfg, avg, num_per_epoch_val):
                 'label_loc': torch.autograd.Variable(input[3]).cuda(),
                 'label_loc_weight': torch.autograd.Variable(input[4]).cuda(),
                 # 'label_mask': torch.autograd.Variable(input[6]).cuda()
+                'kp_reg': torch.autograd.Variable(input[7]).cuda()
             }
             x_kp = input[6]
             x_kp = {x: torch.autograd.Variable(y).cuda() for x, y in x_kp.items()}

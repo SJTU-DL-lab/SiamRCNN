@@ -147,6 +147,8 @@ def add_keypoint_rcnn_gts(gt_keypoints, boxes, batch_idx, num_kps=17, img_size=2
     batch_idx = batch_idx.int().detach().cpu().numpy()
     gt_keypoints = gt_keypoints[batch_idx]
     assert gt_keypoints.shape[0] == boxes.shape[0]
+    if gt_keypoints.shape[2] == 3:
+        gt_keypoints = gt_keypoints.transpose(0, 2, 1)
     # print('gt_keypoints shape: ', gt_keypoints.shape)
     within_box = _within_box(gt_keypoints, boxes)
     # print('within_box shape: ', within_box.shape)
@@ -166,6 +168,7 @@ def add_keypoint_rcnn_gts(gt_keypoints, boxes, batch_idx, num_kps=17, img_size=2
     sampled_keypoints = -np.ones(
         (len(sampled_fg_rois), gt_keypoints.shape[1], num_keypoints),
         dtype=gt_keypoints.dtype)
+    print('gt_keypoints: ', gt_keypoints)
 
     for ii in range(len(sampled_fg_rois)):
         sampled_keypoints[ii, :, :] = gt_keypoints[ii, :, :]
