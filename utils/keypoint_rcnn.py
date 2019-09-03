@@ -24,6 +24,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import numpy as np
+from .image import draw_umich_gaussian
 
 
 def heatmaps_to_keypoints(maps, rois):
@@ -130,6 +131,7 @@ def keypoints_to_heatmap_labels(keypoints, rois, num_kps=17, heatmap_size=56):
 
         valid = np.logical_and(valid_loc, vis)
         valid = valid.astype(np.int32)
+        
         keypoints_trans[:, 0, kp] = x
         keypoints_trans[:, 1, kp] = y
         keypoints_trans[:, 2, kp] = valid
@@ -137,7 +139,7 @@ def keypoints_to_heatmap_labels(keypoints, rois, num_kps=17, heatmap_size=56):
         # lin_ind = y * heatmap_size + x
         # heatmaps[:, kp] = lin_ind * valid
         # weights[:, kp] = valid
-        heatmaps = generate_gaussian_target(keypoints_trans, heatmap_size=heatmap_size)
+        heatmaps = generate_gaussian_target(keypoints_trans, heatmap_size=[heatmap_size, heatmap_size])
 
     return heatmaps  #, weights
 
@@ -173,20 +175,19 @@ def add_keypoint_rcnn_gts(gt_keypoints, boxes, batch_idx, num_kps=17, img_size=2
     sampled_keypoints = np.zeros(
         (len(sampled_fg_rois), gt_keypoints.shape[1], num_keypoints),
         dtype=gt_keypoints.dtype)
-    # print('gt_keypoints: ', gt_keypoints)
 
     for ii in range(len(sampled_fg_rois)):
-        if np.sum(sampled_keypoints[ii, 2, :]) > 0:
+        if np.sum(gt_keypoints[ii, 2, :]) > 0:
             sampled_keypoints[ii, :, :] = gt_keypoints[ii, :, :]
 
 
-    heats, weights = keypoints_to_heatmap_labels(
+    heats = keypoints_to_heatmap_labels(
         sampled_keypoints, sampled_fg_rois)
 
     # heats = heats.reshape(shape)
     # weights = weights.reshape(shape)
 
-    return sampled_fg_rois, heats.astype(np.int32, copy=False), weights
+    return sampled_fg_rois, heats
 
 # def finalize_keypoint_minibatch(blobs, valid):
 #     """Finalize the minibatch after blobs for all minibatch images have been
@@ -226,10 +227,10 @@ def generate_gaussian_target(kp, heatmap_size, num_kps=17, hp_radius=4):
     # heatmap_size shapeL [h, w]
     kp = kp.transpose(0, 2, 1)
     num_rois = kp.shape[0]
-    heatmap = np.zeros(num_rois, num_kps, heatmap_size[0], heatmap_size[1])
+    heatmap = np.zeros((num_rois, num_kps, heatmap_size[0], heatmap_size[1]))
     for i in range(num_rois):
         for j in range(num_kps):
             if kp[i, j, 2] > 0:
-                draw_gaussian(heatmap[i, j],
-                              kp[i, j, :2].astype(np.int32), hp_radius)
+                draw_umich_gaussian(heatmap[i, j],
+                                    kp[i, j, :2].astype(np.int32), hp_radius)
     return heatmap

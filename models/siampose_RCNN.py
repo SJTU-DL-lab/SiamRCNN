@@ -241,13 +241,13 @@ class SiamMask(nn.Module):
         # normalized_boxes = normalized_boxes.view(-1, normalized_boxes.size(-1))
         # print('normalized bbox: ', normalized_boxes)
         if box_flag:
-            sampled_fg_rois, heats, weights = add_keypoint_rcnn_gts(kp_gts, normalized_boxes, boxes_ind)
-            target = generate_gaussian_target(heats, weights)
+            sampled_fg_rois, target = add_keypoint_rcnn_gts(kp_gts, normalized_boxes, boxes_ind)
+            # target = generate_gaussian_target(heats, weights)
 
             pooled_features = roi_align([normalized_boxes, p4_feat, boxes_ind], 7)
             # print('poolded features shape: ', pooled_features.shape)
             pred_kp = self.kp_model(pooled_features, template_feature)
-            gt_hm_hp = torch.from_numpy(target).cuda()
+            gt_hm_hp = torch.from_numpy(target).cuda().float()
             # gt_hm_hp = generate_target_gt(gt_sample, normalized_boxes, boxes_ind, self.output_size)
             kp_input['hm_hp'] = gt_hm_hp
         else:

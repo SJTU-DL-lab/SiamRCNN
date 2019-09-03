@@ -49,8 +49,8 @@ def get_max_preds(batch_heatmaps):
     preds *= pred_mask
     return preds, maxvals
 
-def save_batch_heatmaps(batch_image, batch_heatmaps, file_name,
-                        normalize=True, toTensor=ToTensor()):
+def save_batch_resized_heatmaps(batch_image, batch_heatmaps, file_name,
+                                normalize=True, toTensor=ToTensor(), save=True):
     '''
     batch_image: [batch_size, channel, height, width]
     batch_heatmaps: ['batch_size, num_joints, height, width]
@@ -63,13 +63,16 @@ def save_batch_heatmaps(batch_image, batch_heatmaps, file_name,
 
         batch_image.add_(-min).div_(max - min + 1e-5)
 
+    batch_heatmaps = F.interpolate(batch_heatmaps, 256, mode='nearest')
     batch_size = batch_heatmaps.size(0)
     num_joints = batch_heatmaps.size(1)
     heatmap_height = batch_heatmaps.size(2)
     heatmap_width = batch_heatmaps.size(3)
+    resized_height = 255
+    resized_width = 255
 
-    grid_image = np.zeros((batch_size*heatmap_height,
-                           (num_joints+1)*heatmap_width,
+    grid_image = np.zeros((batch_size*resized_height,
+                           (num_joints+1)*resized_width,
                            3),
                           dtype=np.uint8)
 
@@ -89,8 +92,8 @@ def save_batch_heatmaps(batch_image, batch_heatmaps, file_name,
         resized_image = cv2.resize(image,
                                    (int(heatmap_width), int(heatmap_height)))
 
-        height_begin = heatmap_height * i
-        height_end = heatmap_height * (i + 1)
+        height_begin = resized_height * i
+        height_end = resized_height * (i + 1)
         for j in range(num_joints):
             cv2.circle(resized_image,
                        (int(preds[i][j][0]), int(preds[i][j][1])),
@@ -102,22 +105,24 @@ def save_batch_heatmaps(batch_image, batch_heatmaps, file_name,
                        (int(preds[i][j][0]), int(preds[i][j][1])),
                        1, [0, 0, 255], 1)
 
-            width_begin = heatmap_width * (j+1)
-            width_end = heatmap_width * (j+2)
+            width_begin = resized_width * (j+1)
+            width_end = resized_width * (j+2)
+            masked_image = cv2.resize(masked_image, (resized_width, resized_height))
             grid_image[height_begin:height_end, width_begin:width_end, :] = \
-                masked_image
-            # grid_image[height_begin:height_end, width_begin:width_end, :] = \
-            #     colored_heatmap*0.7 + resized_image*0.3
+                masked_image 
 
-        grid_image[height_begin:height_end, 0:heatmap_width, :] = resized_image
+        resized_image = cv2.resize(resized_image, (resized_width, resized_height))
+        grid_image[height_begin:height_end, 0:resized_width, :] = resized_image
         # print('brefore:', grid_image.shape)
         grid_image = copy.deepcopy(grid_image[:, :, ::-1])
-        # print('after:', grid_image)
-        out_image = toTensor(grid_image)
 
-    return out_image
+        out_image = grid_image
+        if save is True:
+            cv2.imwrite(file_name, resized_image)
 
-def save_batch_resized_heatmaps(batch_image, batch_heatmaps, file_name,
+    return out_image, resized_image
+
+def save_batch_resized_skeleton(batch_image, batch_heatmaps, file_name,
                                 normalize=True, toTensor=ToTensor(), save=True,
                                 out_skelet=False):
     '''
@@ -188,11 +193,12 @@ def save_batch_resized_heatmaps(batch_image, batch_heatmaps, file_name,
             #     colored_heatmap*0.7 + resized_image*0.3
 
         # resized_image = cv2.resize(resized_image, (resized_width, resized_height))
-        grid_image[height_begin:height_end, 0:resized_width, :] = resized_image
+        # grid_image[height_begin:height_end, 0:resized_width, :] = resized_image
         # print('brefore:', grid_image.shape)
-        grid_image = copy.deepcopy(grid_image[:, :, ::-1])
+        # grid_image = copy.deepcopy(grid_image[:, :, ::-1])
         # print('after:', grid_image)
         # out_image = toTensor(grid_image)
+
         out_image = grid_image
         if save is True:
             cv2.imwrite(file_name, resized_image)

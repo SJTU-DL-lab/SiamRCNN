@@ -14,6 +14,7 @@ from utils.bbox_helper import *
 from utils.anchors import Anchors
 from utils.image import get_affine_transform, affine_transform
 from utils.image import gaussian_radius, draw_umich_gaussian, draw_msra_gaussian
+from utils.keypoint2img import convert_3d_kp
 import math
 import sys
 pyv = sys.version[0]
@@ -251,7 +252,7 @@ class Augmentation:
             image = cv2.filter2D(image, -1, kernel)
         return image
 
-    def __call__(self, image, bbox, size, gray=False, mask=None):
+    def __call__(self, image, bbox, size, gray=False, mask=None, kp=None):
         if gray:
             grayed = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             image = np.zeros((grayed.shape[0], grayed.shape[1], 3), np.uint8)
@@ -276,9 +277,16 @@ class Augmentation:
         bbox = BBox(bbox.x1 - x1, bbox.y1 - y1,
                     bbox.x2 - x1, bbox.y2 - y1)
 
+        if kp is not None:
+            kp[:, 0] = kp[:, 0] - x1
+            kp[:, 1] = kp[:, 1] - y1
+
         if self.scale:
             scale_x, scale_y = param['scale']
             bbox = Corner(bbox.x1 / scale_x, bbox.y1 / scale_y, bbox.x2 / scale_x, bbox.y2 / scale_y)
+            if kp is not None:
+                kp[:, 0] = kp[:, 0] / scale_x
+                kp[:, 1] = kp[:, 1] / scale_y
 
         image = crop_hwc(image, crop_bbox, size)
         if not mask is None:
@@ -304,8 +312,10 @@ class Augmentation:
             width = image.shape[1]
             mask = cv2.flip(mask, 1)
             bbox = Corner(width - 1 - bbox.x2, bbox.y1, width - 1 - bbox.x1, bbox.y2)
+            if kp is not None:
+                kp[:, 0] = width - 1 - kp[:, 0]
 
-        return image, bbox, mask
+        return image, bbox, mask, kp
 
 
 class AnchorTargetLayer:
@@ -589,121 +599,6 @@ class DataSets(Dataset):
                 }
         logger.info('dataset informations: \n{}'.format(json.dumps(self.infos, indent=4)))
 
-    def generate_target(self, joints, joints_vis):
-        '''
-        :param joints:  [num_joints, 3]
-        :param joints_vis: [num_joints, 3]
-        :return: target, target_weight(1: visible, 0: invisible)
-        '''
-        target_weight = np.ones((self.num_joints, 1), dtype=np.float32)
-        target_weight[:, 0] = joints_vis[:, 0]
-
-        assert self.target_type == 'gaussian', \
-            'Only support gaussian map now!'
-
-        if self.target_type == 'gaussian':
-            target = np.zeros((self.num_joints,
-                               self.heatmap_size[1],
-                               self.heatmap_size[0]),
-                              dtype=np.float32)
-
-            tmp_size = self.sigma * 3
-
-            for joint_id in range(self.num_joints):
-                feat_stride = [self.image_size / self.heatmap_size[0], self.image_size / self.heatmap_size[1]]
-                mu_x = int(joints[joint_id][0] / feat_stride[0] + 0.5)
-                mu_y = int(joints[joint_id][1] / feat_stride[1] + 0.5)
-                # Check that any part of the gaussian is in-bounds
-                ul = [int(mu_x - tmp_size), int(mu_y - tmp_size)]
-                br = [int(mu_x + tmp_size + 1), int(mu_y + tmp_size + 1)]
-                if ul[0] >= self.heatmap_size[0] or ul[1] >= self.heatmap_size[1] \
-                        or br[0] < 0 or br[1] < 0:
-                    # If not, just return the image as is
-                    target_weight[joint_id] = 0
-                    continue
-
-                # # Generate gaussian
-                size = 2 * tmp_size + 1
-                x = np.arange(0, size, 1, np.float32)
-                y = x[:, np.newaxis]
-                x0 = y0 = size // 2
-                # The gaussian is not normalized, we want the center value to equal 1
-                g = np.exp(- ((x - x0) ** 2 + (y - y0) ** 2) / (2 * self.sigma ** 2))
-
-                # Usable gaussian range
-                g_x = max(0, -ul[0]), min(br[0], self.heatmap_size[0]) - ul[0]
-                g_y = max(0, -ul[1]), min(br[1], self.heatmap_size[1]) - ul[1]
-                # Image range
-                img_x = max(0, ul[0]), min(br[0], self.heatmap_size[0])
-                img_y = max(0, ul[1]), min(br[1], self.heatmap_size[1])
-
-                v = target_weight[joint_id]
-                if v > 0.5:
-                    target[joint_id][img_y[0]:img_y[1], img_x[0]:img_x[1]] = \
-                        g[g_y[0]:g_y[1], g_x[0]:g_x[1]]
-
-        return target, target_weight
-
-    def generate_target_in_single_map(self, joints, joints_vis):
-        '''
-        :param joints:  [num_joints, 3]
-        :return: target, target_weight(1: visible, 0: invisible)
-        '''
-        target_weight = np.ones((self.num_joints, 1), dtype=np.float32)
-        target_weight[:, 0] = joints_vis[:, 0]
-
-        assert self.target_type == 'gaussian', \
-            'Only support gaussian map now!'
-
-        if self.target_type == 'gaussian':
-            target = np.zeros((1,
-                              self.heatmap_size[1],
-                              self.heatmap_size[0]),
-                              dtype=np.float32)
-
-            masked_gaussian = np.zeros((1,
-                                       self.heatmap_size[1],
-                                       self.heatmap_size[0]),
-                                       dtype=np.float32)
-
-            tmp_size = self.sigma * 3
-
-            for joint_id in range(self.num_joints):
-                feat_stride = [self.image_size / self.heatmap_size[0], self.image_size / self.heatmap_size[1]]
-                mu_x = int(joints[joint_id][0] / feat_stride[0] + 0.5)
-                mu_y = int(joints[joint_id][1] / feat_stride[1] + 0.5)
-                # Check that any part of the gaussian is in-bounds
-                ul = [int(mu_x - tmp_size), int(mu_y - tmp_size)]
-                br = [int(mu_x + tmp_size + 1), int(mu_y + tmp_size + 1)]
-                if ul[0] >= self.heatmap_size[0] or ul[1] >= self.heatmap_size[1] \
-                        or br[0] < 0 or br[1] < 0:
-                    # If not, just return the image as is
-                    target_weight[joint_id] = 0
-                    continue
-
-                # # Generate gaussian
-                size = 2 * tmp_size + 1
-                x = np.arange(0, size, 1, np.float32)
-                y = x[:, np.newaxis]
-                x0 = y0 = size // 2
-                # The gaussian is not normalized, we want the center value to equal 1
-                g = np.exp(- ((x - x0) ** 2 + (y - y0) ** 2) / (2 * self.sigma ** 2))
-
-                # Usable gaussian range
-                g_x = max(0, -ul[0]), min(br[0], self.heatmap_size[0]) - ul[0]
-                g_y = max(0, -ul[1]), min(br[1], self.heatmap_size[1]) - ul[1]
-                # Image range
-                img_x = max(0, ul[0]), min(br[0], self.heatmap_size[0])
-                img_y = max(0, ul[1]), min(br[1], self.heatmap_size[1])
-
-                v = target_weight[joint_id]
-                if v > 0.5:
-                    masked_gaussian[:, img_y[0]:img_y[1], img_x[0]:img_x[1]] = \
-                        g[g_y[0]:g_y[1], g_x[0]:g_x[1]]
-                    np.maximum(target, masked_gaussian, out=target)
-
-        return target, target_weight
-
     def imread(self, path):
         img = cv2.imread(path)
 
@@ -748,9 +643,7 @@ class DataSets(Dataset):
         index = self.pick[index]
         dataset, index = self.find_dataset(index)
         neg = False
-
-        # gray = self.gray and self.gray > random.random()
-        # neg = self.neg and self.neg > random.random()
+        gray = False
 
         # if neg:
         #     template = dataset.get_random_target(index)
@@ -778,20 +671,20 @@ class DataSets(Dataset):
         image_id = int(search[0].split('/')[-2])
 
         if dataset.has_mask:
-            search_mask = np.zeros(search_image.shape[:2], dtype=np.float32)
+            search_mask = (cv2.imread(search[2], 0) > 0).astype(np.float32)
         else:
-            search_kp = np.zeros(51, dtype=np.float32)
+            search_kp = np.array(search[2], dtype=np.float32)
 
         if self.crop_size > 0:
             search_image = center_crop(search_image, self.crop_size)
 
-        def toBBox(image, shape):
+        def toBBox(image, shape, context_amount=0.15):
             imh, imw = image.shape[:2]
             if len(shape) == 4:
                 w, h = shape[2]-shape[0], shape[3]-shape[1]
             else:
                 w, h = shape
-            context_amount = 0.5
+
             exemplar_size = self.template_size  # 127
             wc_z = w + context_amount * (w+h)
             hc_z = h + context_amount * (w+h)
@@ -803,11 +696,44 @@ class DataSets(Dataset):
             bbox = center2corner(Center(cx, cy, w, h))
             return bbox
 
+        def toKP(image, shape, kp, context_amount=0.15):
+
+            imh, imw = image.shape[:2]
+            output_kp = np.zeros_like(kp)
+
+            if len(shape) == 4:
+                w, h = shape[2]-shape[0], shape[3]-shape[1]
+            else:
+                w, h = shape
+
+            bbox_center_x = (shape[2]+shape[0])/2
+            bbox_center_y = (shape[3]+shape[1])/2
+            kp_x = kp[:, 0]
+            kp_y = kp[:, 1]
+            rel_kp_x = kp_x - bbox_center_x
+            rel_kp_y = kp_y - bbox_center_y
+
+            exemplar_size = self.template_size  # 127
+            wc_z = w + context_amount * (w+h)
+            hc_z = h + context_amount * (w+h)
+            s_z = np.sqrt(wc_z * hc_z)
+            scale_z = exemplar_size / s_z
+            rel_kp_x = rel_kp_x*scale_z
+            rel_kp_y = rel_kp_y*scale_z
+            cx, cy = imw//2, imh//2
+
+            output_kp[:, 0] = rel_kp_x + cx
+            output_kp[:, 1] = rel_kp_y + cy
+            output_kp[:, 2] = kp[:, 2]
+            return output_kp
+
+        search_kp = convert_3d_kp(search_kp, self.num_joints)
         template_box = toBBox(template_image, template[1])
         search_box = toBBox(search_image, search[1])
+        search_kp = toKP(search_image, search[1], search_kp)
         # bbox = search_box
-        template, _, _ = self.template_aug(template_image, template_box, self.template_size, gray=False)
-        search, bbox, mask = self.search_aug(search_image, search_box, self.search_size, gray=False)
+        template, _, _, _ = self.template_aug(template_image, template_box, self.template_size, gray=gray)
+        search, bbox, mask, joints_3d = self.search_aug(search_image, search_box, self.search_size, gray=gray, kp=search_kp)
 
         def draw(image, box, name):
             image = image.copy()
@@ -815,74 +741,6 @@ class DataSets(Dataset):
             cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0))
             cv2.imwrite(name, image)
 
-        def crop_hwc(bbox, out_sz=255):
-            a = (out_sz - 1) / (bbox[2] - bbox[0])
-            b = (out_sz - 1) / (bbox[3] - bbox[1])
-            c = -a * bbox[0]
-            d = -b * bbox[1]
-            mapping = np.array([[a, 0, c],
-                                [0, b, d]]).astype(np.float)
-            # crop = cv2.warpAffine(image, mapping, (out_sz, out_sz),
-            # borderMode=cv2.BORDER_CONSTANT, borderValue=padding)
-            return mapping
-
-        def crop_hwc1(image, bbox, out_sz, padding=(0, 0, 0)):
-            a = (out_sz - 1) / (bbox[2] - bbox[0])
-            b = (out_sz - 1) / (bbox[3] - bbox[1])
-            c = -a * bbox[0]
-            d = -b * bbox[1]
-            mapping = np.array([[a, 0, c],
-                                [0, b, d]]).astype(np.float)
-            crop = cv2.warpAffine(image, mapping, (out_sz, out_sz))
-            return crop
-
-        def pos_s_2_bbox(pos, s):
-            bbox = [pos[0] - s / 2, pos[1] - s / 2, pos[0] + s / 2, pos[1] + s / 2]
-            return bbox
-
-        def crop_like_SiamFCx(bbox, exemplar_size=127, context_amount=0.5, search_size=255):
-            target_pos = [(bbox[2] + bbox[0]) / 2., (bbox[3] + bbox[1]) / 2.]
-            target_size = [bbox[2] - bbox[0] + 1, bbox[3] - bbox[1] + 1]
-            wc_z = target_size[1] + context_amount * sum(target_size)
-            hc_z = target_size[0] + context_amount * sum(target_size)
-            s_z = np.sqrt(wc_z * hc_z)
-            scale_z = exemplar_size / s_z
-            d_search = (search_size - exemplar_size) / 2
-            pad = d_search / scale_z
-            s_x = s_z + 2 * pad
-
-            # x = crop_hwc1(image, pos_s_2_bbox(target_pos, s_x), search_size, padding)
-            return target_pos, s_x
-
-        def kp_conversion(KeyPoints, matrix):
-
-            key_points = []
-            kps_conversion = []
-            skeleton = [0, 0]
-            Skeleton = []
-
-            for i in range(0, int(len(KeyPoints) / 3)):
-                skeleton[0] = KeyPoints[i * 3 + 0]
-                skeleton[1] = KeyPoints[i * 3 + 1]
-                Skeleton.append(skeleton[:])
-                lis = Skeleton[i]
-                lis.append(1)
-                key_points.append(lis)
-
-            key_points = np.array(key_points)
-
-            for i in range(0, int(len(KeyPoints) / 3)):
-                if KeyPoints[i * 3 + 2] != 0:
-                    ky_conversion = np.matmul(matrix, key_points[i, :]).tolist()
-                    kps_conversion.append(ky_conversion[0])
-                    kps_conversion.append(ky_conversion[1])
-                    kps_conversion.append(KeyPoints[i * 3 + 2])
-                else:
-                    kps_conversion.append(0)
-                    kps_conversion.append(0)
-                    kps_conversion.append(0)
-
-            return kps_conversion
 
         if debug:
             draw(template_image, template_box, "debug/{:06d}_ot.jpg".format(index))
@@ -890,38 +748,16 @@ class DataSets(Dataset):
             draw(template, _, "debug/{:06d}_t.jpg".format(index))
             draw(search, bbox, "debug/{:06d}_s.jpg".format(index))
 
-        cls, delta, delta_weight = self.anchor_target(self.anchors, bbox, self.size, False)
+        cls, delta, delta_weight = self.anchor_target(self.anchors, bbox, self.size, neg)
         if not dataset.has_mask:
-            pos, s = crop_like_SiamFCx(search_box, exemplar_size=127, context_amount=0.5, search_size=255)
-            mapping_bbox = pos_s_2_bbox(pos, s)
 
-            mapping = crop_hwc(mapping_bbox, out_sz=255)
-
-            keypoints = kp_conversion(search_kp.tolist(), mapping)
-
-            joints_3d = np.zeros((self.num_joints, 3), dtype=np.float)
-            joints_3d_vis = np.zeros((self.num_joints, 3), dtype=np.float)
-            for ipt in range(self.num_joints):
-                joints_3d[ipt, 0] = keypoints[ipt * 3 + 0]
-                joints_3d[ipt, 1] = keypoints[ipt * 3 + 1]
-                joints_3d[ipt, 2] = keypoints[ipt * 3 + 2]
-                t_vis = search_kp[ipt * 3 + 2]
-                if t_vis > 1:
-                    t_vis = 1
-                joints_3d_vis[ipt, 0] = t_vis
-                joints_3d_vis[ipt, 1] = t_vis
-                joints_3d_vis[ipt, 2] = 0
-
-            img = search.copy()
-            # joints_3d = joints_3d / 255
-
-            if not neg:
-                kp_weight = cls.max(axis=0, keepdims=True)
-            else:
-                kp_weight = np.zeros([1, cls.shape[1], cls.shape[2]], dtype=np.float32)
-
+            # if not neg:
+            #     kp_weight = cls.max(axis=0, keepdims=True)
+            # else:
+            #     kp_weight = np.zeros([1, cls.shape[1], cls.shape[2]], dtype=np.float32)
 
             # now process the ct part
+            img = search.copy()
             c = np.array([img.shape[1] / 2., img.shape[0] / 2.], dtype=np.float32)
             s = max(img.shape[0], img.shape[1]) * 1.0
             rot = 0
@@ -934,8 +770,8 @@ class DataSets(Dataset):
             ind = np.zeros(1, dtype=np.int64)
             # hm_hp = np.zeros((num_joints, output_res, output_res), dtype=np.float32)
             hm_hp = np.zeros((num_joints, output_res, output_res), dtype=np.float32)
-            kps = np.zeros(num_joints * 2, dtype=np.float32)
-            kps_mask = np.zeros((self.num_joints * 2), dtype=np.uint8)
+            # kps = np.zeros(num_joints * 2, dtype=np.float32)
+            # kps_mask = np.zeros((num_joints * 2), dtype=np.uint8)
             hp_offset = np.zeros((num_joints, 2), dtype=np.float32)
             hp_ind = np.zeros(num_joints, dtype=np.int64)
             hp_mask = np.zeros(num_joints, dtype=np.int64)
@@ -958,33 +794,35 @@ class DataSets(Dataset):
             hp_radius = gaussian_radius((math.ceil(h)*2.3, math.ceil(w)*2.3))
             hp_radius = self.hm_gauss \
                         if self.mse_loss else max(0, int(hp_radius))
-            ind[0] = ct_int[1] * output_res + ct_int[0]
+            # ind[0] = ct_int[1] * output_res + ct_int[0]
+            if not neg:
+                ind[0] = 1
             for j in range(num_joints):
                 if pts[j, 2] > 0:
                     pts[j, :2] = affine_transform(pts[j, :2], trans_output_rot)
                     if pts[j, 0] >= 0 and pts[j, 0] < output_res and \
                        pts[j, 1] >= 0 and pts[j, 1] < output_res:
-                        kps[j * 2: j * 2 + 2] = pts[j, :2] - ct_int
-                        kps_mask[j * 2: j * 2 + 2] = 1
+                        # kps[j * 2: j * 2 + 2] = pts[j, :2] - ct_int
+                        # if not neg:
+                        #     kps_mask[j * 2: j * 2 + 2] = 1
                         pt_int = pts[j, :2].astype(np.int32)
-                        # print('ct_int: ', ct_int)
-                        # print('pt_int: ', pt_int)
                         hp_offset[j] = pts[j, :2] - pt_int
                         hp_ind[j] = pt_int[1] * output_res + pt_int[0]
-                        hp_mask[j] = 1
+                        if not neg:
+                            hp_mask[j] = 1
 
                         draw_gaussian(hm_hp[j], pt_int, hp_radius)
                         # pt_ori = joints_3d[j, :2].astype(np.int32)
                         # draw_gaussian(hm_hp[j], pt_ori, hp_radius)
 
-            ret = {'hps': kps, 'hm_hp': hm_hp, 'hp_mask': hp_mask}
-            # print('kps: ', ret['hps'])
-            ret.update({'hp_offset': hp_offset, 'hp_ind': hp_ind, 'hps_mask': kps_mask, 'ind': ind})
+            # ret = {'hps': kps, 'hm_hp': hm_hp, 'hp_mask': hp_mask}
+            ret = {'hm_hp': hm_hp, 'hp_mask': hp_mask}
+            ret.update({'hp_offset': hp_offset, 'hp_ind': hp_ind, 'ind': ind})
 
         # print('hp_offset: ', hp_offset)
-        joints_3d_out = joints_3d.transpose(1, 0)
 
         template, search = map(lambda x: np.transpose(x, (2, 0, 1)).astype(np.float32), [template, search])
+
         return template, search, cls, delta, \
           delta_weight, bbox_reg, \
-          ret, joints_3d_out, image_id
+          ret, joints_3d, image_id

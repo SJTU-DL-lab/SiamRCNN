@@ -20,15 +20,14 @@ def _neg_loss(pred, gt, mask):
     '''
     pos_inds = gt.eq(1).float()
     neg_inds = gt.lt(1).float()
-    mask = mask.unsqueeze(-1).unsqueeze(-1)
+    mask = mask.unsqueeze(-1).unsqueeze(-1).float()
 
     neg_weights = torch.pow(1 - gt, 4)
 
     loss = 0
 
     pos_loss = torch.log(pred) * torch.pow(1 - pred, 2) * pos_inds * mask
-    neg_loss = torch.log(1 - pred) * torch.pow(pred, 2) * neg_weights \
-      * neg_inds * mask
+    neg_loss = torch.log(1 - pred) * torch.pow(pred, 2) * neg_weights * neg_inds * mask
 
     num_pos = pos_inds.float().sum()
     pos_loss = pos_loss.sum()
