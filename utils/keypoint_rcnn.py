@@ -94,9 +94,10 @@ def keypoints_to_heatmap_labels(keypoints, rois, num_kps=17, heatmap_size=56):
     # where d is a discrete coordinate and c is a continuous coordinate.
     assert keypoints.shape[2] == num_kps
 
-    shape = (len(rois), num_kps)
-    heatmaps = np.zeros(shape, dtype=np.float32)
-    weights = np.zeros(shape, dtype=np.int32)
+    # shape = (len(rois), num_kps)
+    # heatmaps = np.zeros(shape, dtype=np.float32)
+    # weights = np.zeros(shape, dtype=np.int32)
+    keypoints_trans = np.zeros_like(keypoints)
 
     offset_x = rois[:, 0]
     offset_y = rois[:, 1]
@@ -129,12 +130,16 @@ def keypoints_to_heatmap_labels(keypoints, rois, num_kps=17, heatmap_size=56):
 
         valid = np.logical_and(valid_loc, vis)
         valid = valid.astype(np.int32)
+        keypoints_trans[:, 0, kp] = x
+        keypoints_trans[:, 1, kp] = y
+        keypoints_trans[:, 2, kp] = valid
 
-        lin_ind = y * heatmap_size + x
-        heatmaps[:, kp] = lin_ind * valid
-        weights[:, kp] = valid
+        # lin_ind = y * heatmap_size + x
+        # heatmaps[:, kp] = lin_ind * valid
+        # weights[:, kp] = valid
+        heatmaps = generate_gaussian_target(keypoints_trans, heatmap_size=heatmap_size)
 
-    return heatmaps, weights
+    return heatmaps  #, weights
 
 
 def add_keypoint_rcnn_gts(gt_keypoints, boxes, batch_idx, num_kps=17, img_size=255):
@@ -214,3 +219,17 @@ def _within_box(points, boxes):
         points[:, 1, :] >= np.expand_dims(boxes[:, 1], axis=1),
         points[:, 1, :] <= np.expand_dims(boxes[:, 3], axis=1))
     return np.logical_and(x_within, y_within)
+
+
+def generate_gaussian_target(kp, heatmap_size, num_kps=17, hp_radius=4):
+    # kp shape [num_rois, 3, 17]
+    # heatmap_size shapeL [h, w]
+    kp = kp.transpose(0, 2, 1)
+    num_rois = kp.shape[0]
+    heatmap = np.zeros(num_rois, num_kps, heatmap_size[0], heatmap_size[1])
+    for i in range(num_rois):
+        for j in range(num_kps):
+            if kp[i, j, 2] > 0:
+                draw_gaussian(heatmap[i, j],
+                              kp[i, j, :2].astype(np.int32), hp_radius)
+    return heatmap

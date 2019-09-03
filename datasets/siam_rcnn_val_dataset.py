@@ -987,4 +987,4 @@ class DataSets(Dataset):
         template, search = map(lambda x: np.transpose(x, (2, 0, 1)).astype(np.float32), [template, search])
         return template, search, cls, delta, \
           delta_weight, bbox_reg, \
-          np.array(kp_weight, np.float32), ret, joints_3d_out, image_id
+          ret, joints_3d_out, image_id

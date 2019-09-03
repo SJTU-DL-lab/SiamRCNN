@@ -242,7 +242,7 @@ class SiamMask(nn.Module):
         # print('normalized bbox: ', normalized_boxes)
         if box_flag:
             sampled_fg_rois, heats, weights = add_keypoint_rcnn_gts(kp_gts, normalized_boxes, boxes_ind)
-            target, target_weight = generate_gaussian_target(heats, weights)
+            target = generate_gaussian_target(heats, weights)
 
             pooled_features = roi_align([normalized_boxes, p4_feat, boxes_ind], 7)
             # print('poolded features shape: ', pooled_features.shape)
