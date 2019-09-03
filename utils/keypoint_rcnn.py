@@ -139,9 +139,9 @@ def keypoints_to_heatmap_labels(keypoints, rois, num_kps=17, heatmap_size=56):
         # lin_ind = y * heatmap_size + x
         # heatmaps[:, kp] = lin_ind * valid
         # weights[:, kp] = valid
-        heatmaps = generate_gaussian_target(keypoints_trans, heatmap_size=[heatmap_size, heatmap_size])
+        heatmap, kp_offset, hp_mask, ind = generate_gaussian_target(keypoints_trans, heatmap_size=[heatmap_size, heatmap_size])
 
-    return heatmaps  #, weights
+    return heatmap, kp_offset, hp_mask, ind  #, weights
 
 
 def add_keypoint_rcnn_gts(gt_keypoints, boxes, batch_idx, num_kps=17, img_size=255):
@@ -180,14 +180,13 @@ def add_keypoint_rcnn_gts(gt_keypoints, boxes, batch_idx, num_kps=17, img_size=2
         if np.sum(gt_keypoints[ii, 2, :]) > 0:
             sampled_keypoints[ii, :, :] = gt_keypoints[ii, :, :]
 
-
-    heats = keypoints_to_heatmap_labels(
+    heatmap, kp_offset, hp_mask, ind = keypoints_to_heatmap_labels(
         sampled_keypoints, sampled_fg_rois)
 
     # heats = heats.reshape(shape)
     # weights = weights.reshape(shape)
 
-    return sampled_fg_rois, heats
+    return sampled_fg_rois, heatmap, kp_offset, hp_mask, ind
 
 # def finalize_keypoint_minibatch(blobs, valid):
 #     """Finalize the minibatch after blobs for all minibatch images have been
@@ -222,15 +221,29 @@ def _within_box(points, boxes):
     return np.logical_and(x_within, y_within)
 
 
-def generate_gaussian_target(kp, heatmap_size, num_kps=17, hp_radius=4):
+def generate_gaussian_target(kp, heatmap_size, num_kps=17, hp_radius=6):
     # kp shape [num_rois, 3, 17]
     # heatmap_size shapeL [h, w]
     kp = kp.transpose(0, 2, 1)
     num_rois = kp.shape[0]
-    heatmap = np.zeros((num_rois, num_kps, heatmap_size[0], heatmap_size[1]))
+
+    heatmap = np.zeros((num_rois, num_kps, heatmap_size[0], heatmap_size[1]), dtype=np.float32)
+    hp_mask = np.zeros((num_rois, num_kps), dtype=np.int64)
+    hp_ind = np.zeros((num_rois, num_kps), dtype=np.int64)
+    kp_offset = np.zeros((num_rois, num_kps, 2), dtype=np.float32)
+        
+    kp_coord = kp[:, :, :2]
+    kp_offset = kp_coord.astype(np.int32) - kp_coord
+    # kp_coord = kp_coord[:, :, ::-1]
     for i in range(num_rois):
         for j in range(num_kps):
             if kp[i, j, 2] > 0:
+                kp_int = kp_coord[i, j].astype(np.int32)         
+                hp_mask[i, j] = 1
+                hp_ind[i, j] = kp_int[1] * heatmap_size[1] + kp_int[0]
+                kp_offset[i, j] = kp_coord[i, j] - kp_int
+                
                 draw_umich_gaussian(heatmap[i, j],
-                                    kp[i, j, :2].astype(np.int32), hp_radius)
-    return heatmap
+                                    kp_int, hp_radius)
+
+    return heatmap, kp_offset, hp_mask, hp_ind

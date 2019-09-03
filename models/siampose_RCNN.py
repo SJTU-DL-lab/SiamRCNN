@@ -34,13 +34,13 @@ class PoseLoss(torch.nn.Module):
         # batch['hps_mask'] = batch['hps_mask'].index_select(0, ind)
         batch['ind'] = batch['ind'].index_select(0, ind)
         # batch['hps'] = batch['hps'].index_select(0, ind)
-        batch['hp_mask'] = batch['hp_mask'].index_select(0, ind)
-        batch['hp_ind'] = batch['hp_ind'].index_select(0, ind)
-        batch['hp_offset'] = batch['hp_offset'].index_select(0, ind)
+        # batch['hp_mask'] = batch['hp_mask'].index_select(0, ind)
+        # batch['hp_ind'] = batch['hp_ind'].index_select(0, ind)
+        # batch['hp_offset'] = batch['hp_offset'].index_select(0, ind)
         # print('hps_mask shape: {}, ind shape: {} , hps shape: {}'.format(batch['hps_mask'].shape,
         #        batch['ind'].shape, batch['hps'].shape))
         # print('output hps shape: ', output['hps'].shape)
-        batch['hm_hp'] = batch['hm_hp'].index_select(0, ind)
+        # batch['hm_hp'] = batch['hm_hp'].index_select(0, ind)
         if opt.hm_hp and not opt.mse_loss:
             output['hm_hp'] = _sigmoid(output['hm_hp'])
 
@@ -241,15 +241,22 @@ class SiamMask(nn.Module):
         # normalized_boxes = normalized_boxes.view(-1, normalized_boxes.size(-1))
         # print('normalized bbox: ', normalized_boxes)
         if box_flag:
-            sampled_fg_rois, target = add_keypoint_rcnn_gts(kp_gts, normalized_boxes, boxes_ind)
+            sampled_fg_rois, target, kp_offset, hp_mask, hp_ind = add_keypoint_rcnn_gts(kp_gts, normalized_boxes, boxes_ind)
             # target = generate_gaussian_target(heats, weights)
 
             pooled_features = roi_align([normalized_boxes, p4_feat, boxes_ind], 7)
             # print('poolded features shape: ', pooled_features.shape)
             pred_kp = self.kp_model(pooled_features, template_feature)
             gt_hm_hp = torch.from_numpy(target).cuda().float()
+            gt_offset = torch.from_numpy(kp_offset).cuda().float()
+            gt_hp_mask = torch.from_numpy(hp_mask).cuda().int()
+            gt_hp_ind = torch.from_numpy(hp_ind).cuda().long()
+            
             # gt_hm_hp = generate_target_gt(gt_sample, normalized_boxes, boxes_ind, self.output_size)
             kp_input['hm_hp'] = gt_hm_hp
+            kp_input['hp_offset'] = gt_offset
+            kp_input['hp_mask'] = gt_hp_mask
+            kp_input['hp_ind'] = gt_hp_ind
         else:
             print('no box flag')
             # 'hps': 34, 'hm_hp': 17, 'hp_offset': 2

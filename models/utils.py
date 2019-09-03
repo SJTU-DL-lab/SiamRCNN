@@ -273,6 +273,10 @@ def proposal_layer(inputs, anchors, thresh=0.5, args=None):
         if keep.size(0) > 1:
             keep = keep[:1]
         boxes = boxes[keep, :]
+
+        y1, x1, y2, x2 = boxes.chunk(4, dim=1)
+        boxes = torch.cat([x1, y1, x2, y2], dim=1).detach().contiguous()
+
         boxes_out.append(boxes)
         boxes_ind.extend([i] * keep.size(0))
         # ind_start = i * max_rois
@@ -280,11 +284,15 @@ def proposal_layer(inputs, anchors, thresh=0.5, args=None):
         # box_ind[i, ind_start:num_keep] = i
         # select_bs = keep // total_anchors
         # kps_i = torch.index_select(kps, 0, select_bs)
-
-    boxes = torch.cat(boxes_out, 0)
-    boxes_ind = torch.Tensor(boxes_ind).cuda()
+    
+    if len(boxes_out) > 0:
+        boxes = torch.cat(boxes_out, 0)
+        boxes_ind = torch.Tensor(boxes_ind).cuda()
+    else:
+        boxes = torch.zeros(1, 4).cuda().float()
+        boxes_ind = torch.zeros(1).cuda()
     # Normalize dimensions to range of 0 to 1.
-    norm = Variable(torch.from_numpy(np.array([height, width, height, width])).float(), requires_grad=False)
+    norm = Variable(torch.from_numpy(np.array([width, height, width, height])).float(), requires_grad=False)
     norm = norm.cuda()
     normalized_boxes = boxes / norm
 
@@ -343,10 +351,10 @@ def roi_align(inputs, pool_size):
     boxes_ind = inputs[2]
 
     # Assign each ROI to a level in the pyramid based on the ROI area.
-    # x1, y1, x2, y2 = boxes.chunk(4, dim=1)
+    x1, y1, x2, y2 = boxes.chunk(4, dim=1)
     # h = y2 - y1
     # w = x2 - x1
-    # boxes = torch.cat([y1, x1, y2, x2], dim=1).detach().contiguous()
+    boxes = torch.cat([y1, x1, y2, x2], dim=1).detach().contiguous()
     boxes_ind = boxes_ind.int().detach()
     # ind = torch.zeros(boxes.size()[0]).int().detach()
     # ind = Variable(torch.arange(boxes.size()[0]), requires_grad=False).int() # .cuda()

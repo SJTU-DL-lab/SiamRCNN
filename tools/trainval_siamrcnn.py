@@ -21,7 +21,7 @@ from torch.autograd import Variable
 from utils.log_helper import init_log, print_speed, add_file_handler, Dummy
 from utils.load_helper import load_pretrain, restore_from
 from utils.average_meter_helper import AverageMeter
-from utils.image import get_max_preds, save_batch_heatmaps
+from utils.image import get_max_preds
 
 from datasets.siam_rcnn_dataset import DataSets
 from utils.lr_helper import build_lr_scheduler
