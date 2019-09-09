@@ -209,6 +209,9 @@ def proposal_layer(inputs, anchors, thresh=0.5, box_expand_ratio=0, args=None):
     # boxes_out = np.zeros((bs, max_rois, 4))
     # box_ind = np.ones(bs, max_rois) * -1
     # total_anchors = scores.size(1) // bs
+    size = args.img_size  # int(config['train_datasets']['search_size'])
+    height, width = size, size
+
     for i in range(bs):
         pos_ix = torch.nonzero(scores[i] > thresh)
         if pos_ix.dim() > 1:
@@ -252,8 +255,6 @@ def proposal_layer(inputs, anchors, thresh=0.5, box_expand_ratio=0, args=None):
         boxes = apply_box_deltas(anchors_i, deltas_i)
 
         # Clip to image boundaries. [batch, N, (y1, x1, y2, x2)]
-        size = args.img_size  # int(config['train_datasets']['search_size'])
-        height, width = size, size
         window = np.array([0, 0, height, width]).astype(np.float32)
         boxes = clip_boxes(boxes, window)
 
